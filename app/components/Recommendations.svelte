@@ -68,7 +68,8 @@
     import { onMount } from 'svelte';
     import { firebase } from '@nativescript/firebase-core';
     import '@nativescript/firebase-firestore';
-    import { navigate } from '@nativescript-community/svelte-native';
+    import '@nativescript/firebase-auth'; // Required for firebase().auth() functionality
+        import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import BookDetails from './BookDetails.svelte';
     import { Book, UserProfile } from '../types';
