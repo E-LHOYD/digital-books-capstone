@@ -1,0 +1,33 @@
+// Apply the Google services plugin
+apply plugin: 'com.google.gms.google-services'
+
+android {
+    compileSdkVersion 34
+    buildToolsVersion "35.0.1"
+
+    defaultConfig {
+        applicationId "com.gdlibrary.app"
+
+        minSdkVersion 23
+
+        targetSdkVersion 33
+
+        // Version Information
+        versionCode 1
+        versionName "1.0.0"
+
+        generatedDensities = []
+    }
+
+    aaptOptions {
+        additionalParameters "--no-version-vectors"
+    }
+}
+
+// Dependencies
+dependencies {
+    // Optional: multidex if needed
+    // implementation 'androidx.multidex:multidex:2.0.1'
+}
+
+apply plugin: 'com.google.gms.google-services'
