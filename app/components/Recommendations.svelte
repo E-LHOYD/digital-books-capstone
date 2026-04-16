@@ -1,4 +1,4 @@
-<page>
+<page actionBarHidden={true} class="page">
     <stackLayout class="container">
         <!-- Header -->
         <label text="Recommended for You" class="header-title" />
