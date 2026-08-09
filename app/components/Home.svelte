@@ -149,7 +149,7 @@
 
 <style>
     .page {
-		background-color: #f5f5f5;
+		background-color: #ff0000;
     }
 
     .main-layout {

@@ -5,8 +5,8 @@
 const UPDATE_API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
 
 // Current app version (should match app configuration)
-const CURRENT_VERSION = '1.0.0';
-const CURRENT_VERSION_CODE = 1;
+const CURRENT_VERSION = '1.0.1';
+const CURRENT_VERSION_CODE = 2;
 
 /**
  * Check for app updates from the server
