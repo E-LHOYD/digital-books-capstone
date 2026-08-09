@@ -3,54 +3,49 @@
 <script lang="ts">
     import Lockscreen from './components/Lockscreen.svelte';
     import { initFirebase } from "./services/firebase.js";
-    import { checkForUpdates, isForcedUpdate, getDownloadUrl, getChangelog } from "./services/app-update.js";
     import { onMount } from 'svelte';
 
     initFirebase();
 
     onMount(() => {
-        // Check for app updates in background, don't block app startup
+        // Simple version check without external dependency
         setTimeout(() => {
             checkForAppUpdates();
-        }, 3000); // Wait 3 seconds after app loads before checking
+        }, 3000);
     });
 
     async function checkForAppUpdates() {
         try {
             console.log("Checking for app updates...");
-            const updateInfo = await checkForUpdates();
             
-            if (updateInfo) {
-                console.log("App update available:", updateInfo.version);
+            const CURRENT_VERSION = '1.0.1';
+            const API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
+            
+            const response = await fetch(API_URL);
+            if (!response.ok) {
+                console.log("Update check failed");
+                return;
+            }
+            
+            const updateInfo = await response.json();
+            console.log("Server version:", updateInfo.version, "Current version:", CURRENT_VERSION);
+            
+            if (updateInfo.version !== CURRENT_VERSION) {
+                console.log("Update available:", updateInfo.version);
                 
-                const forced = isForcedUpdate(updateInfo);
-                const downloadUrl = getDownloadUrl(updateInfo);
-                const changes = getChangelog(updateInfo);
+                const message = `New version ${updateInfo.version} available!\n\nChanges:\n${updateInfo.changes.join('\n')}\n\nDownload: ${updateInfo.downloadUrl}`;
                 
-                const message = `New version ${updateInfo.version} available!\n\nChanges:\n${changes.join('\n')}\n\nDownload: ${downloadUrl}`;
-                
-                // Use NativeScript's dialog instead of browser alert
                 const dialogs = require('@nativescript/core').dialogs;
-                
-                if (forced) {
-                    await dialogs.alert({
-                        title: "⚠️ Required Update",
-                        message: message,
-                        okButtonText: "OK"
-                    });
-                } else {
-                    await dialogs.alert({
-                        title: "📱 Update Available",
-                        message: message,
-                        okButtonText: "OK"
-                    });
-                }
+                await dialogs.alert({
+                    title: "📱 Update Available",
+                    message: message,
+                    okButtonText: "OK"
+                });
             } else {
-                console.log("No update available");
+                console.log("App is up to date");
             }
         } catch (error) {
-            console.error("Error checking for app updates:", error);
-            // Don't block app if update check fails
+            console.error("Error checking for updates:", error);
         }
     }
 </script>
