@@ -2,7 +2,7 @@
 // This service handles checking for app updates and downloading new APKs
 
 const UPDATE_API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
-const DOWNLOAD_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/download';
+const DOWNLOAD_URL = 'https://gardnerebooks-download.vercel.app'; // Separate download site
 
 // Current app version (should match app configuration)
 const CURRENT_VERSION = '1.0.0';
