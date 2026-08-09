@@ -1,8 +1,8 @@
 // App Update Service for Over-the-Air Updates
-// Currently disabled - download site was removed
-// This service can be re-enabled when a download solution is determined
+// Check for updates and provide download information
 
 const UPDATE_API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
+const DOWNLOAD_SITE_URL = 'https://gardnerebooks-download.vercel.app';
 
 // Current app version (should match app configuration)
 const CURRENT_VERSION = '1.0.1';
@@ -99,7 +99,8 @@ export function isCurrentVersionSupported(updateInfo) {
  * @returns {string} Download URL
  */
 export function getDownloadUrl(updateInfo) {
-    return updateInfo.downloadUrl;
+    // Return the download site URL since APK is hosted on GitHub Releases
+    return DOWNLOAD_SITE_URL;
 }
 
 /**
