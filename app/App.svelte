@@ -18,7 +18,7 @@
         try {
             console.log("Checking for app updates...");
             
-            const CURRENT_VERSION = '1.0.1';
+            const CURRENT_VERSION = '1.0.0';
             const API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
             
             const response = await fetch(API_URL);
