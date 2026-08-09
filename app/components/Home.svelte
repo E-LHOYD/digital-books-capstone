@@ -149,7 +149,7 @@
 
 <style>
     .page {
-		background-color: #ff0000;
+		background-color: #0000ff;
     }
 
     .main-layout {
@@ -159,7 +159,7 @@
 
     .search-container {
         padding: 10 20;
-        background-color: #ff0000;
+        background-color: #0000ff;
     }
 
     .container {
@@ -169,7 +169,7 @@
     .bottom-container-fixed {
         padding: 10 5;
         vertical-align: bottom;
-        background-color: #ff0000;
+        background-color: #0000ff;
         position: fixed;
         bottom: 0;
         left: 0;
