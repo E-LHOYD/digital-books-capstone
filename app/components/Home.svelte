@@ -50,7 +50,7 @@
             <stackLayout orientation="horizontal" class="bottom-buttons">
                 <button text="Library" class="nav-btn" class:nav-btn-active={currentPage === 'library'} />
                 <button text="My Shelf" class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} />
-                <button text="Settings" class="nav-btn" class:nav-btn-active={currentPage === 'settings'} />
+                <button text="Settings" class="nav-btn" class:nav-btn-active={currentPage === 'settings'} on:tap={goToSettings} />
             </stackLayout>
         </stackLayout>
     </gridLayout>
@@ -63,6 +63,7 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import BookDetails from './BookDetails.svelte';
     import Recommendations from './Recommendations.svelte';
+    import Settings from './Settings.svelte';
 
     let books: any[] = [];
     let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'settings'
@@ -83,6 +84,12 @@
     function goToRecommendations() {
         navigate({
             page: Recommendations
+        } as any);
+    }
+
+    function goToSettings() {
+        navigate({
+            page: Settings
         } as any);
     }
 
@@ -107,24 +114,24 @@
 				const title = data.title;
 				const author = data.author;
 				const detail = data.detail || '';
+				const megaFileUrl = data.megaFileUrl || null;
 
 				// Generate proper NativeScript image paths with lowercase for Android compatibility
 				const cleanTitle = title.replace(/\s+/g, '').toLowerCase();
 				const coverPath = `~/ebooks/cover/${cleanTitle}cover.jpg`;
-				const bookPath = `~/ebooks/books/${cleanTitle}.pdf`;
 
 				console.log("Book title:", title);
 				console.log("Book author:", author);
 				console.log("Book detail:", detail);
+				console.log("MEGA file URL:", megaFileUrl);
 				console.log("Generated cover path:", coverPath);
-                console.log("Generated book path:", bookPath);
 				return {
 					id: doc.id,
 					title,
 					author,
 					detail,
+					megaFileUrl,
 					coverPath,
-					bookPath,
 					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
 				};
 			});
@@ -286,30 +293,21 @@
     .empty-container {
         padding: 20;
         text-align: center;
-        vertical-align: center;
     }
 
     .loading-text,
+    .error-text,
     .empty-text {
         font-size: 16;
         color: #666;
-        text-align: center;
-    }
-
-    .error-text {
-        font-size: 16;
-        color: #d32f2f;
-        text-align: center;
-        margin-bottom: 10;
     }
 
     .retry-btn {
+        margin-top: 10;
+        padding: 10 20;
         background-color: #033047;
         color: white;
+        border-radius: 8;
         font-size: 14;
-        padding: 10 20;
-        border-radius: 6;
-        border-width: 0;
     }
 </style>
-

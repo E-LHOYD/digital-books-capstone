@@ -72,14 +72,13 @@
         import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import BookDetails from './BookDetails.svelte';
-    import { Book, UserProfile } from '../types';
 
-    let userProfile: UserProfile | null = null;
+    let userProfile: any | null = null;
     let isLoadingProfile: boolean = false;
     let showRecommendations: boolean = false;
     let isLoading: boolean = false;
-    let recommendedBooks: Book[] = [];
-    let allBooks: Book[] = [];
+    let recommendedBooks: any[] = [];
+    let allBooks: any[] = [];
 
     onMount(async () => {
         await loadAllBooks();
@@ -252,7 +251,7 @@
         }, 1000);
     }
 
-    function filterBooksByAcademicDetails(): Book[] {
+    function filterBooksByAcademicDetails(): any[] {
         if (!userProfile) return [];
         
         console.log("=== STARTING FILTERING ===");
@@ -379,7 +378,7 @@
         return finalResult;
     }
 
-    function goToBookDetails(book: Book) {
+    function goToBookDetails(book: any) {
         navigate({
             page: BookDetails,
             props: { book }

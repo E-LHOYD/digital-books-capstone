@@ -4,6 +4,8 @@ export interface Book {
     coverPath?: string;
     detail?: string;
     subject?: string;
+    megaFileUrl?: string;
+    id?: string;
 }
 
 export interface UserProfile {

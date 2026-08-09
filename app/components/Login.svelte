@@ -25,8 +25,26 @@
         />
         </gridLayout>
 
+        <!-- Error Message -->
+        {#if errorMessage}
+            <label text={errorMessage} class="error-message" />
+        {/if}
+
+        <!-- Keep Logged In Checkbox -->
+        <stackLayout orientation="horizontal" class="checkbox-container">
+            <label 
+                text={keepLoggedIn ? "[✓]" : "[  ]"} 
+                class="checkbox-btn" 
+                on:tap={() => keepLoggedIn = !keepLoggedIn} 
+            />
+            <label text="Keep me logged in" class="checkbox-label" />
+        </stackLayout>
+
         <!-- Login Button -->
         <button text="Login" class="btn login" on:tap={handleLogin}/>
+
+        <!-- Sign Up Button -->
+        <button text="Sign Up" class="btn signup" on:tap={goToSignup} />
 
         <!-- Back Button -->
         <button text="Back" class="btn back" on:tap={() => navigate({ page: Lockscreen })} />
@@ -38,12 +56,15 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Lockscreen from './Lockscreen.svelte';
     import Home from './Home.svelte';
+    import Signup from './Signup.svelte';
     import { login, getUserByUsername } from '../services/firebase';
 
     //Password eye icon
     let password = "";
     let isSecure = true;
     let loginInput = "";
+    let errorMessage = "";
+    let keepLoggedIn = true; // Default to keep logged in
 
     // Function to check if input is email or username
     function isEmail(input: string): boolean {
@@ -51,7 +72,11 @@
     }
 
     async function handleLogin() {
+        // Clear previous error message
+        errorMessage = "";
+        
         if (!loginInput || !password) {
+            errorMessage = "Please fill in all fields";
             console.log("Please fill in all fields");
             return;
         }
@@ -67,22 +92,46 @@
                 // Username login - get email from Firestore
                 console.log("Login attempt with username:", loginInput);
                 
-                const userData = await getUserByUsername(loginInput);
-                console.log("Found user in Firestore:", userData);
-                
-                email = userData.email;
-                console.log("Authenticating with email:", email);
+                try {
+                    const userData = await getUserByUsername(loginInput);
+                    console.log("Found user in Firestore:", userData);
+                    
+                    if (!userData || !userData.email) {
+                        errorMessage = "User not found or missing email in profile";
+                        return;
+                    }
+                    
+                    email = userData.email;
+                    console.log("Authenticating with email:", email);
+                } catch (usernameError) {
+                    console.error("Username lookup failed:", usernameError);
+                    errorMessage = "Username not found. Please try with your email instead.";
+                    return;
+                }
             }
             
-            const user = await login(email, password);
+            console.log("Attempting Firebase login with email:", email);
+            const user = await login(email, password, keepLoggedIn);
             console.log("Login successful:", user);
             
             // Navigate to Home on successful login
             goToHome();
         } catch (error) {
             console.error("Login failed:", error);
+            console.error("Error code:", error.code);
+            console.error("Error message:", error.message);
             console.error("Error details:", JSON.stringify(error, null, 2));
-            // Handle login error (show message to user)
+            
+            // Show specific error message based on error type
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = "User not found. Please check your username or email.";
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = "Incorrect password. Please try again.";
+            } else if (error.message && error.message.includes('User not found')) {
+                errorMessage = "Username not found. Please check your username.";
+            } else {
+                errorMessage = "Login failed: " + error.message;
+            }
         }
     }
     
@@ -90,6 +139,12 @@
         navigate({
             page: Home
         });
+    }
+
+    function goToSignup() {
+        navigate({
+            page: Signup
+        } as any);
     }
 </script>
 
@@ -163,10 +218,55 @@
         color: white;
     }
 
+    .signup {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+    }
+
     .back {
         background-color: white;
         color: #033047;
         border-width: 4;
         border-color: #033047;
+    }
+
+    .error-message {
+        font-size: 14;
+        color: #c62828;
+        text-align: center;
+        margin: 10 0;
+        padding: 10;
+        background-color: #ffebee;
+        border-radius: 8;
+        border-width: 1;
+        border-color: #ef9a9a;
+    }
+
+    .checkbox-container {
+        margin: 15 0;
+        width: 100%;
+        horizontal-align: left;
+    }
+
+    .checkbox-btn {
+        width: 40;
+        height: 30;
+        background-color: white;
+        color: #033047;
+        border-width: 2;
+        border-color: #033047;
+        border-radius: 4;
+        font-size: 20;
+        font-weight: bold;
+        margin-right: 10;
+        text-align: center;
+        vertical-align: center;
+    }
+
+    .checkbox-label {
+        font-size: 16;
+        color: #033047;
+        vertical-align: center;
     }
 </style>

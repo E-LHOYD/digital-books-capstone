@@ -5,17 +5,51 @@
 
         <!-- Buttons -->
         <button text="Login" class="btn login" on:tap={goToLogin} />
+        <button text="Sign Up" class="btn signup" on:tap={goToSignup} />
     </stackLayout>
 </page>
 
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import Login from './Login.svelte';
+    import Signup from './Signup.svelte';
+    import { autoLogin } from '../services/firebase';
+    import Home from './Home.svelte';
+
+    onMount(() => {
+        // Attempt auto-login on app start
+        attemptAutoLogin();
+    });
+
+    async function attemptAutoLogin() {
+        try {
+            console.log("Attempting auto-login...");
+            const user = await autoLogin();
+            if (user) {
+                console.log("Auto-login successful:", user.email);
+                // Navigate directly to Home if auto-login succeeds
+                navigate({
+                    page: Home
+                } as any);
+            } else {
+                console.log("No saved credentials or auto-login failed");
+            }
+        } catch (error) {
+            console.error("Auto-login error:", error);
+        }
+    }
 
     function goToLogin() {
         navigate({
             page: Login
         });
+    }
+
+    function goToSignup() {
+        navigate({
+            page: Signup
+        } as any);
     }
 </script>
 
@@ -56,5 +90,12 @@
     .login {
         background-color: #033047;
         color: white;
+    }
+
+    .signup {
+        background-color: white;
+        color: #033047;
+        border-width: 4;
+        border-color: #033047;
     }
 </style>
