@@ -1,8 +1,8 @@
 // MEGA Streaming Service for Mobile App
 // This service handles streaming books from MEGA cloud storage for reading
 
-// Use the deployed admin dashboard URL (update this after deployment)
-const API_BASE_URL = 'https://gardnerebooks-admin.vercel.app'; // Update with your actual Vercel URL
+// Use the deployed admin dashboard URL
+const API_BASE_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app';
 
 /**
  * Get a readable stream from MEGA URL for direct reading
