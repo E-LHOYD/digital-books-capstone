@@ -24,7 +24,7 @@
                 const downloadUrl = getDownloadUrl(updateInfo);
                 const changes = getChangelog(updateInfo);
                 
-                const message = `New version ${updateInfo.version} available!\n\nChanges:\n${changes.join('\n')}\n\nDownload: ${downloadUrl}`;
+                const message = `New version ${updateInfo.version} available!\n\nChanges:\n${changes.join('\n')}\n\nPlease visit ${downloadUrl} to download the update.`;
                 
                 if (forced) {
                     alert("⚠️ Required Update\n\n" + message);

@@ -2,6 +2,7 @@
 // This service handles checking for app updates and downloading new APKs
 
 const UPDATE_API_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/api/app-version';
+const DOWNLOAD_URL = 'https://admin-dashboard-xi-nine-5gm5r8ufpa.vercel.app/download';
 
 // Current app version (should match app configuration)
 const CURRENT_VERSION = '1.0.0';
@@ -108,4 +109,16 @@ export function getDownloadUrl(updateInfo) {
  */
 export function getChangelog(updateInfo) {
     return updateInfo.changes || [];
+}
+
+/**
+ * Open the download page in device browser
+ * @param {Object} updateInfo - Update information from server
+ */
+export function openDownloadPage(updateInfo) {
+    const downloadUrl = getDownloadUrl(updateInfo);
+    // In NativeScript, we would use utils.openUrl to open in browser
+    // For now, this is a placeholder
+    console.log("Opening download page:", downloadUrl);
+    return downloadUrl;
 }
