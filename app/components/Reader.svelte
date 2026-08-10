@@ -37,7 +37,7 @@
 
 <script lang="ts">
     import { Frame } from '@nativescript/core';
-    import { getReaderUrl } from '../services/mega.js';
+    import { getReaderUrl } from '../services/storage.js';
 
     export let book: any;
 
@@ -47,7 +47,7 @@
     let isLoading = true;
     let loadError: string | null = null;
 
-    $: readerUrl = `${getReaderUrl(book.megaFileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
+    $: readerUrl = `${getReaderUrl(book.fileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
 
     function onLoadStarted() {
         isLoading = true;

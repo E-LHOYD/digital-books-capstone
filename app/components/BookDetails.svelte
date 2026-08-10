@@ -42,7 +42,7 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import Reader from './Reader.svelte';
-    import { isMegaUrl } from '../services/mega.js';
+    import { isBookFileUrl } from '../services/storage.js';
     // @ts-ignore
     import { addBookToShelf, getCurrentUserId } from '../services/shelf.js';
     // @ts-ignore
@@ -51,19 +51,19 @@
     // @ts-ignore
     export let book: Book;
 
-    // A book is only readable if its Firestore document carries a usable MEGA
-    // share link in `megaFileUrl`. The admin dashboard is what puts it there.
-    $: canRead = isMegaUrl(book.megaFileUrl);
+    // A book is only readable if its Firestore document carries a usable
+    // storage URL in `fileUrl`. The admin dashboard uploads it and writes it there.
+    $: canRead = isBookFileUrl(book.fileUrl);
 
     function readBook() {
         if (!canRead) {
-            console.error('Book has no usable megaFileUrl:', book.title, book.megaFileUrl);
+            console.error('Book has no usable fileUrl:', book.title, book.fileUrl);
             alert(
-                book.megaFileUrl
+                book.fileUrl
                     ? "This book's file link is not valid, so it cannot be opened. " +
-                      'Please ask an administrator to re-add the MEGA link.'
-                    : 'No file has been attached to this book yet, so it cannot be read. ' +
-                      'Please ask an administrator to add its MEGA link.'
+                      'Please ask an administrator to upload the file again.'
+                    : 'No file has been uploaded for this book yet, so it cannot be read. ' +
+                      'Please ask an administrator to upload it.'
             );
             return;
         }

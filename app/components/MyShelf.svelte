@@ -126,7 +126,7 @@
                     title: data.title,
                     author: data.author,
                     detail: data.detail || '',
-                    megaFileUrl: data.megaFileUrl || null,
+                    fileUrl: data.fileUrl || null,
                     coverPath: `~/ebooks/cover/${data.title.replace(/\s+/g, '').toLowerCase()}cover.jpg`,
                 };
             });

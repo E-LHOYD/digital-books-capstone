@@ -121,7 +121,7 @@
 				const title = data.title;
 				const author = data.author;
 				const detail = data.detail || '';
-				const megaFileUrl = data.megaFileUrl || null;
+				const fileUrl = data.fileUrl || null;
 
 				// Generate proper NativeScript image paths with lowercase for Android compatibility
 				const cleanTitle = title.replace(/\s+/g, '').toLowerCase();
@@ -130,14 +130,14 @@
 				console.log("Book title:", title);
 				console.log("Book author:", author);
 				console.log("Book detail:", detail);
-				console.log("MEGA file URL:", megaFileUrl);
+				console.log("Book file URL:", fileUrl);
 				console.log("Generated cover path:", coverPath);
 				return {
 					id: doc.id,
 					title,
 					author,
 					detail,
-					megaFileUrl,
+					fileUrl,
 					coverPath,
 					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
 				};
