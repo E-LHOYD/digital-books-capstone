@@ -14,5 +14,10 @@ module.exports = (env) => {
     },
   })
 
+  // Disable HMR
+  webpack.chainWebpack(config => {
+    config.plugins.delete('hmr')
+  })
+
   return webpack.resolveConfig()
 }

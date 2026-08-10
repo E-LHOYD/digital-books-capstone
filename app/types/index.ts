@@ -16,3 +16,18 @@ export interface UserProfile {
     createdAt: Date;
     lastUpdated: Date;
 }
+
+export interface Shelf {
+    id: string;
+    name: string;
+    userId: string;
+    isReadShelf: boolean;
+    createdAt: Date;
+    bookIds: string[];
+}
+
+export interface UserShelves {
+    userId: string;
+    shelves: Shelf[];
+    customShelfCount: number;
+}

@@ -49,7 +49,7 @@
         <stackLayout row={2} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
                 <button text="Library" class="nav-btn" class:nav-btn-active={currentPage === 'library'} />
-                <button text="My Shelf" class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} />
+                <button text="My Shelf" class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} on:tap={goToMyShelf} />
                 <button text="Settings" class="nav-btn" class:nav-btn-active={currentPage === 'settings'} on:tap={goToSettings} />
             </stackLayout>
         </stackLayout>
@@ -64,6 +64,7 @@
     import BookDetails from './BookDetails.svelte';
     import Recommendations from './Recommendations.svelte';
     import Settings from './Settings.svelte';
+    import MyShelf from './MyShelf.svelte';
 
     let books: any[] = [];
     let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'settings'
@@ -90,6 +91,12 @@
     function goToSettings() {
         navigate({
             page: Settings
+        } as any);
+    }
+
+    function goToMyShelf() {
+        navigate({
+            page: MyShelf
         } as any);
     }
 
@@ -149,17 +156,18 @@
 
 <style>
     .page {
-		background-color: #0000ff;
+		background-color: white;
     }
 
     .main-layout {
         width: 100%;
         height: 100%;
+        background-color: white;
     }
 
     .search-container {
         padding: 10 20;
-        background-color: #0000ff;
+        background-color: white;
     }
 
     .container {
@@ -169,7 +177,7 @@
     .bottom-container-fixed {
         padding: 10 5;
         vertical-align: bottom;
-        background-color: #0000ff;
+        background-color: white;
         position: fixed;
         bottom: 0;
         left: 0;

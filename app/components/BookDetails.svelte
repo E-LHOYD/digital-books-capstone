@@ -29,7 +29,7 @@
         <!-- Buttons Row -->
         <stackLayout orientation="horizontal" class="buttons-row">
             <button text="Read Book" class="btn btn-primary" on:tap={readBook} isEnabled={canRead} />
-            <button text="Read Later" class="btn btn-secondary" />
+            <button text="Add to Read" class="btn btn-secondary" on:tap={addToRead} />
         </stackLayout>
 
         <!-- Back Button -->
@@ -43,8 +43,13 @@
     import Home from './Home.svelte';
     import Reader from './Reader.svelte';
     import { isMegaUrl } from '../services/mega.js';
+    // @ts-ignore
+    import { addBookToShelf, getCurrentUserId } from '../services/shelf.js';
+    // @ts-ignore
+    import { Book } from '../types';
 
-    export let book: any;
+    // @ts-ignore
+    export let book: Book;
 
     // A book is only readable if its Firestore document carries a usable MEGA
     // share link in `megaFileUrl`. The admin dashboard is what puts it there.
@@ -73,6 +78,34 @@
         navigate({
             page: Home
         } as any);
+    }
+
+    async function addToRead() {
+        try {
+            const userId = getCurrentUserId();
+            if (!userId) {
+                alert('Please log in to add books to your read shelf.');
+                return;
+            }
+
+            const bookId = book.id;
+
+            if (!bookId) {
+                alert('Unable to add book: missing book ID');
+                return;
+            }
+
+            // Add book to the "read" shelf
+            await addBookToShelf(userId, 'read', bookId);
+            alert('Book added to your read shelf!');
+        } catch (error) {
+            console.error('Error adding book to read shelf:', error);
+            if ((error as any).message === 'Book already in shelf') {
+                alert('This book is already in your read shelf.');
+            } else {
+                alert('Failed to add book to read shelf. Please try again.');
+            }
+        }
     }
 </script>
 
