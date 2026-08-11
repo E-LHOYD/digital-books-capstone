@@ -42,6 +42,15 @@
                     </stackLayout>
                 </stackLayout>
 
+                <!-- Create Shelf Button -->
+                {#if customShelves.length < 5}
+                    <button text="+ Create New Shelf" class="create-shelf-btn" on:tap={showCreateShelfDialog} />
+                {:else}
+                    <stackLayout class="max-shelves-notice">
+                        <label text="Maximum 5 custom shelves reached" class="notice-text" />
+                    </stackLayout>
+                {/if}
+
                 <!-- Custom Shelves -->
                 {#each customShelves as shelf}
                     <stackLayout class="shelf-item" on:tap={() => goToShelfBooks(shelf.id)}>
@@ -61,57 +70,6 @@
                     </stackLayout>
                 {/each}
 
-                <!-- Create Shelf Button -->
-                {#if customShelves.length < 5}
-                    <button text="+ Create New Shelf" class="create-shelf-btn" on:tap={showCreateShelfDialog} />
-                {:else}
-                    <stackLayout class="max-shelves-notice">
-                        <label text="Maximum 5 custom shelves reached" class="notice-text" />
-                    </stackLayout>
-                {/if}
-
-                <!-- Create Shelf Modal -->
-                {#if showCreateModal}
-                    <stackLayout class="modal-overlay" on:tap={hideCreateModal}>
-                        <stackLayout class="modal-content" on:tap={stopPropagation}>
-                            <label text="Create New Shelf" class="modal-title" />
-                            
-                            <textField 
-                                hint="Shelf name" 
-                                class="shelf-input" 
-                                text={newShelfName}
-                                on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
-                            />
-                            
-                            {#if createError}
-                                <label text={createError} class="create-error" textWrap="true" />
-                            {/if}
-
-                            <stackLayout orientation="horizontal" class="modal-actions">
-                                <button text="Create" class="btn btn-create" on:tap={createShelf} />
-                                <button text="Cancel" class="btn btn-cancel" on:tap={hideCreateModal} />
-                            </stackLayout>
-                        </stackLayout>
-                    </stackLayout>
-                {/if}
-
-                <!-- Result Modal -->
-                {#if resultKind}
-                    <stackLayout class="modal-overlay" on:tap={hideResult}>
-                        <stackLayout class="modal-content" on:tap={stopPropagation}>
-                            <label
-                                text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
-                                class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
-                            />
-
-                            <label text={resultMessage} class="result-message" textWrap="true" />
-
-                            <stackLayout class="modal-actions">
-                                <button text="OK" class="btn btn-create" on:tap={hideResult} />
-                            </stackLayout>
-                        </stackLayout>
-                    </stackLayout>
-                {/if}
             </stackLayout>
         </scrollView>
 
@@ -123,6 +81,49 @@
                 <button text="Settings" class="nav-btn" on:tap={goToSettings} />
             </stackLayout>
         </stackLayout>
+
+        <!-- Create Shelf Modal -->
+        {#if showCreateModal}
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideCreateModal}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text="Create New Shelf" class="modal-title" />
+                    
+                    <textField 
+                        hint="Shelf name" 
+                        class="shelf-input" 
+                        text={newShelfName}
+                        on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
+                    />
+                    
+                    {#if createError}
+                        <label text={createError} class="create-error" textWrap="true" />
+                    {/if}
+
+                    <stackLayout orientation="horizontal" class="modal-actions">
+                        <button text="Create" class="btn btn-create" on:tap={createShelf} />
+                        <button text="Cancel" class="btn btn-cancel" on:tap={hideCreateModal} />
+                    </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
+
+        <!-- Result Modal -->
+        {#if resultKind}
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideResult}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label
+                        text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
+                        class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
+                    />
+
+                    <label text={resultMessage} class="result-message" textWrap="true" />
+
+                    <stackLayout class="modal-actions">
+                        <button text="OK" class="btn btn-create" on:tap={hideResult} />
+                    </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
     </gridLayout>
 </page>
 
@@ -541,15 +542,10 @@
         border-width: 0;
     }
 
+    /* Covers the whole page as a grid child spanning all rows; NativeScript
+       does not support position: absolute, so the old rules did nothing. */
     .modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        justify-content: center;
-        align-items: center;
     }
 
     .modal-content {
