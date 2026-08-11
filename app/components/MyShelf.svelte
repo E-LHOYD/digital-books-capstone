@@ -17,10 +17,7 @@
                     <stackLayout class="shelf-preview">
                         {#if readBooks.length > 0}
                             {#each readBooks.slice(0, 3) as book}
-                                <gridLayout rows="auto" columns="*, auto">
-                                    <label row={0} col={0} text={book.title} class="preview-book" />
-                                    <label row={0} col={1} text={percentLabel(book)} class="preview-percent" />
-                                </gridLayout>
+                                <label text={book.title} class="preview-book" />
                             {/each}
                         {:else}
                             <label text="No books read yet" class="empty-text" />
@@ -318,11 +315,6 @@
         return entry && typeof entry.percentage === 'number' ? entry.percentage : null;
     }
 
-    function percentLabel(book: any): string {
-        const value = percentFor(book);
-        return value === null ? '' : `${Math.round(value)}%`;
-    }
-
     // Percentage is attached to the book objects themselves so the shelf page,
     // which receives them as a prop, can show it without refetching.
     function withProgress(books: any[]): any[] {
@@ -347,7 +339,9 @@
 
     function getShelfBooks(shelf: any): any[] {
         const ids = shelf?.bookIds || [];
-        return allBooks.filter(book => ids.includes(book.id || ''));
+        // Enriched like the Read and Viewed lists, so opening a custom shelf
+        // shows percentages rather than a bare list.
+        return withProgress(allBooks.filter(book => ids.includes(book.id || '')));
     }
 
     function goToShelfBooks(shelfId: string) {
@@ -568,14 +562,6 @@
 
     .shelf-preview {
         padding-left: 10;
-    }
-
-    .preview-percent {
-        font-size: 13;
-        font-weight: bold;
-        color: #1b7f3b;
-        vertical-align: center;
-        margin-left: 8;
     }
 
     .preview-book {

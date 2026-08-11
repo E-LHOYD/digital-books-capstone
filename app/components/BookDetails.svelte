@@ -16,6 +16,16 @@
         <!-- Description -->
         <label text={book.detail || 'No description available'} textWrap="true" class="detail-description" />
 
+        <!-- Reading progress -->
+        {#if readingPercent !== null}
+            <stackLayout class="progress-line" orientation="horizontal">
+                <label text={`${Math.round(readingPercent)}% read`} class="progress-percent" />
+                {#if readingStatus}
+                    <label text={readingStatus === 'read' ? ' · Read' : ' · Viewed'} class="progress-status" />
+                {/if}
+            </stackLayout>
+        {/if}
+
         <!-- Availability notice -->
         {#if !canRead}
             <stackLayout class="notice">
@@ -109,12 +119,15 @@
 </page>
 
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import Reader from './Reader.svelte';
     import { isBookFileUrl } from '../services/storage.js';
     // @ts-ignore
     import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf } from '../services/shelf.js';
+    // @ts-ignore
+    import { getReadingProgress } from '../services/readingProgress.js';
     // @ts-ignore
     import type { Book } from '../types';
 
@@ -124,6 +137,22 @@
     // A book is only readable if its Firestore document carries a usable
     // storage URL in `fileUrl`. The admin dashboard uploads it and writes it there.
     $: canRead = isBookFileUrl(book.fileUrl);
+
+    // Reading progress for this book, shown once there is something to show.
+    let readingPercent: number | null = null;
+    let readingStatus: string | null = null;
+
+    onMount(async () => {
+        try {
+            const progress = await getReadingProgress(book.id);
+            if (progress && typeof progress.percentage === 'number') {
+                readingPercent = progress.percentage;
+                readingStatus = progress.status || null;
+            }
+        } catch (error) {
+            console.error('Error loading reading progress:', error);
+        }
+    });
 
     // Shelf modal state
     let showShelfModal = false;
@@ -287,6 +316,22 @@
 </script>
 
 <style>
+    .progress-line {
+        margin-bottom: 16;
+        horizontal-align: center;
+    }
+
+    .progress-percent {
+        font-size: 15;
+        font-weight: bold;
+        color: #1b7f3b;
+    }
+
+    .progress-status {
+        font-size: 15;
+        color: #666;
+    }
+
     .shelf-error {
         font-size: 14;
         color: #c62828;
