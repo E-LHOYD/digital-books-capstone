@@ -17,9 +17,10 @@ function getAuth() {
     return authInstance;
 }
 
-// Writing on every screen would be wasteful; once every few minutes is enough
-// to drive an "active now" window.
-const MIN_INTERVAL_MS = 5 * 60 * 1000;
+// Must stay comfortably below the dashboard's active-now window, currently five
+// minutes. At exactly five, someone reading continuously would drop out of the
+// count in the moments before their next write; at two they never do.
+const MIN_INTERVAL_MS = 2 * 60 * 1000;
 let lastWriteAt = 0;
 
 /**

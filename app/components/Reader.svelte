@@ -48,6 +48,8 @@
     import { onDestroy } from 'svelte';
     import { getReaderUrl } from '../services/storage.js';
     // @ts-ignore
+    import { recordActivity } from '../services/presence.js';
+    // @ts-ignore
     import { saveReadingProgress, getReadingProgress } from '../services/readingProgress.js';
 
     export let book: any;
@@ -193,7 +195,13 @@
     function startPolling() {
         stopPolling();
         readProgressFromPage();
-        pollTimer = setInterval(readProgressFromPage, 1000);
+        pollTimer = setInterval(() => {
+            readProgressFromPage();
+            // Throttled inside recordActivity, so this is one write every couple
+            // of minutes, not one a second. Without it a reader settled into a
+            // long book stops counting as active.
+            recordActivity();
+        }, 1000);
     }
 
     function stopPolling() {

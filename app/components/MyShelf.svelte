@@ -173,6 +173,8 @@
     import { getUserShelves, createCustomShelf, deleteCustomShelf, getCurrentUserId } from '../services/shelf.js';
     // @ts-ignore
     import { getAllReadingProgress } from '../services/readingProgress.js';
+    // @ts-ignore
+    import { recordActivity } from '../services/presence.js';
 
     let customShelves: any[] = [];
     let readBooks: any[] = [];
@@ -197,6 +199,7 @@
 
     onMount(() => {
         console.log('MyShelf component mounted');
+        recordActivity();
 
         // Auth is a class here, not a function, and this plugin exposes
         // addAuthStateChangeListener rather than the web SDK's onAuthStateChanged.
