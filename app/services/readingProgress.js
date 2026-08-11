@@ -43,13 +43,16 @@ export async function getReadingProgress(bookId) {
 }
 
 /**
- * Save reading progress for a book
+ * Save reading progress for a book and update shelves automatically
  */
 export async function saveReadingProgress(bookId, currentPage, totalPages, percentage) {
     try {
         const userId = getCurrentUserId();
         if (!userId) return false;
 
+        const previousProgress = await getReadingProgress(bookId);
+        const previousStatus = previousProgress?.status || null;
+        
         const progressData = {
             userId,
             bookId,
@@ -67,10 +70,137 @@ export async function saveReadingProgress(bookId, currentPage, totalPages, perce
             .doc(`${userId}_${bookId}`)
             .set(progressData, { merge: true });
 
+        // Update shelves based on reading progress
+        await updateShelfBasedOnProgress(userId, bookId, progressData.status, previousStatus);
+
         return true;
     } catch (error) {
         console.error('Error saving reading progress:', error);
         return false;
+    }
+}
+
+/**
+ * Update shelf based on reading progress
+ */
+async function updateShelfBasedOnProgress(userId, bookId, currentStatus, previousStatus) {
+    try {
+        const shelvesDoc = await firebase()
+            .firestore()
+            .collection('userShelves')
+            .doc(userId)
+            .get();
+
+        if (!shelvesDoc.exists) {
+            // Create initial shelves
+            const initialShelves = [
+                {
+                    id: 'read',
+                    name: 'Read',
+                    userId,
+                    isReadShelf: true,
+                    isViewedShelf: false,
+                    createdAt: new Date(),
+                    bookIds: currentStatus === 'read' ? [bookId] : []
+                },
+                {
+                    id: 'viewed',
+                    name: 'Viewed',
+                    userId,
+                    isReadShelf: false,
+                    isViewedShelf: true,
+                    createdAt: new Date(),
+                    bookIds: currentStatus === 'viewed' ? [bookId] : []
+                }
+            ];
+
+            await firebase()
+                .firestore()
+                .collection('userShelves')
+                .doc(userId)
+                .set({
+                    userId,
+                    shelves: initialShelves,
+                    customShelfCount: 0
+                });
+            return;
+        }
+
+        const data = shelvesDoc.data();
+        let shelves = data?.shelves || [];
+        
+        // Ensure read and viewed shelves exist
+        if (!shelves.find(s => s.id === 'read')) {
+            shelves.push({
+                id: 'read',
+                name: 'Read',
+                userId,
+                isReadShelf: true,
+                isViewedShelf: false,
+                createdAt: new Date(),
+                bookIds: []
+            });
+        }
+        
+        if (!shelves.find(s => s.id === 'viewed')) {
+            shelves.push({
+                id: 'viewed',
+                name: 'Viewed',
+                userId,
+                isReadShelf: false,
+                isViewedShelf: true,
+                createdAt: new Date(),
+                bookIds: []
+            });
+        }
+
+        const readShelf = shelves.find(s => s.id === 'read');
+        const viewedShelf = shelves.find(s => s.id === 'viewed');
+
+        // If status changed from viewed to read, move from viewed to read shelf
+        if (previousStatus === 'viewed' && currentStatus === 'read') {
+            if (viewedShelf) {
+                viewedShelf.bookIds = viewedShelf.bookIds.filter(id => id !== bookId);
+            }
+            if (readShelf && !readShelf.bookIds.includes(bookId)) {
+                readShelf.bookIds.push(bookId);
+            }
+        }
+        // If status changed from read to viewed, move from read to viewed shelf
+        else if (previousStatus === 'read' && currentStatus === 'viewed') {
+            if (readShelf) {
+                readShelf.bookIds = readShelf.bookIds.filter(id => id !== bookId);
+            }
+            if (viewedShelf && !viewedShelf.bookIds.includes(bookId)) {
+                viewedShelf.bookIds.push(bookId);
+            }
+        }
+        // If no previous status, add to appropriate shelf
+        else if (!previousStatus) {
+            if (currentStatus === 'read' && readShelf) {
+                if (!readShelf.bookIds.includes(bookId)) {
+                    readShelf.bookIds.push(bookId);
+                }
+            } else if (currentStatus === 'viewed' && viewedShelf) {
+                if (!viewedShelf.bookIds.includes(bookId)) {
+                    viewedShelf.bookIds.push(bookId);
+                }
+            }
+        }
+
+        await firebase()
+            .firestore()
+            .collection('userShelves')
+            .doc(userId)
+            .set({
+                userId,
+                shelves,
+                customShelfCount: shelves.filter(s => !s.isReadShelf && !s.isViewedShelf).length
+            }, { merge: true });
+
+    } catch (error) {
+        console.error('Error updating shelf based on progress:', error);
+        // Don't throw error here as progress saving should still succeed
     }
 }
 
