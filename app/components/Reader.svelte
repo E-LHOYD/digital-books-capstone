@@ -134,14 +134,24 @@
     let loggedFirstPayload = false;
     let loggedNoBridge = false;
 
+    // bind:this yields svelte-native's element wrapper, not the NativeScript
+    // view, so the native handle lives one level down. NativeViewElementNode
+    // exposes it as nativeView; NativeElementNode as nativeElement.
+    function resolveWebView(): any {
+        if (!webViewRef) return null;
+        return webViewRef.nativeView ?? webViewRef.nativeElement ?? webViewRef;
+    }
+
     function readProgressFromPage() {
-        const native = webViewRef?.android;
+        const view = resolveWebView();
+        const native = view?.android;
         if (!isAndroid || !native || typeof native.evaluateJavascript !== 'function') {
             if (!loggedNoBridge) {
                 loggedNoBridge = true;
                 console.error(
                     'Reader progress unavailable: isAndroid=' + isAndroid +
                     ' webViewRef=' + !!webViewRef +
+                    ' view=' + !!view +
                     ' android=' + !!native
                 );
             }
