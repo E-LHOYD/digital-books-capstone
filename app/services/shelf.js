@@ -3,66 +3,62 @@ import '@nativescript/firebase-firestore';
 import { Auth } from '@nativescript/firebase-auth';
 
 /**
+ * Get current user ID
+ */
+export function getCurrentUserId() {
+    const auth = Auth();
+    const user = auth.currentUser;
+    return user ? user.uid : null;
+}
+
+/**
  * Get user's shelves from Firestore
+ * Structure: shelves/{userId}/userShelves/{shelfId}
  */
 export async function getUserShelves(userId) {
     try {
-        const shelvesDoc = await firebase()
+        const shelvesSnapshot = await firebase()
             .firestore()
-            .collection('userShelves')
+            .collection('shelves')
             .doc(userId)
+            .collection('userShelves')
             .get();
 
-        if (shelvesDoc.exists) {
-            const data = shelvesDoc.data();
-            let shelves = data?.shelves || [];
-            
-            // Ensure read shelf exists
-            if (!shelves.find(s => s.isReadShelf)) {
-                shelves.push({
-                    id: 'read',
-                    name: 'Read',
-                    userId,
-                    isReadShelf: true,
-                    createdAt: new Date(),
-                    bookIds: []
-                });
-            }
-            
-            // Ensure viewed shelf exists
-            if (!shelves.find(s => s.isViewedShelf)) {
-                shelves.push({
-                    id: 'viewed',
-                    name: 'Viewed',
-                    userId,
-                    isViewedShelf: true,
-                    createdAt: new Date(),
-                    bookIds: []
-                });
-            }
-            
-            return shelves;
-        }
-        
-        // Return default with read and viewed shelves if no data exists
-        return [
-            {
+        const shelves = [];
+        shelvesSnapshot.forEach(doc => {
+            shelves.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        // Ensure read shelf exists
+        if (!shelves.find(s => s.id === 'read')) {
+            shelves.push({
                 id: 'read',
                 name: 'Read',
                 userId,
                 isReadShelf: true,
+                isViewedShelf: false,
                 createdAt: new Date(),
                 bookIds: []
-            },
-            {
+            });
+        }
+
+        // Ensure viewed shelf exists
+        if (!shelves.find(s => s.id === 'viewed')) {
+            shelves.push({
                 id: 'viewed',
                 name: 'Viewed',
                 userId,
+                isReadShelf: false,
                 isViewedShelf: true,
                 createdAt: new Date(),
                 bookIds: []
-            }
-        ];
+            });
+        }
+
+        return shelves;
     } catch (error) {
         console.error('Error getting user shelves:', error);
         return [];
@@ -70,22 +66,20 @@ export async function getUserShelves(userId) {
 }
 
 /**
- * Save user's shelves to Firestore
+ * Save a single shelf to Firestore
  */
-export async function saveUserShelves(userId, shelves) {
+export async function saveShelf(userId, shelf) {
     try {
         await firebase()
             .firestore()
-            .collection('userShelves')
+            .collection('shelves')
             .doc(userId)
-            .set({
-                userId,
-                shelves,
-                customShelfCount: shelves.filter(s => !s.isReadShelf && !s.isViewedShelf).length
-            }, { merge: true });
+            .collection('userShelves')
+            .doc(shelf.id)
+            .set(shelf);
         return true;
     } catch (error) {
-        console.error('Error saving user shelves:', error);
+        console.error('Error saving shelf:', error);
         return false;
     }
 }
@@ -113,8 +107,7 @@ export async function createCustomShelf(userId, name) {
             bookIds: []
         };
 
-        shelves.push(newShelf);
-        await saveUserShelves(userId, shelves);
+        await saveShelf(userId, newShelf);
         return newShelf;
     } catch (error) {
         console.error('Error creating custom shelf:', error);
@@ -127,32 +120,51 @@ export async function createCustomShelf(userId, name) {
  */
 export async function addBookToShelf(userId, shelfId, bookId) {
     try {
-        const shelves = await getUserShelves(userId);
-        let shelf = shelves.find(s => s.id === shelfId);
-        
-        // Auto-create read shelf if it doesn't exist
-        if (!shelf && shelfId === 'read') {
-            shelf = {
-                id: 'read',
-                name: 'Read',
+        const shelfDoc = await firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId)
+            .get();
+
+        if (!shelfDoc.exists) {
+            // Auto-create read or viewed shelf if it doesn't exist
+            const isReadShelf = shelfId === 'read';
+            const isViewedShelf = shelfId === 'viewed';
+            
+            const newShelf = {
+                id: shelfId,
+                name: isReadShelf ? 'Read' : 'Viewed',
                 userId,
-                isReadShelf: true,
+                isReadShelf,
+                isViewedShelf,
                 createdAt: new Date(),
-                bookIds: []
+                bookIds: [bookId]
             };
-            shelves.push(shelf);
-        }
-        
-        if (!shelf) {
-            throw new Error('Shelf not found');
+
+            await saveShelf(userId, newShelf);
+            return true;
         }
 
-        if (shelf.bookIds.includes(bookId)) {
+        const shelf = shelfDoc.data();
+        if (shelf.bookIds && shelf.bookIds.includes(bookId)) {
             throw new Error('Book already in shelf');
         }
 
-        shelf.bookIds.push(bookId);
-        await saveUserShelves(userId, shelves);
+        const updatedBookIds = shelf.bookIds || [];
+        updatedBookIds.push(bookId);
+
+        await firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId)
+            .update({
+                bookIds: updatedBookIds
+            });
+
         return true;
     } catch (error) {
         console.error('Error adding book to shelf:', error);
@@ -165,15 +177,31 @@ export async function addBookToShelf(userId, shelfId, bookId) {
  */
 export async function removeBookFromShelf(userId, shelfId, bookId) {
     try {
-        const shelves = await getUserShelves(userId);
-        const shelf = shelves.find(s => s.id === shelfId);
-        
-        if (!shelf) {
+        const shelfDoc = await firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId)
+            .get();
+
+        if (!shelfDoc.exists) {
             throw new Error('Shelf not found');
         }
 
-        shelf.bookIds = shelf.bookIds.filter(id => id !== bookId);
-        await saveUserShelves(userId, shelves);
+        const shelf = shelfDoc.data();
+        const updatedBookIds = (shelf.bookIds || []).filter(id => id !== bookId);
+
+        await firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId)
+            .update({
+                bookIds: updatedBookIds
+            });
+
         return true;
     } catch (error) {
         console.error('Error removing book from shelf:', error);
@@ -186,26 +214,16 @@ export async function removeBookFromShelf(userId, shelfId, bookId) {
  */
 export async function deleteCustomShelf(userId, shelfId) {
     try {
-        const shelves = await getUserShelves(userId);
-        const filteredShelves = shelves.filter(s => s.id !== shelfId);
-        
-        if (filteredShelves.length === shelves.length) {
-            throw new Error('Shelf not found');
-        }
-
-        await saveUserShelves(userId, filteredShelves);
+        await firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId)
+            .delete();
         return true;
     } catch (error) {
         console.error('Error deleting custom shelf:', error);
         throw error;
     }
-}
-
-/**
- * Get current user ID
- */
-export function getCurrentUserId() {
-    const auth = Auth();
-    const user = auth.currentUser;
-    return user ? user.uid : null;
 }

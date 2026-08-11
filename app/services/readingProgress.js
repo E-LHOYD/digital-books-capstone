@@ -85,119 +85,27 @@ export async function saveReadingProgress(bookId, currentPage, totalPages, perce
  */
 async function updateShelfBasedOnProgress(userId, bookId, currentStatus, previousStatus) {
     try {
-        const shelvesDoc = await firebase()
-            .firestore()
-            .collection('userShelves')
-            .doc(userId)
-            .get();
-
-        if (!shelvesDoc.exists) {
-            // Create initial shelves
-            const initialShelves = [
-                {
-                    id: 'read',
-                    name: 'Read',
-                    userId,
-                    isReadShelf: true,
-                    isViewedShelf: false,
-                    createdAt: new Date(),
-                    bookIds: currentStatus === 'read' ? [bookId] : []
-                },
-                {
-                    id: 'viewed',
-                    name: 'Viewed',
-                    userId,
-                    isReadShelf: false,
-                    isViewedShelf: true,
-                    createdAt: new Date(),
-                    bookIds: currentStatus === 'viewed' ? [bookId] : []
-                }
-            ];
-
-            await firebase()
-                .firestore()
-                .collection('userShelves')
-                .doc(userId)
-                .set({
-                    userId,
-                    shelves: initialShelves,
-                    customShelfCount: 0
-                });
-            return;
-        }
-
-        const data = shelvesDoc.data();
-        let shelves = data?.shelves || [];
-        
-        // Ensure read and viewed shelves exist
-        if (!shelves.find(s => s.id === 'read')) {
-            shelves.push({
-                id: 'read',
-                name: 'Read',
-                userId,
-                isReadShelf: true,
-                isViewedShelf: false,
-                createdAt: new Date(),
-                bookIds: []
-            });
-        }
-        
-        if (!shelves.find(s => s.id === 'viewed')) {
-            shelves.push({
-                id: 'viewed',
-                name: 'Viewed',
-                userId,
-                isReadShelf: false,
-                isViewedShelf: true,
-                createdAt: new Date(),
-                bookIds: []
-            });
-        }
-
-        const readShelf = shelves.find(s => s.id === 'read');
-        const viewedShelf = shelves.find(s => s.id === 'viewed');
+        // Import shelf functions
+        const { addBookToShelf, removeBookFromShelf } = await import('./shelf.js');
 
         // If status changed from viewed to read, move from viewed to read shelf
         if (previousStatus === 'viewed' && currentStatus === 'read') {
-            if (viewedShelf) {
-                viewedShelf.bookIds = viewedShelf.bookIds.filter(id => id !== bookId);
-            }
-            if (readShelf && !readShelf.bookIds.includes(bookId)) {
-                readShelf.bookIds.push(bookId);
-            }
+            await removeBookFromShelf(userId, 'viewed', bookId);
+            await addBookToShelf(userId, 'read', bookId);
         }
         // If status changed from read to viewed, move from read to viewed shelf
         else if (previousStatus === 'read' && currentStatus === 'viewed') {
-            if (readShelf) {
-                readShelf.bookIds = readShelf.bookIds.filter(id => id !== bookId);
-            }
-            if (viewedShelf && !viewedShelf.bookIds.includes(bookId)) {
-                viewedShelf.bookIds.push(bookId);
-            }
+            await removeBookFromShelf(userId, 'read', bookId);
+            await addBookToShelf(userId, 'viewed', bookId);
         }
         // If no previous status, add to appropriate shelf
         else if (!previousStatus) {
-            if (currentStatus === 'read' && readShelf) {
-                if (!readShelf.bookIds.includes(bookId)) {
-                    readShelf.bookIds.push(bookId);
-                }
-            } else if (currentStatus === 'viewed' && viewedShelf) {
-                if (!viewedShelf.bookIds.includes(bookId)) {
-                    viewedShelf.bookIds.push(bookId);
-                }
+            if (currentStatus === 'read') {
+                await addBookToShelf(userId, 'read', bookId);
+            } else {
+                await addBookToShelf(userId, 'viewed', bookId);
             }
         }
-
-        await firebase()
-            .firestore()
-            .collection('userShelves')
-            .doc(userId)
-            .set({
-                userId,
-                shelves,
-                customShelfCount: shelves.filter(s => !s.isReadShelf && !s.isViewedShelf).length
-            }, { merge: true });
-
     } catch (error) {
         console.error('Error updating shelf based on progress:', error);
         // Don't throw error here as progress saving should still succeed
