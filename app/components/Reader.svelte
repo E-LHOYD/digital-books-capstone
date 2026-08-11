@@ -131,9 +131,22 @@
     // with @JavascriptInterface on API 17+, and the NativeScript runtime cannot
     // emit Java annotations on classes extended from JavaScript. Implementing
     // ValueCallback is plain interface implementation, which it can do.
+    let loggedFirstPayload = false;
+    let loggedNoBridge = false;
+
     function readProgressFromPage() {
         const native = webViewRef?.android;
-        if (!isAndroid || !native || typeof native.evaluateJavascript !== 'function') return;
+        if (!isAndroid || !native || typeof native.evaluateJavascript !== 'function') {
+            if (!loggedNoBridge) {
+                loggedNoBridge = true;
+                console.error(
+                    'Reader progress unavailable: isAndroid=' + isAndroid +
+                    ' webViewRef=' + !!webViewRef +
+                    ' android=' + !!native
+                );
+            }
+            return;
+        }
 
         try {
             native.evaluateJavascript(
@@ -141,6 +154,12 @@
                 new android.webkit.ValueCallback({
                     onReceiveValue(value: any) {
                         try {
+                            if (!loggedFirstPayload) {
+                                loggedFirstPayload = true;
+                                // If this logs "null", the reader page being served
+                                // does not publish progress yet - deploy the dashboard.
+                                console.log('Reader progress payload:', String(value));
+                            }
                             if (!value || value === 'null') return;
                             // evaluateJavascript hands back a JSON string literal,
                             // so the payload needs unwrapping twice.
@@ -163,6 +182,7 @@
 
     function startPolling() {
         stopPolling();
+        readProgressFromPage();
         pollTimer = setInterval(readProgressFromPage, 1000);
     }
 
