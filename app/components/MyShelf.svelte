@@ -83,9 +83,31 @@
                                 on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
                             />
                             
+                            {#if createError}
+                                <label text={createError} class="create-error" textWrap="true" />
+                            {/if}
+
                             <stackLayout orientation="horizontal" class="modal-actions">
                                 <button text="Create" class="btn btn-create" on:tap={createShelf} />
                                 <button text="Cancel" class="btn btn-cancel" on:tap={hideCreateModal} />
+                            </stackLayout>
+                        </stackLayout>
+                    </stackLayout>
+                {/if}
+
+                <!-- Result Modal -->
+                {#if resultKind}
+                    <stackLayout class="modal-overlay" on:tap={hideResult}>
+                        <stackLayout class="modal-content" on:tap={stopPropagation}>
+                            <label
+                                text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
+                                class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
+                            />
+
+                            <label text={resultMessage} class="result-message" textWrap="true" />
+
+                            <stackLayout class="modal-actions">
+                                <button text="OK" class="btn btn-create" on:tap={hideResult} />
                             </stackLayout>
                         </stackLayout>
                     </stackLayout>
@@ -125,6 +147,11 @@
     let currentUserId: string | null = null;
     let showCreateModal = false;
     let newShelfName = '';
+    // Validation problems stay inside the create modal so the name can be
+    // corrected without losing it; the outcome of a submit gets its own modal.
+    let createError = '';
+    let resultKind: 'success' | 'error' | null = null;
+    let resultMessage = '';
 
     let auth: any = null;
     let authListener: any = null;
@@ -287,12 +314,24 @@
         console.log('showCreateShelfDialog called');
         showCreateModal = true;
         newShelfName = '';
+        createError = '';
         console.log('Modal should be visible now');
     }
 
     function hideCreateModal() {
         showCreateModal = false;
         newShelfName = '';
+        createError = '';
+    }
+
+    function showResult(kind: 'success' | 'error', message: string) {
+        resultKind = kind;
+        resultMessage = message;
+    }
+
+    function hideResult() {
+        resultKind = null;
+        resultMessage = '';
     }
 
     function stopPropagation(event: any) {
@@ -300,15 +339,17 @@
     }
 
     async function createShelf() {
+        createError = '';
+
         if (!currentUserId) {
             console.error('No current user ID');
-            alert('Please log in to create shelves');
+            createError = 'You must be signed in to create shelves.';
             return;
         }
-        
+
         if (!newShelfName.trim()) {
             console.error('Empty shelf name');
-            alert('Please enter a shelf name');
+            createError = 'Please enter a shelf name.';
             return;
         }
 
@@ -321,15 +362,17 @@
             await loadUserData();
             customShelves = customShelves;
             console.log('Shelves reloaded:', customShelves);
-            alert('Shelf created successfully!');
+            const createdName = newShelf?.name || 'Shelf';
             hideCreateModal();
+            showResult('success', `"${createdName}" was created.`);
         } catch (error: any) {
             console.error('Error creating shelf:', error);
             console.error('Error details:', JSON.stringify(error));
+            hideCreateModal();
             if (error.message === 'Maximum 5 custom shelves reached') {
-                alert('You can only create up to 5 custom shelves.');
+                showResult('error', 'You can only create up to 5 custom shelves.');
             } else {
-                alert('Failed to create shelf: ' + (error.message || 'Unknown error'));
+                showResult('error', error.message || 'The shelf could not be created.');
             }
         }
     }
@@ -547,6 +590,27 @@
         border-radius: 8;
         border-width: 0;
         margin: 0 5;
+    }
+
+    .result-success {
+        color: #1b7f3b;
+    }
+
+    .result-error {
+        color: #c62828;
+    }
+
+    .result-message {
+        font-size: 16;
+        color: #333;
+        text-align: center;
+    }
+
+    .create-error {
+        font-size: 14;
+        color: #c62828;
+        text-align: center;
+        margin-top: 8;
     }
 
     .btn-cancel {
