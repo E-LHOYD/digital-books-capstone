@@ -36,7 +36,7 @@
     import MyShelf from './MyShelf.svelte';
     import BookDetails from './BookDetails.svelte';
     // @ts-ignore
-    import { Book } from '../types';
+    import type { Book } from '../types';
 
     // @ts-ignore
     export let shelfId: string;

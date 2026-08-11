@@ -89,7 +89,7 @@
     // @ts-ignore
     import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf } from '../services/shelf.js';
     // @ts-ignore
-    import { Book } from '../types';
+    import type { Book } from '../types';
 
     // @ts-ignore
     export let book: Book;

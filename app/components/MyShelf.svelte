@@ -110,7 +110,7 @@
     import '@nativescript/firebase-firestore';
     import { navigate } from '@nativescript-community/svelte-native';
     // @ts-ignore
-    import { Shelf, Book } from '../types';
+    import type { Shelf, Book } from '../types';
     import Home from './Home.svelte';
     import Settings from './Settings.svelte';
     import ShelfBooks from './ShelfBooks.svelte';
