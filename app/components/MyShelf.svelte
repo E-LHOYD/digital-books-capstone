@@ -127,8 +127,21 @@
     let newShelfName = '';
 
     onMount(async () => {
-        await loadUserData();
-        await loadAllBooks();
+        console.log('MyShelf component mounted');
+        
+        // Set up auth state listener
+        const auth = Auth();
+        auth.onAuthStateChanged((user) => {
+            console.log('Auth state changed:', user ? 'User logged in: ' + user.uid : 'No user');
+            if (user) {
+                currentUserId = user.uid;
+                loadUserData();
+                loadAllBooks();
+            } else {
+                currentUserId = null;
+                console.error('No user logged in');
+            }
+        });
     });
 
     async function loadUserData() {
