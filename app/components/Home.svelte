@@ -2,7 +2,19 @@
     <gridLayout rows="auto, *, auto" columns="*" class="main-layout">
         <!-- Search Bar at Top -->
         <stackLayout row={0} col={0} class="search-container">
-            <textField hint="Search..." class="search-bar" />
+            <gridLayout rows="auto" columns="*, auto">
+                <textField
+                    row={0}
+                    col={0}
+                    hint="Search title or author"
+                    class="search-bar"
+                    text={searchQuery}
+                    on:textChange={(e) => (searchQuery = e?.value ?? e?.object?.text ?? '')}
+                />
+                {#if searchQuery}
+                    <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
+                {/if}
+            </gridLayout>
         </stackLayout>
         
         <!-- Main Content -->
@@ -28,8 +40,17 @@
                         <stackLayout class="empty-container">
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
+                    {:else if filteredBooks.length === 0}
+                        <stackLayout class="empty-container">
+                            <label
+                                text={`Nothing matches "${searchQuery}"`}
+                                class="empty-text"
+                                textWrap="true"
+                            />
+                            <button text="Clear search" class="retry-btn" on:tap={clearSearch} />
+                        </stackLayout>
                     {:else}
-                        {#each books as book (book)}
+                        {#each filteredBooks as book (book.id)}
 							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
 								
 								<!-- Book Info -->
@@ -67,9 +88,27 @@
     import MyShelf from './MyShelf.svelte';
 
     let books: any[] = [];
+    let searchQuery = '';
     let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'settings'
     let isLoading = false;
     let error: string | null = null;
+
+    // Matches on title or author, case-insensitively. Every whitespace-separated
+    // term must appear somewhere, so "growth thompson" finds a book by matching
+    // one word against the title and the other against the author.
+    function matchesSearch(book: any, terms: string[]): boolean {
+        const haystack = `${book?.title ?? ''} ${book?.author ?? ''}`.toLowerCase();
+        return terms.every((term) => haystack.includes(term));
+    }
+
+    $: searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    $: filteredBooks = searchTerms.length === 0
+        ? books
+        : books.filter((book) => matchesSearch(book, searchTerms));
+
+    function clearSearch() {
+        searchQuery = '';
+    }
 
     onMount(() => {
         loadBooks();
@@ -210,6 +249,17 @@
         background-color: #033047;
         color: white;
         border-width: 0;
+    }
+
+    .search-clear {
+        background-color: transparent;
+        color: #033047;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 0;
+        padding: 0 12;
+        margin: 0;
+        vertical-align: center;
     }
 
     .search-bar {
