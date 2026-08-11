@@ -1,5 +1,6 @@
 <page>
-    <stackLayout class="container">
+    <gridLayout rows="*" columns="*">
+    <stackLayout row={0} col={0} class="container">
 
         <!-- Cover -->
         <stackLayout class="detail-cover">
@@ -32,14 +33,24 @@
             <button text="Add to Shelf" class="btn btn-secondary" on:tap={showShelfSelector} />
         </stackLayout>
 
+        <!-- Back Button -->
+        <button text="Back" class="btn btn-back" on:tap={goBack} />
+
+    </stackLayout>
+
         <!-- Shelf Selection Modal -->
         {#if showShelfModal}
-            <stackLayout class="modal-overlay" on:tap={hideShelfModal}>
-                <stackLayout class="modal-content" on:tap={stopPropagation}>
+            <gridLayout row={0} col={0} class="modal-overlay" on:tap={hideShelfModal}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Select a Shelf" class="modal-title" />
                     
                     <scrollView class="shelf-list">
                         <stackLayout>
+                            {#if loadingShelves}
+                                <label text="Loading shelves…" class="empty-text" />
+                            {:else if shelves.length === 0}
+                                <label text="No shelves yet. Create one below." class="empty-text" textWrap="true" />
+                            {/if}
                             {#each shelves as shelf}
                                 <stackLayout 
                                     class="shelf-item" 
@@ -52,6 +63,10 @@
                         </stackLayout>
                     </scrollView>
 
+                    {#if shelfError}
+                        <label text={shelfError} class="shelf-error" textWrap="true" />
+                    {/if}
+
                     <stackLayout class="modal-actions">
                         <button text="Create New Shelf" class="btn btn-create" on:tap={showCreateShelfForm} />
                         <button text="Cancel" class="btn btn-cancel" on:tap={hideShelfModal} />
@@ -63,7 +78,7 @@
                                 hint="Shelf name" 
                                 class="shelf-input" 
                                 text={newShelfName}
-                                on:textChange={(e) => newShelfName = e.value}
+                                on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
                             />
                             <stackLayout orientation="horizontal" class="form-actions">
                                 <button text="Create" class="btn btn-confirm" on:tap={createNewShelf} />
@@ -72,13 +87,25 @@
                         </stackLayout>
                     {/if}
                 </stackLayout>
-            </stackLayout>
+            </gridLayout>
         {/if}
 
-        <!-- Back Button -->
-        <button text="Back" class="btn btn-back" on:tap={goBack} />
-
-    </stackLayout>
+        <!-- Result Modal -->
+        {#if resultKind}
+            <gridLayout row={0} col={0} class="modal-overlay" on:tap={hideResult}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label
+                        text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
+                        class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
+                    />
+                    <label text={resultMessage} class="result-message" textWrap="true" />
+                    <stackLayout class="modal-actions">
+                        <button text="OK" class="btn btn-create" on:tap={hideResult} />
+                    </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
+    </gridLayout>
 </page>
 
 <script lang="ts">
@@ -103,16 +130,41 @@
     let showCreateForm = false;
     let shelves: any[] = [];
     let newShelfName = '';
+    let loadingShelves = false;
+    let shelfError = '';
+    let resultKind: 'success' | 'error' | null = null;
+    let resultMessage = '';
+
+    function showResult(kind: 'success' | 'error', message: string) {
+        resultKind = kind;
+        resultMessage = message;
+    }
+
+    function hideResult() {
+        resultKind = null;
+        resultMessage = '';
+    }
 
     // Load shelves when component mounts
     async function loadShelves() {
+        loadingShelves = true;
+        shelfError = '';
         try {
             const userId = getCurrentUserId();
-            if (userId) {
-                shelves = await getUserShelves(userId);
+            if (!userId) {
+                shelfError = 'You must be signed in to use shelves.';
+                shelves = [];
+                return;
             }
-        } catch (error) {
+            shelves = await getUserShelves(userId);
+        } catch (error: any) {
+            // getUserShelves rethrows now, so a failure here is a real error
+            // rather than "no shelves yet" and must not look like an empty list.
             console.error('Error loading shelves:', error);
+            shelves = [];
+            shelfError = 'Could not load your shelves. ' + (error?.message || '');
+        } finally {
+            loadingShelves = false;
         }
     }
 
@@ -141,19 +193,27 @@
         } as any);
     }
 
-    function showShelfSelector() {
-        loadShelves();
+    async function showShelfSelector() {
         showShelfModal = true;
+        shelfError = '';
+        // Awaited: previously the modal opened while this was still in flight,
+        // so the list rendered empty and looked broken.
+        await loadShelves();
     }
 
     function hideShelfModal() {
         showShelfModal = false;
         showCreateForm = false;
         newShelfName = '';
+        shelfError = '';
     }
 
     function stopPropagation(event: any) {
-        event.stopPropagation();
+        // NativeScript gesture events do not implement stopPropagation, so
+        // calling it unguarded throws and swallows the tap.
+        if (event && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
     }
 
     function showCreateShelfForm() {
@@ -169,61 +229,85 @@
         try {
             const userId = getCurrentUserId();
             if (!userId) {
-                alert('Please log in to add books to shelves.');
+                shelfError = 'You must be signed in to add books to shelves.';
                 return;
             }
 
             const bookId = book.id;
 
             if (!bookId) {
-                alert('Unable to add book: missing book ID');
+                shelfError = 'This book has no ID, so it cannot be added.';
                 return;
             }
 
+            const shelfName = shelves.find((s: any) => s.id === shelfId)?.name || 'shelf';
             await addBookToShelf(userId, shelfId, bookId);
-            alert('Book added to shelf!');
             hideShelfModal();
+            showResult('success', `"${book.title}" was added to ${shelfName}.`);
         } catch (error) {
             console.error('Error adding book to shelf:', error);
             if ((error as any).message === 'Book already in shelf') {
-                alert('This book is already in this shelf.');
+                shelfError = 'This book is already in that shelf.';
             } else {
-                alert('Failed to add book to shelf. Please try again.');
+                shelfError = 'Could not add the book. Please try again.';
             }
         }
     }
 
     async function createNewShelf() {
+        shelfError = '';
+
         if (!newShelfName.trim()) {
-            alert('Please enter a shelf name');
+            shelfError = 'Please enter a shelf name.';
             return;
         }
 
         try {
             const userId = getCurrentUserId();
             if (!userId) {
-                alert('Please log in to create shelves.');
+                shelfError = 'You must be signed in to create shelves.';
                 return;
             }
 
             await createCustomShelf(userId, newShelfName.trim());
-            alert('Shelf created successfully!');
-            
-            // Reload shelves and show shelf selector
+
+            // Stay in the selector with the new shelf listed, so the book can be
+            // filed straight away rather than reopening the picker.
             await loadShelves();
             hideCreateShelfForm();
         } catch (error) {
             console.error('Error creating shelf:', error);
             if ((error as any).message === 'Maximum 5 custom shelves reached') {
-                alert('You have reached the maximum of 5 custom shelves.');
+                shelfError = 'You have reached the maximum of 5 custom shelves.';
             } else {
-                alert('Failed to create shelf. Please try again.');
+                shelfError = 'Could not create the shelf. Please try again.';
             }
         }
     }
 </script>
 
 <style>
+    .shelf-error {
+        font-size: 14;
+        color: #c62828;
+        text-align: center;
+        margin-top: 8;
+    }
+
+    .result-success {
+        color: #1b7f3b;
+    }
+
+    .result-error {
+        color: #c62828;
+    }
+
+    .result-message {
+        font-size: 16;
+        color: #333;
+        text-align: center;
+    }
+
     .container {
         padding: 20;
         align-items: center;
@@ -315,15 +399,10 @@
         text-align: center;
     }
 
+    /* Covers the page as a grid child; NativeScript ignores position: absolute,
+       which is why this used to sit in the content flow instead of over it. */
     .modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
-        justify-content: center;
-        align-items: center;
     }
 
     .modal-content {

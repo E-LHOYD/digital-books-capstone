@@ -336,7 +336,11 @@
     }
 
     function stopPropagation(event: any) {
-        event.stopPropagation();
+        // NativeScript gesture events do not implement stopPropagation, so
+        // calling it unguarded throws and swallows the tap.
+        if (event && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
     }
 
     async function createShelf() {
