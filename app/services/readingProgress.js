@@ -11,9 +11,20 @@ const VIEWED_THRESHOLD = 0.05; // Below 5% is "viewed"
 /**
  * Get current user ID
  */
+// Auth is a class in @nativescript/firebase-auth, so it must be constructed.
+// Calling Auth() throws "Class constructor Auth cannot be invoked without 'new'".
+// Built lazily so it is never constructed before Firebase has initialised.
+let authInstance = null;
+
+function getAuth() {
+    if (!authInstance) {
+        authInstance = new Auth();
+    }
+    return authInstance;
+}
+
 export function getCurrentUserId() {
-    const auth = Auth();
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     return user ? user.uid : null;
 }
 

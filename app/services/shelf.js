@@ -5,9 +5,20 @@ import { Auth } from '@nativescript/firebase-auth';
 /**
  * Get current user ID
  */
+// Auth is a class in @nativescript/firebase-auth, so it must be constructed.
+// Calling Auth() throws "Class constructor Auth cannot be invoked without 'new'".
+// Built lazily so it is never constructed before Firebase has initialised.
+let authInstance = null;
+
+function getAuth() {
+    if (!authInstance) {
+        authInstance = new Auth();
+    }
+    return authInstance;
+}
+
 export function getCurrentUserId() {
-    const auth = Auth();
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     return user ? user.uid : null;
 }
 
@@ -60,8 +71,11 @@ export async function getUserShelves(userId) {
 
         return shelves;
     } catch (error) {
+        // Rethrown rather than returned as []: an empty list is indistinguishable
+        // from "no shelves yet", which silently defeated the 5-shelf cap check
+        // in createCustomShelf and hid permission errors from the caller.
         console.error('Error getting user shelves:', error);
-        return [];
+        throw error;
     }
 }
 

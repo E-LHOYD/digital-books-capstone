@@ -80,7 +80,7 @@
                                 hint="Shelf name" 
                                 class="shelf-input" 
                                 text={newShelfName}
-                                on:textChange={(e) => newShelfName = e.value}
+                                on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
                             />
                             
                             <stackLayout orientation="horizontal" class="modal-actions">
@@ -105,7 +105,7 @@
 </page>
 
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { firebase } from '@nativescript/firebase-core';
     import '@nativescript/firebase-firestore';
     import { navigate } from '@nativescript-community/svelte-native';
@@ -126,23 +126,56 @@
     let showCreateModal = false;
     let newShelfName = '';
 
-    onMount(async () => {
+    let auth: any = null;
+    let authListener: any = null;
+    let loadedForUid: string | null = null;
+
+    onMount(() => {
         console.log('MyShelf component mounted');
-        
-        // Set up auth state listener
-        const auth = Auth();
-        auth.onAuthStateChanged((user) => {
+
+        // Auth is a class here, not a function, and this plugin exposes
+        // addAuthStateChangeListener rather than the web SDK's onAuthStateChanged.
+        // Getting either wrong threw before the listener was ever registered,
+        // which left currentUserId null and made every shelf action fail.
+        auth = new Auth();
+
+        authListener = (user: any) => {
             console.log('Auth state changed:', user ? 'User logged in: ' + user.uid : 'No user');
-            if (user) {
-                currentUserId = user.uid;
-                loadUserData();
-                loadAllBooks();
-            } else {
-                currentUserId = null;
-                console.error('No user logged in');
-            }
-        });
+            handleUser(user);
+        };
+        auth.addAuthStateChangeListener(authListener);
+
+        // The listener does not necessarily fire for an already signed-in user,
+        // so seed from the current value too.
+        handleUser(auth.currentUser);
     });
+
+    onDestroy(() => {
+        if (auth && authListener) {
+            auth.removeAuthStateChangeListener(authListener);
+        }
+    });
+
+    async function handleUser(user: any) {
+        if (!user) {
+            currentUserId = null;
+            loadedForUid = null;
+            return;
+        }
+
+        currentUserId = user.uid;
+
+        // Guard against loading twice when the listener and the initial seed
+        // both report the same user.
+        if (loadedForUid === user.uid) return;
+        loadedForUid = user.uid;
+
+        // Books must be loaded before shelves: loadReadBooks and loadViewedBooks
+        // filter allBooks, so running these concurrently left both shelves empty
+        // on first open.
+        await loadAllBooks();
+        await loadUserData();
+    }
 
     async function loadUserData() {
         try {
@@ -212,7 +245,8 @@
     }
 
     function getShelfBooks(shelf: any): any[] {
-        return allBooks.filter(book => shelf.bookIds.includes(book.id || ''));
+        const ids = shelf?.bookIds || [];
+        return allBooks.filter(book => ids.includes(book.id || ''));
     }
 
     function goToShelfBooks(shelfId: string) {
@@ -228,8 +262,13 @@
             shelfName = 'Viewed';
             books = viewedBooks;
         } else {
-            shelfName = customShelves.find(s => s.id === shelfId)?.name || 'Shelf';
-            books = getShelfBooks(customShelves.find(s => s.id === shelfId)!);
+            const shelf = customShelves.find(s => s.id === shelfId);
+            if (!shelf) {
+                console.error('Shelf not found:', shelfId);
+                return;
+            }
+            shelfName = shelf.name || 'Shelf';
+            books = getShelfBooks(shelf);
         }
         
         navigate({
@@ -280,6 +319,7 @@
             console.log('Shelf created successfully:', newShelf);
             // Reload shelves from Firestore to ensure it's saved
             await loadUserData();
+            customShelves = customShelves;
             console.log('Shelves reloaded:', customShelves);
             alert('Shelf created successfully!');
             hideCreateModal();
