@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "223899471865",
+    "project_id": "gd-library",
+    "storage_bucket": "gd-library.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:223899471865:android:b7548e20286e3e86e6b728",
+        "android_client_info": {
+          "package_name": "com.gdlibrary.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4KD1_3W7Vp9g9gXymlSYp1RigY9KEJaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
