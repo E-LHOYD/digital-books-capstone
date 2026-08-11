@@ -316,6 +316,12 @@ export async function createUserProfile(userData) {
                     course: userData.course,
                     year: userData.year
                 })
+            }),
+            // A teacher has no year, course or student number. The employee
+            // number and department stand in their place.
+            ...(userData.role === 'teacher' && {
+                employeeNumber: userData.employeeNumber,
+                department: userData.department
             })
         };
 

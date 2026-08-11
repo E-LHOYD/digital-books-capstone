@@ -35,6 +35,20 @@
                     <textField hint="Course *" text={course} on:textChange={(e) => course = e.value} class="input" />
                     <textField hint="Year *" text={year} on:textChange={(e) => year = e.value} class="input" />
                 {/if}
+            {:else if role === 'teacher'}
+                <!-- Teacher Fields -->
+                <textField hint="Employee Number *" text={employeeNumber} on:textChange={(e) => employeeNumber = e.value} class="input" />
+                <label text="Department" class="label" />
+                <stackLayout orientation="horizontal" class="role-container">
+                    {#each DEPARTMENTS as option}
+                        <button
+                            text={option}
+                            class="role-btn"
+                            class:role-btn-active={department === option}
+                            on:tap={() => department = option}
+                        />
+                    {/each}
+                </stackLayout>
             {/if}
 
             <!-- Account Information -->
@@ -111,6 +125,7 @@
     import Login from './Login.svelte';
     import { register, createUserProfile } from '../services/firebase';
     import { SUBJECTS } from '../services/subjects';
+    import { DEPARTMENTS } from '../services/users';
 
     // Role
     let role = 'student';
@@ -128,6 +143,11 @@
     let studentNumber = '';
     let course = '';
     let year = '';
+
+    // Teacher Specific. A teacher has no year, course or student number; the
+    // employee number and department stand in their place.
+    let employeeNumber = '';
+    let department = '';
 
     // Account Info
     let email = '';
@@ -183,6 +203,13 @@
                     errorMessage = 'Please fill in all college information';
                     return false;
                 }
+            }
+        }
+
+        if (role === 'teacher') {
+            if (!employeeNumber || !department) {
+                errorMessage = 'Please fill in all teacher information';
+                return false;
             }
         }
 
@@ -244,6 +271,8 @@
                 studentNumber,
                 course,
                 year,
+                employeeNumber,
+                department,
                 username,
                 interests: selectedInterests
             };
