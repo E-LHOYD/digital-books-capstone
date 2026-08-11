@@ -180,6 +180,8 @@
 				// older single string.
 				const subjects = data.subjects || null;
 				const subject = data.subject || null;
+				// Carried through so recommendations and details see the same fields.
+				const yearLevels = data.yearLevels || null;
 
 				// Generate proper NativeScript image paths with lowercase for Android compatibility
 				const cleanTitle = title.replace(/\s+/g, '').toLowerCase();
@@ -198,6 +200,7 @@
 					fileUrl,
 					subjects,
 					subject,
+					yearLevels,
 					coverPath,
 					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
 				};
