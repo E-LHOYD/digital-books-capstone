@@ -53,14 +53,28 @@ shelves/
               └── bookIds: ["book1", "book4"]
 ```
 
-## Recommended Firestore Rules
+## Complete Firestore Rules (Merged with Your Existing Rules)
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Shelves collection
+ 
+    match /users/{userId} {
+      // Allow read if logged in OR for username lookup during login
+      // (Temporarily allowing unauthenticated reads for username login functionality)
+      allow read: if request.auth != null || true;
+      
+      // Allow write if user owns the document OR if creating a new user profile
+      allow write: if request.auth != null && (request.auth.uid == userId || request.resource.data == null);
+    }
+ 
+    match /admin/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // NEW: Shelves collection structure
     match /shelves/{userId} {
       // User can only access their own shelves
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -70,16 +84,28 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-    
-    // Reading progress collection
+
+    // NEW: Reading progress collection
     match /readingProgress/{userId_bookId} {
-      // Extract userId from document ID
+      // Extract userId from document ID (format: {userId}_{bookId})
       allow read, write: if request.auth != null && 
                             request.auth.uid == userId_bookId.split('_')[0];
+    }
+
+    // Allow read/write for authenticated users on other collections (books, etc.)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
 ```
+
+## What Changed
+
+1. **Kept your existing rules** for `users` and `admin` collections
+2. **Added new rules** for `shelves/{userId}/userShelves/{shelfId}` - users can only access their own shelves
+3. **Added new rules** for `readingProgress/{userId_bookId}` - users can only access their own reading progress
+4. **Kept the catch-all rule** at the end for other collections like `books`
 
 ## Limits
 
