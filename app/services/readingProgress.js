@@ -5,8 +5,10 @@ import { Auth } from '@nativescript/firebase-auth';
 /**
  * Reading progress threshold constants
  */
-const READ_THRESHOLD = 0.05; // 5% threshold for "viewed" vs "read"
-const VIEWED_THRESHOLD = 0.05; // Below 5% is "viewed"
+// `percentage` is on a 0-100 scale, but this was compared against 0.05, so
+// anything past a twentieth of one percent counted as "read" and a book could
+// never be merely "viewed". At or above this share counts as read.
+const READ_THRESHOLD_PERCENT = 10;
 
 /**
  * Get current user ID
@@ -72,7 +74,15 @@ export async function saveReadingProgress(bookId, currentPage, totalPages, perce
             percentage,
             lastReadAt: new Date(),
             // Determine status based on percentage
-            status: percentage >= READ_THRESHOLD ? 'read' : 'viewed'
+            // Page 1 is always just "viewed", whatever the percentage says: in a
+            // ten page book the first page alone is already 10%, so percentage
+            // on its own would call an unopened book read.
+            status:
+                currentPage <= 1
+                    ? 'viewed'
+                    : percentage >= READ_THRESHOLD_PERCENT
+                      ? 'read'
+                      : 'viewed'
         };
 
         await firebase()

@@ -5,7 +5,7 @@
         <gridLayout row={0} col={0} rows="auto" columns="auto, *, auto" class="reader-bar">
             <button row={0} col={0} text="Back" class="reader-back" on:tap={goBack} />
             <label row={0} col={1} text={book.title} class="reader-title" textWrap="false" />
-            <label row={0} col={2} text={`Page ${currentPage}`} class="reader-page-counter" />
+            <label row={0} col={2} text={`${currentPage} / ${totalPages}`} class="reader-page-counter" />
         </gridLayout>
 
         <!-- Progress bar -->
@@ -17,6 +17,7 @@
         <!-- Book -->
         <gridLayout row={2} col={0} rows="*" columns="*">
             <webView
+                bind:this={webViewRef}
                 row={0}
                 col={0}
                 src={readerUrl}
@@ -43,7 +44,8 @@
 </page>
 
 <script lang="ts">
-    import { Frame } from '@nativescript/core';
+    import { Frame, isAndroid } from '@nativescript/core';
+    import { onDestroy } from 'svelte';
     import { getReaderUrl } from '../services/storage.js';
     // @ts-ignore
     import { saveReadingProgress, getReadingProgress } from '../services/readingProgress.js';
@@ -57,10 +59,13 @@
     let loadError: string | null = null;
     
     // Reading progress tracking
+    let webViewRef: any = null;
     let currentPage = 1;
-    let totalPages = 100; // Default, will be updated from actual PDF
+    let totalPages = 0;
     let progressPercentage = 0;
+    let furthestPage = 1;
     let saveTimer: any = null;
+    let pollTimer: any = null;
 
     $: readerUrl = `${getReaderUrl(book.fileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
 
@@ -79,6 +84,7 @@
         } else {
             // Load existing progress
             loadExistingProgress();
+            startPolling();
         }
     }
 
@@ -86,8 +92,9 @@
         try {
             const progress = await getReadingProgress(book.id);
             if (progress) {
-                currentPage = progress.currentPage || 1;
-                totalPages = progress.totalPages || 100;
+                furthestPage = progress.currentPage || 1;
+                currentPage = furthestPage;
+                totalPages = progress.totalPages || 0;
                 progressPercentage = progress.percentage || 0;
             }
         } catch (error) {
@@ -95,19 +102,81 @@
         }
     }
 
-    function updateProgress(newPage: number) {
+    function updateProgress(newPage: number, newTotal: number) {
+        if (!newTotal) return;
+
+        totalPages = newTotal;
         currentPage = newPage;
-        progressPercentage = (currentPage / totalPages) * 100;
-        
+
+        // Progress is the furthest point reached, so scrolling back up does not
+        // undo it.
+        if (newPage > furthestPage) furthestPage = newPage;
+        progressPercentage = (furthestPage / totalPages) * 100;
+
         // Debounced save to Firestore
         if (saveTimer) {
             clearTimeout(saveTimer);
         }
-        
+
         saveTimer = setTimeout(() => {
-            saveReadingProgress(book.id, currentPage, totalPages, progressPercentage);
+            saveReadingProgress(book.id, furthestPage, totalPages, progressPercentage);
         }, 2000); // Save after 2 seconds of inactivity
     }
+
+    // The PDF is rendered by a web page inside the WebView, so scrolling is
+    // invisible to the app. The page keeps window.__readerProgress current and
+    // this polls it.
+    //
+    // Polled rather than pushed: addJavascriptInterface needs methods annotated
+    // with @JavascriptInterface on API 17+, and the NativeScript runtime cannot
+    // emit Java annotations on classes extended from JavaScript. Implementing
+    // ValueCallback is plain interface implementation, which it can do.
+    function readProgressFromPage() {
+        const native = webViewRef?.android;
+        if (!isAndroid || !native || typeof native.evaluateJavascript !== 'function') return;
+
+        try {
+            native.evaluateJavascript(
+                'JSON.stringify(window.__readerProgress || null)',
+                new android.webkit.ValueCallback({
+                    onReceiveValue(value: any) {
+                        try {
+                            if (!value || value === 'null') return;
+                            // evaluateJavascript hands back a JSON string literal,
+                            // so the payload needs unwrapping twice.
+                            let raw = String(value);
+                            const once = JSON.parse(raw);
+                            const data = typeof once === 'string' ? JSON.parse(once) : once;
+                            if (data && data.total) {
+                                updateProgress(Number(data.page) || 1, Number(data.total));
+                            }
+                        } catch (e) {
+                            console.error('Reader progress parse failed:', e);
+                        }
+                    }
+                })
+            );
+        } catch (error) {
+            console.error('Reader progress poll failed:', error);
+        }
+    }
+
+    function startPolling() {
+        stopPolling();
+        pollTimer = setInterval(readProgressFromPage, 1000);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    onDestroy(() => {
+        stopPolling();
+        if (saveTimer) clearTimeout(saveTimer);
+    });
 
     function retry() {
         loadError = null;
@@ -116,8 +185,13 @@
     }
 
     function goBack() {
+        stopPolling();
+        if (saveTimer) clearTimeout(saveTimer);
+
         // Save progress before leaving
-        saveReadingProgress(book.id, currentPage, totalPages, progressPercentage);
+        if (totalPages > 0) {
+            saveReadingProgress(book.id, furthestPage, totalPages, progressPercentage);
+        }
         
         // Pop back to the book details page rather than pushing a new copy of
         // it onto the navigation stack.
