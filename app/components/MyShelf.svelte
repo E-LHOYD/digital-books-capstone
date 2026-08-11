@@ -53,13 +53,14 @@
 
                 <!-- Custom Shelves -->
                 {#each customShelves as shelf}
-                    <stackLayout class="shelf-item" on:tap={() => goToShelfBooks(shelf.id)}>
+                    <gridLayout class="shelf-item" rows="auto" columns="*, auto">
+                        <stackLayout row={0} col={0} on:tap={() => goToShelfBooks(shelf.id)}>
                         <stackLayout class="shelf-header">
                             <label text={shelf.name} class="shelf-name" />
-                            <label text={shelf.bookIds.length + ' books'} class="shelf-count" />
+                            <label text={(shelf.bookIds?.length || 0) + ' books'} class="shelf-count" />
                         </stackLayout>
                         <stackLayout class="shelf-preview">
-                            {#if shelf.bookIds.length > 0}
+                            {#if (shelf.bookIds?.length || 0) > 0}
                                 {#each getShelfBooks(shelf).slice(0, 3) as book}
                                     <label text={book.title} class="preview-book" />
                                 {/each}
@@ -67,7 +68,17 @@
                                 <label text="Empty shelf" class="empty-text" />
                             {/if}
                         </stackLayout>
-                    </stackLayout>
+                        </stackLayout>
+
+                        <button
+                            row={0}
+                            col={1}
+                            text="Delete"
+                            class="shelf-delete-btn"
+                            verticalAlignment="center"
+                            on:tap={() => confirmDeleteShelf(shelf)}
+                        />
+                    </gridLayout>
                 {/each}
 
             </stackLayout>
@@ -107,6 +118,26 @@
             </gridLayout>
         {/if}
 
+        <!-- Delete Confirmation Modal -->
+        {#if pendingDelete}
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={cancelDeleteShelf}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text="Delete shelf" class="modal-title result-error" />
+
+                    <label
+                        text={`"${pendingDelete.name}" will be removed. The books in it are not deleted.`}
+                        class="result-message"
+                        textWrap="true"
+                    />
+
+                    <stackLayout orientation="horizontal" class="modal-actions">
+                        <button text="Delete" class="btn btn-danger" isEnabled={!deleting} on:tap={performDeleteShelf} />
+                        <button text="Cancel" class="btn btn-cancel" isEnabled={!deleting} on:tap={cancelDeleteShelf} />
+                    </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
+
         <!-- Result Modal -->
         {#if resultKind}
             <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideResult}>
@@ -139,7 +170,7 @@
     import ShelfBooks from './ShelfBooks.svelte';
     import { Auth } from '@nativescript/firebase-auth';
     // @ts-ignore
-    import { getUserShelves, createCustomShelf, getCurrentUserId } from '../services/shelf.js';
+    import { getUserShelves, createCustomShelf, deleteCustomShelf, getCurrentUserId } from '../services/shelf.js';
 
     let customShelves: any[] = [];
     let readBooks: any[] = [];
@@ -153,6 +184,9 @@
     let createError = '';
     let resultKind: 'success' | 'error' | null = null;
     let resultMessage = '';
+    // Held rather than acted on immediately: deleting a shelf is not undoable.
+    let pendingDelete: any = null;
+    let deleting = false;
 
     let auth: any = null;
     let authListener: any = null;
@@ -323,6 +357,36 @@
         showCreateModal = false;
         newShelfName = '';
         createError = '';
+    }
+
+    function confirmDeleteShelf(shelf: any) {
+        pendingDelete = shelf;
+    }
+
+    function cancelDeleteShelf() {
+        if (deleting) return;
+        pendingDelete = null;
+    }
+
+    async function performDeleteShelf() {
+        if (!pendingDelete || !currentUserId || deleting) return;
+
+        const shelf = pendingDelete;
+        deleting = true;
+
+        try {
+            await deleteCustomShelf(currentUserId, shelf.id);
+            pendingDelete = null;
+            await loadUserData();
+            customShelves = customShelves;
+            showResult('success', `"${shelf.name}" was deleted.`);
+        } catch (error: any) {
+            console.error('Error deleting shelf:', error);
+            pendingDelete = null;
+            showResult('error', error?.message || 'The shelf could not be deleted.');
+        } finally {
+            deleting = false;
+        }
     }
 
     function showResult(kind: 'success' | 'error', message: string) {
@@ -611,6 +675,27 @@
         color: #c62828;
         text-align: center;
         margin-top: 8;
+    }
+
+    .shelf-delete-btn {
+        background-color: transparent;
+        color: #c62828;
+        font-size: 13;
+        font-weight: bold;
+        border-width: 0;
+        padding: 8 10;
+        margin: 0;
+    }
+
+    .btn-danger {
+        background-color: #c62828;
+        color: white;
+        font-size: 16;
+        font-weight: bold;
+        padding: 12 20;
+        border-radius: 8;
+        border-width: 0;
+        margin: 0 5;
     }
 
     .btn-cancel {
