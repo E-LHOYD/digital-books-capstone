@@ -22,6 +22,7 @@
                 src={readerUrl}
                 on:loadStarted={onLoadStarted}
                 on:loadFinished={onLoadFinished}
+                bind:this={webView}
             />
 
             {#if isLoading}
@@ -61,6 +62,7 @@
     let totalPages = 100; // Default, will be updated from actual PDF
     let progressPercentage = 0;
     let saveTimer: any = null;
+    let webView: any = null;
 
     $: readerUrl = `${getReaderUrl(book.fileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
 
@@ -79,6 +81,8 @@
         } else {
             // Load existing progress
             loadExistingProgress();
+            // Try to get page count from PDF
+            getPageCount();
         }
     }
 
@@ -93,6 +97,13 @@
         } catch (error) {
             console.error('Error loading progress:', error);
         }
+    }
+
+    function getPageCount() {
+        // Send message to WebView to get page count
+        // This would require the reader page to expose an API
+        // For now, we'll use a default and estimate
+        console.log('Getting page count from PDF...');
     }
 
     function updateProgress(newPage: number) {
