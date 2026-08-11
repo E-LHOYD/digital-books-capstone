@@ -232,8 +232,10 @@
     }
 
     function showCreateShelfDialog() {
+        console.log('showCreateShelfDialog called');
         showCreateModal = true;
         newShelfName = '';
+        console.log('Modal should be visible now');
     }
 
     function hideCreateModal() {
@@ -246,26 +248,35 @@
     }
 
     async function createShelf() {
-        if (!currentUserId) return;
+        if (!currentUserId) {
+            console.error('No current user ID');
+            alert('Please log in to create shelves');
+            return;
+        }
         
         if (!newShelfName.trim()) {
+            console.error('Empty shelf name');
             alert('Please enter a shelf name');
             return;
         }
 
+        console.log('Creating shelf:', newShelfName, 'for user:', currentUserId);
+
         try {
-            await createCustomShelf(currentUserId, newShelfName.trim());
+            const newShelf = await createCustomShelf(currentUserId, newShelfName.trim());
+            console.log('Shelf created successfully:', newShelf);
             // Reload shelves from Firestore to ensure it's saved
             await loadUserData();
-            console.log('Shelf created successfully');
+            console.log('Shelves reloaded:', customShelves);
             alert('Shelf created successfully!');
             hideCreateModal();
         } catch (error: any) {
             console.error('Error creating shelf:', error);
+            console.error('Error details:', JSON.stringify(error));
             if (error.message === 'Maximum 5 custom shelves reached') {
                 alert('You can only create up to 5 custom shelves.');
             } else {
-                alert('Failed to create shelf. Please try again.');
+                alert('Failed to create shelf: ' + (error.message || 'Unknown error'));
             }
         }
     }

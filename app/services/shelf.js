@@ -70,16 +70,25 @@ export async function getUserShelves(userId) {
  */
 export async function saveShelf(userId, shelf) {
     try {
-        await firebase()
+        console.log('saveShelf called with userId:', userId, 'shelfId:', shelf.id);
+        console.log('Shelf data:', JSON.stringify(shelf));
+        
+        const docRef = firebase()
             .firestore()
             .collection('shelves')
             .doc(userId)
             .collection('userShelves')
-            .doc(shelf.id)
-            .set(shelf);
+            .doc(shelf.id);
+        
+        console.log('Writing to path:', docRef.path);
+        
+        await docRef.set(shelf);
+        
+        console.log('Shelf saved successfully');
         return true;
     } catch (error) {
         console.error('Error saving shelf:', error);
+        console.error('Error details:', JSON.stringify(error));
         return false;
     }
 }
@@ -89,11 +98,17 @@ export async function saveShelf(userId, shelf) {
  */
 export async function createCustomShelf(userId, name) {
     try {
+        console.log('createCustomShelf called with userId:', userId, 'name:', name);
+        
         const shelves = await getUserShelves(userId);
+        console.log('Current shelves:', shelves);
         
         // Check if user already has 5 custom shelves (excluding read and viewed shelves)
         const customShelves = shelves.filter(s => !s.isReadShelf && !s.isViewedShelf);
+        console.log('Custom shelves count:', customShelves.length);
+        
         if (customShelves.length >= 5) {
+            console.log('Maximum shelves reached');
             throw new Error('Maximum 5 custom shelves reached');
         }
 
@@ -107,7 +122,10 @@ export async function createCustomShelf(userId, name) {
             bookIds: []
         };
 
-        await saveShelf(userId, newShelf);
+        console.log('Saving shelf:', newShelf);
+        const saved = await saveShelf(userId, newShelf);
+        console.log('Shelf saved:', saved);
+        
         return newShelf;
     } catch (error) {
         console.error('Error creating custom shelf:', error);
