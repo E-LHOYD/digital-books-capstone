@@ -4,6 +4,7 @@ export interface Book {
     coverPath?: string;
     detail?: string;
     subject?: string;
+    subjects?: string[];
     fileUrl?: string;
     fileName?: string;
     fileSize?: number;

@@ -20,7 +20,7 @@
         <!-- Main Content -->
         <stackLayout row={1} col={0} class="container">
             <stackLayout orientation="horizontal" class="buttons-container">
-                <button text="Subjects" class="subjects-btn" />
+                <button text="Subjects" class="subjects-btn" on:tap={goToSubjects} />
                 <button text="Recommendation" class="recommendation-btn" on:tap={goToRecommendations} />
             </stackLayout>
             
@@ -84,6 +84,7 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import BookDetails from './BookDetails.svelte';
     import Recommendations from './Recommendations.svelte';
+    import Subjects from './Subjects.svelte';
     import Settings from './Settings.svelte';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
@@ -123,6 +124,15 @@
         navigate({
             page: BookDetails,
             props: { book }
+        } as any);
+    }
+
+    function goToSubjects() {
+        // The library already has every book, so the subject pages work from
+        // that rather than reading Firestore again.
+        navigate({
+            page: Subjects,
+            props: { books }
         } as any);
     }
 
@@ -166,6 +176,10 @@
 				const author = data.author;
 				const detail = data.detail || '';
 				const fileUrl = data.fileUrl || null;
+				// Kept as written so bookSubjects can read either the list or the
+				// older single string.
+				const subjects = data.subjects || null;
+				const subject = data.subject || null;
 
 				// Generate proper NativeScript image paths with lowercase for Android compatibility
 				const cleanTitle = title.replace(/\s+/g, '').toLowerCase();
@@ -182,6 +196,8 @@
 					author,
 					detail,
 					fileUrl,
+					subjects,
+					subject,
 					coverPath,
 					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
 				};
