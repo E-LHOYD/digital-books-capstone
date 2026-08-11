@@ -27,8 +27,21 @@
 
         <!-- Error Message -->
         {#if errorMessage}
-            <label text={errorMessage} class="error-message" />
+            <label text={errorMessage} class="error-message" textWrap={true} />
         {/if}
+
+        <!-- Reset Notice -->
+        {#if noticeMessage}
+            <label text={noticeMessage} class="notice-message" textWrap={true} />
+        {/if}
+
+        <!-- Forgot Password -->
+        <button
+            text={isSendingReset ? "Sending..." : "Forgot Password?"}
+            class="link-btn"
+            isEnabled={!isSendingReset}
+            on:tap={handleForgotPassword}
+        />
 
         <!-- Keep Logged In Checkbox -->
         <stackLayout orientation="horizontal" class="checkbox-container">
@@ -57,7 +70,7 @@
     import Lockscreen from './Lockscreen.svelte';
     import Home from './Home.svelte';
     import Signup from './Signup.svelte';
-    import { login, getUserByUsername } from '../services/firebase';
+    import { login, getUserByUsername, sendPasswordReset } from '../services/firebase';
 
     //Password eye icon
     let password = "";
@@ -65,10 +78,50 @@
     let loginInput = "";
     let errorMessage = "";
     let keepLoggedIn = true; // Default to keep logged in
+    let noticeMessage = "";
+    let isSendingReset = false;
 
     // Function to check if input is email or username
     function isEmail(input: string): boolean {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+    }
+
+    // Resolve whatever is in the login box to an email address, the same way a
+    // login does, so a reset can be asked for by username too.
+    async function resolveEmail(input: string): Promise<string> {
+        if (isEmail(input)) return input;
+
+        const userData = await getUserByUsername(input);
+        return userData?.email || "";
+    }
+
+    async function handleForgotPassword() {
+        errorMessage = "";
+        noticeMessage = "";
+
+        if (!loginInput) {
+            errorMessage = "Enter your email or username first, then tap Forgot Password.";
+            return;
+        }
+
+        isSendingReset = true;
+
+        try {
+            const email = await resolveEmail(loginInput);
+
+            if (email) {
+                await sendPasswordReset(email);
+            }
+        } catch (error) {
+            // A username that matches nobody throws here. Saying so would let
+            // anyone test which usernames exist, so it is treated as a send.
+            console.log("Password reset lookup failed:", error?.message);
+        } finally {
+            isSendingReset = false;
+        }
+
+        noticeMessage =
+            "If that account exists, a reset link is on its way. Check the inbox and the spam folder.";
     }
 
     async function handleLogin() {
@@ -211,6 +264,22 @@
         border-radius: 100;
         font-size: 16;
         font-weight: bold;
+    }
+
+    .notice-message {
+        color: #1a5fb4;
+        font-size: 14;
+        margin: 6 0;
+        text-align: center;
+    }
+
+    .link-btn {
+        background-color: transparent;
+        color: #033047;
+        font-size: 14;
+        border-width: 0;
+        margin: 0;
+        padding: 6 0;
     }
 
     .login {

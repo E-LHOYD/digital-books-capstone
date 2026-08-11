@@ -101,6 +101,35 @@ export async function login(email, password, keepLoggedIn = true) {
 }
 
 // =========================
+// 🔑 PASSWORD RESET
+// =========================
+/**
+ * Send a password reset email.
+ *
+ * Firebase distinguishes "no such account" from "sent", but the caller is not
+ * told which: anyone who can reach the login screen could otherwise use this to
+ * find out which email addresses have accounts. The screen says the same thing
+ * either way.
+ *
+ * @param {string} email - The address to send the reset link to
+ * @returns {Promise<void>}
+ */
+export async function sendPasswordReset(email) {
+    try {
+        await auth.sendPasswordResetEmail(email);
+        console.log("Password reset email requested for:", email);
+    } catch (error) {
+        // Not knowing the address is an expected outcome, not a failure.
+        if (error?.code === 'auth/user-not-found' || error?.code === 'auth/invalid-email') {
+            console.log("Password reset requested for an unknown address");
+            return;
+        }
+        console.error("Password reset failed:", error);
+        throw error;
+    }
+}
+
+// =========================
 // 🔐 REGISTER USER
 // =========================
 /**
