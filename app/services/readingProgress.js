@@ -50,9 +50,6 @@ export async function saveReadingProgress(bookId, currentPage, totalPages, perce
         const userId = getCurrentUserId();
         if (!userId) return false;
 
-        const previousProgress = await getReadingProgress(bookId);
-        const previousStatus = previousProgress?.status || null;
-        
         const progressData = {
             userId,
             bookId,
@@ -70,12 +67,10 @@ export async function saveReadingProgress(bookId, currentPage, totalPages, perce
             .doc(`${userId}_${bookId}`)
             .set(progressData, { merge: true });
 
-        // Update shelves based on reading progress (manual trigger)
-        // This is handled by the shelf service when needed
-        return { success: true, previousStatus, currentStatus: progressData.status };
+        return true;
     } catch (error) {
         console.error('Error saving reading progress:', error);
-        return { success: false };
+        return false;
     }
 }
 
