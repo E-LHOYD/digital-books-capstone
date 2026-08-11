@@ -85,6 +85,8 @@
     import BookDetails from './BookDetails.svelte';
     import Recommendations from './Recommendations.svelte';
     import Settings from './Settings.svelte';
+    // @ts-ignore
+    import { recordActivity } from '../services/presence.js';
     import MyShelf from './MyShelf.svelte';
 
     let books: any[] = [];
@@ -112,6 +114,9 @@
 
     onMount(() => {
         loadBooks();
+        // Marks the user active whenever the library is opened, which is what
+        // the dashboard counts.
+        recordActivity(true);
     });
 
     function goToBookDetails(book: any) {
