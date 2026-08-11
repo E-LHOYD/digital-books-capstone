@@ -25,6 +25,23 @@
                     </stackLayout>
                 </stackLayout>
 
+                <!-- Viewed Shelf -->
+                <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('viewed')}>
+                    <stackLayout class="shelf-header">
+                        <label text="👁️ Viewed" class="shelf-name" />
+                        <label text={viewedBooks.length + ' books'} class="shelf-count" />
+                    </stackLayout>
+                    <stackLayout class="shelf-preview">
+                        {#if viewedBooks.length > 0}
+                            {#each viewedBooks.slice(0, 3) as book}
+                                <label text={book.title} class="preview-book" />
+                            {/each}
+                        {:else}
+                            <label text="No books viewed yet" class="empty-text" />
+                        {/if}
+                    </stackLayout>
+                </stackLayout>
+
                 <!-- Custom Shelves -->
                 {#each customShelves as shelf}
                     <stackLayout class="shelf-item" on:tap={() => goToShelfBooks(shelf.id)}>
@@ -82,6 +99,7 @@
 
     let customShelves: any[] = [];
     let readBooks: any[] = [];
+    let viewedBooks: any[] = [];
     let allBooks: any[] = [];
     let currentUserId: string | null = null;
 
@@ -100,12 +118,18 @@
 
             // Load user's shelves from Firestore using service
             const shelves = await getUserShelves(currentUserId);
-            customShelves = shelves.filter((s: any) => !s.isReadShelf);
+            customShelves = shelves.filter((s: any) => !s.isReadShelf && !s.isViewedShelf);
             
             // Load read books
             const readShelf = shelves.find((s: any) => s.isReadShelf);
             if (readShelf && readShelf.bookIds) {
                 await loadReadBooks(readShelf.bookIds);
+            }
+
+            // Load viewed books
+            const viewedShelf = shelves.find((s: any) => s.isViewedShelf);
+            if (viewedShelf && viewedShelf.bookIds) {
+                await loadViewedBooks(viewedShelf.bookIds);
             }
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -143,14 +167,34 @@
         }
     }
 
+    async function loadViewedBooks(bookIds: string[]) {
+        try {
+            viewedBooks = allBooks.filter(book => bookIds.includes(book.id || ''));
+        } catch (error) {
+            console.error('Error loading viewed books:', error);
+        }
+    }
+
     function getShelfBooks(shelf: any): any[] {
         return allBooks.filter(book => shelf.bookIds.includes(book.id || ''));
     }
 
     function goToShelfBooks(shelfId: string) {
         const isReadShelf = shelfId === 'read';
-        const shelfName = isReadShelf ? 'Read' : customShelves.find(s => s.id === shelfId)?.name || 'Shelf';
-        const books = isReadShelf ? readBooks : getShelfBooks(customShelves.find(s => s.id === shelfId)!);
+        const isViewedShelf = shelfId === 'viewed';
+        let shelfName = 'Shelf';
+        let books: any[] = [];
+
+        if (isReadShelf) {
+            shelfName = 'Read';
+            books = readBooks;
+        } else if (isViewedShelf) {
+            shelfName = 'Viewed';
+            books = viewedBooks;
+        } else {
+            shelfName = customShelves.find(s => s.id === shelfId)?.name || 'Shelf';
+            books = getShelfBooks(customShelves.find(s => s.id === shelfId)!);
+        }
         
         navigate({
             page: ShelfBooks,
@@ -158,7 +202,8 @@
                 shelfId, 
                 shelfName, 
                 books,
-                isReadShelf
+                isReadShelf,
+                isViewedShelf
             }
         } as any);
     }
@@ -183,9 +228,11 @@
         if (!currentUserId) return;
 
         try {
-            const newShelf = await createCustomShelf(currentUserId, name);
-            customShelves = [...customShelves, newShelf];
+            await createCustomShelf(currentUserId, name);
+            // Reload shelves from Firestore to ensure it's saved
+            await loadUserData();
             console.log('Shelf created successfully');
+            alert('Shelf created successfully!');
         } catch (error: any) {
             console.error('Error creating shelf:', error);
             if (error.message === 'Maximum 5 custom shelves reached') {

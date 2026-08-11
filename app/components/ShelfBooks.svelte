@@ -25,7 +25,7 @@
         </scrollView>
 
         <!-- Remove from shelf button (only for custom shelves) -->
-        {#if !isReadShelf && books.length > 0}
+        {#if !isReadShelf && !isViewedShelf && books.length > 0}
             <button text="Remove Selected Books" class="remove-btn" on:tap={showRemoveDialog} />
         {/if}
     </stackLayout>
@@ -46,6 +46,8 @@
     export let books: Book[];
     // @ts-ignore
     export let isReadShelf: boolean;
+    // @ts-ignore
+    export let isViewedShelf: boolean = false;
 
     function goBack() {
         navigate({
