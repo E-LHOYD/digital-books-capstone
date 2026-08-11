@@ -1,14 +1,21 @@
 <page actionBarHidden={true} class="reader-page">
-    <gridLayout rows="auto, *" columns="*">
+    <gridLayout rows="auto, auto, *" columns="*">
 
         <!-- Top bar -->
-        <gridLayout row={0} col={0} rows="auto" columns="auto, *" class="reader-bar">
+        <gridLayout row={0} col={0} rows="auto" columns="auto, *, auto" class="reader-bar">
             <button row={0} col={0} text="Back" class="reader-back" on:tap={goBack} />
             <label row={0} col={1} text={book.title} class="reader-title" textWrap="false" />
+            <label row={0} col={2} text={`Page ${currentPage}`} class="reader-page-counter" />
+        </gridLayout>
+
+        <!-- Progress bar -->
+        <gridLayout row={1} col={0} rows="auto" columns="*" class="reader-progress-container">
+            <progress row={0} col={0} value={progressPercentage} maxValue="100" class="reader-progress-bar" />
+            <label row={0} col={0} text={`${progressPercentage.toFixed(1)}%`} class="reader-progress-text" />
         </gridLayout>
 
         <!-- Book -->
-        <gridLayout row={1} col={0} rows="*" columns="*">
+        <gridLayout row={2} col={0} rows="*" columns="*">
             <webView
                 row={0}
                 col={0}
@@ -38,6 +45,8 @@
 <script lang="ts">
     import { Frame } from '@nativescript/core';
     import { getReaderUrl } from '../services/storage.js';
+    // @ts-ignore
+    import { saveReadingProgress, getReadingProgress } from '../services/readingProgress.js';
 
     export let book: any;
 
@@ -46,6 +55,12 @@
     let attempt = 0;
     let isLoading = true;
     let loadError: string | null = null;
+    
+    // Reading progress tracking
+    let currentPage = 1;
+    let totalPages = 100; // Default, will be updated from actual PDF
+    let progressPercentage = 0;
+    let saveTimer: any = null;
 
     $: readerUrl = `${getReaderUrl(book.fileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
 
@@ -61,7 +76,37 @@
             console.error('Reader WebView error:', args.error);
             loadError =
                 'Could not open this book. Check your internet connection and try again.';
+        } else {
+            // Load existing progress
+            loadExistingProgress();
         }
+    }
+
+    async function loadExistingProgress() {
+        try {
+            const progress = await getReadingProgress(book.id);
+            if (progress) {
+                currentPage = progress.currentPage || 1;
+                totalPages = progress.totalPages || 100;
+                progressPercentage = progress.percentage || 0;
+            }
+        } catch (error) {
+            console.error('Error loading progress:', error);
+        }
+    }
+
+    function updateProgress(newPage: number) {
+        currentPage = newPage;
+        progressPercentage = (currentPage / totalPages) * 100;
+        
+        // Debounced save to Firestore
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+        }
+        
+        saveTimer = setTimeout(() => {
+            saveReadingProgress(book.id, currentPage, totalPages, progressPercentage);
+        }, 2000); // Save after 2 seconds of inactivity
     }
 
     function retry() {
@@ -71,6 +116,9 @@
     }
 
     function goBack() {
+        // Save progress before leaving
+        saveReadingProgress(book.id, currentPage, totalPages, progressPercentage);
+        
         // Pop back to the book details page rather than pushing a new copy of
         // it onto the navigation stack.
         Frame.topmost()?.goBack();
@@ -102,6 +150,30 @@
         font-size: 16;
         vertical-align: center;
         margin-left: 6;
+    }
+
+    .reader-page-counter {
+        color: white;
+        font-size: 14;
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .reader-progress-container {
+        background-color: #033047;
+        padding: 4 10;
+    }
+
+    .reader-progress-bar {
+        height: 4;
+        value: 0;
+    }
+
+    .reader-progress-text {
+        color: white;
+        font-size: 12;
+        horizontal-align: right;
+        margin-right: 10;
     }
 
     .reader-overlay {

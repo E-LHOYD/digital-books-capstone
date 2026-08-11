@@ -29,18 +29,40 @@ export async function getUserShelves(userId) {
                 });
             }
             
+            // Ensure viewed shelf exists
+            if (!shelves.find(s => s.isViewedShelf)) {
+                shelves.push({
+                    id: 'viewed',
+                    name: 'Viewed',
+                    userId,
+                    isViewedShelf: true,
+                    createdAt: new Date(),
+                    bookIds: []
+                });
+            }
+            
             return shelves;
         }
         
-        // Return default with read shelf if no data exists
-        return [{
-            id: 'read',
-            name: 'Read',
-            userId,
-            isReadShelf: true,
-            createdAt: new Date(),
-            bookIds: []
-        }];
+        // Return default with read and viewed shelves if no data exists
+        return [
+            {
+                id: 'read',
+                name: 'Read',
+                userId,
+                isReadShelf: true,
+                createdAt: new Date(),
+                bookIds: []
+            },
+            {
+                id: 'viewed',
+                name: 'Viewed',
+                userId,
+                isViewedShelf: true,
+                createdAt: new Date(),
+                bookIds: []
+            }
+        ];
     } catch (error) {
         console.error('Error getting user shelves:', error);
         return [];
@@ -59,7 +81,7 @@ export async function saveUserShelves(userId, shelves) {
             .set({
                 userId,
                 shelves,
-                customShelfCount: shelves.filter(s => !s.isReadShelf).length
+                customShelfCount: shelves.filter(s => !s.isReadShelf && !s.isViewedShelf).length
             }, { merge: true });
         return true;
     } catch (error) {
@@ -75,8 +97,8 @@ export async function createCustomShelf(userId, name) {
     try {
         const shelves = await getUserShelves(userId);
         
-        // Check if user already has 5 custom shelves
-        const customShelves = shelves.filter(s => !s.isReadShelf);
+        // Check if user already has 5 custom shelves (excluding read and viewed shelves)
+        const customShelves = shelves.filter(s => !s.isReadShelf && !s.isViewedShelf);
         if (customShelves.length >= 5) {
             throw new Error('Maximum 5 custom shelves reached');
         }
@@ -86,6 +108,7 @@ export async function createCustomShelf(userId, name) {
             name,
             userId,
             isReadShelf: false,
+            isViewedShelf: false,
             createdAt: new Date(),
             bookIds: []
         };
