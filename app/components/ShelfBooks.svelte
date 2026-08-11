@@ -15,10 +15,20 @@
                     </stackLayout>
                 {:else}
                     {#each books as book (book.id)}
-                        <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
-                            <label text={book.title} class="book-title" />
-                            <label text={book.author} class="book-author" />
-                        </stackLayout>
+                        <gridLayout class="book-item" rows="auto, auto" columns="*, auto" on:tap={() => goToBookDetails(book)}>
+                            <label row={0} col={0} text={book.title} class="book-title" />
+                            <label row={1} col={0} text={book.author} class="book-author" />
+                            {#if typeof book.percentage === 'number'}
+                                <label
+                                    row={0}
+                                    col={1}
+                                    rowSpan={2}
+                                    text={`${Math.round(book.percentage)}%`}
+                                    class="book-percent"
+                                    verticalAlignment="center"
+                                />
+                            {/if}
+                        </gridLayout>
                     {/each}
                 {/if}
             </stackLayout>
@@ -118,6 +128,13 @@
     .book-item:active {
         background-color: #f8f8f8;
         opacity: 0.8;
+    }
+
+    .book-percent {
+        font-size: 15;
+        font-weight: bold;
+        color: #1b7f3b;
+        margin-left: 10;
     }
 
     .book-title {

@@ -17,7 +17,10 @@
                     <stackLayout class="shelf-preview">
                         {#if readBooks.length > 0}
                             {#each readBooks.slice(0, 3) as book}
-                                <label text={book.title} class="preview-book" />
+                                <gridLayout rows="auto" columns="*, auto">
+                                    <label row={0} col={0} text={book.title} class="preview-book" />
+                                    <label row={0} col={1} text={percentLabel(book)} class="preview-percent" />
+                                </gridLayout>
                             {/each}
                         {:else}
                             <label text="No books read yet" class="empty-text" />
@@ -171,11 +174,14 @@
     import { Auth } from '@nativescript/firebase-auth';
     // @ts-ignore
     import { getUserShelves, createCustomShelf, deleteCustomShelf, getCurrentUserId } from '../services/shelf.js';
+    // @ts-ignore
+    import { getAllReadingProgress } from '../services/readingProgress.js';
 
     let customShelves: any[] = [];
     let readBooks: any[] = [];
     let viewedBooks: any[] = [];
     let allBooks: any[] = [];
+    let progressByBook: Record<string, any> = {};
     let currentUserId: string | null = null;
     let showCreateModal = false;
     let newShelfName = '';
@@ -234,8 +240,10 @@
 
         // Books must be loaded before shelves: loadReadBooks and loadViewedBooks
         // filter allBooks, so running these concurrently left both shelves empty
-        // on first open.
+        // on first open. Progress comes next, so the shelf lists can be built
+        // with each book's percentage already attached.
         await loadAllBooks();
+        await loadProgress();
         await loadUserData();
     }
 
@@ -290,9 +298,40 @@
         }
     }
 
+    // One query for every book's progress, rather than one per book.
+    async function loadProgress() {
+        try {
+            const list = await getAllReadingProgress();
+            const map: Record<string, any> = {};
+            for (const entry of list || []) {
+                if (entry?.bookId) map[entry.bookId] = entry;
+            }
+            progressByBook = map;
+        } catch (error) {
+            console.error('Error loading reading progress:', error);
+            progressByBook = {};
+        }
+    }
+
+    function percentFor(book: any): number | null {
+        const entry = progressByBook[book?.id || ''];
+        return entry && typeof entry.percentage === 'number' ? entry.percentage : null;
+    }
+
+    function percentLabel(book: any): string {
+        const value = percentFor(book);
+        return value === null ? '' : `${Math.round(value)}%`;
+    }
+
+    // Percentage is attached to the book objects themselves so the shelf page,
+    // which receives them as a prop, can show it without refetching.
+    function withProgress(books: any[]): any[] {
+        return books.map((book) => ({ ...book, percentage: percentFor(book) }));
+    }
+
     async function loadReadBooks(bookIds: string[]) {
         try {
-            readBooks = allBooks.filter(book => bookIds.includes(book.id || ''));
+            readBooks = withProgress(allBooks.filter(book => bookIds.includes(book.id || '')));
         } catch (error) {
             console.error('Error loading read books:', error);
         }
@@ -300,7 +339,7 @@
 
     async function loadViewedBooks(bookIds: string[]) {
         try {
-            viewedBooks = allBooks.filter(book => bookIds.includes(book.id || ''));
+            viewedBooks = withProgress(allBooks.filter(book => bookIds.includes(book.id || '')));
         } catch (error) {
             console.error('Error loading viewed books:', error);
         }
@@ -529,6 +568,14 @@
 
     .shelf-preview {
         padding-left: 10;
+    }
+
+    .preview-percent {
+        font-size: 13;
+        font-weight: bold;
+        color: #1b7f3b;
+        vertical-align: center;
+        margin-left: 8;
     }
 
     .preview-book {
