@@ -62,7 +62,8 @@
                             <textField 
                                 hint="Shelf name" 
                                 class="shelf-input" 
-                                bind:value={newShelfName} 
+                                text={newShelfName}
+                                on:textChange={(e) => newShelfName = e.value}
                             />
                             <stackLayout orientation="horizontal" class="form-actions">
                                 <button text="Create" class="btn btn-confirm" on:tap={createNewShelf} />
