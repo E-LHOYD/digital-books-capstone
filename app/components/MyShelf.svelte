@@ -69,6 +69,27 @@
                         <label text="Maximum 5 custom shelves reached" class="notice-text" />
                     </stackLayout>
                 {/if}
+
+                <!-- Create Shelf Modal -->
+                {#if showCreateModal}
+                    <stackLayout class="modal-overlay" on:tap={hideCreateModal}>
+                        <stackLayout class="modal-content" on:tap={stopPropagation}>
+                            <label text="Create New Shelf" class="modal-title" />
+                            
+                            <textField 
+                                hint="Shelf name" 
+                                class="shelf-input" 
+                                text={newShelfName}
+                                on:textChange={(e) => newShelfName = e.value}
+                            />
+                            
+                            <stackLayout orientation="horizontal" class="modal-actions">
+                                <button text="Create" class="btn btn-create" on:tap={createShelf} />
+                                <button text="Cancel" class="btn btn-cancel" on:tap={hideCreateModal} />
+                            </stackLayout>
+                        </stackLayout>
+                    </stackLayout>
+                {/if}
             </stackLayout>
         </scrollView>
 
@@ -102,6 +123,8 @@
     let viewedBooks: any[] = [];
     let allBooks: any[] = [];
     let currentUserId: string | null = null;
+    let showCreateModal = false;
+    let newShelfName = '';
 
     onMount(async () => {
         await loadUserData();
@@ -209,30 +232,34 @@
     }
 
     function showCreateShelfDialog() {
-        // Simple prompt dialog for shelf name
-        const prompt = require('@nativescript/core/ui/dialogs').prompt({
-            title: 'Create New Shelf',
-            message: 'Enter shelf name:',
-            okButtonText: 'Create',
-            cancelButtonText: 'Cancel',
-            defaultText: '',
-            inputType: 'text'
-        }).then((result: any) => {
-            if (result.result && result.text.trim()) {
-                createShelf(result.text.trim());
-            }
-        });
+        showCreateModal = true;
+        newShelfName = '';
     }
 
-    async function createShelf(name: string) {
+    function hideCreateModal() {
+        showCreateModal = false;
+        newShelfName = '';
+    }
+
+    function stopPropagation(event: any) {
+        event.stopPropagation();
+    }
+
+    async function createShelf() {
         if (!currentUserId) return;
+        
+        if (!newShelfName.trim()) {
+            alert('Please enter a shelf name');
+            return;
+        }
 
         try {
-            await createCustomShelf(currentUserId, name);
+            await createCustomShelf(currentUserId, newShelfName.trim());
             // Reload shelves from Firestore to ensure it's saved
             await loadUserData();
             console.log('Shelf created successfully');
             alert('Shelf created successfully!');
+            hideCreateModal();
         } catch (error: any) {
             console.error('Error creating shelf:', error);
             if (error.message === 'Maximum 5 custom shelves reached') {
@@ -405,5 +432,68 @@
         background-color: #033047;
         color: white;
         border-width: 0;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 12;
+        padding: 20;
+        width: 80%;
+        max-width: 400;
+    }
+
+    .modal-title {
+        font-size: 20;
+        font-weight: bold;
+        color: #033047;
+        margin-bottom: 15;
+        text-align: center;
+    }
+
+    .shelf-input {
+        font-size: 16;
+        padding: 12;
+        border-width: 1;
+        border-color: #ccc;
+        border-radius: 8;
+        margin-bottom: 15;
+    }
+
+    .modal-actions {
+        margin-top: 15;
+    }
+
+    .btn-create {
+        background-color: #033047;
+        color: white;
+        font-size: 16;
+        font-weight: bold;
+        padding: 12 20;
+        border-radius: 8;
+        border-width: 0;
+        margin: 0 5;
+    }
+
+    .btn-cancel {
+        background-color: #f0f0f0;
+        color: #033047;
+        font-size: 16;
+        font-weight: bold;
+        padding: 12 20;
+        border-radius: 8;
+        border-width: 2;
+        border-color: #033047;
+        margin: 0 5;
     }
 </style>
