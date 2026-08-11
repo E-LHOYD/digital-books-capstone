@@ -110,6 +110,7 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Login from './Login.svelte';
     import { register, createUserProfile } from '../services/firebase';
+    import { SUBJECTS } from '../services/subjects';
 
     // Role
     let role = 'student';
@@ -133,12 +134,13 @@
     let username = '';
 
     // Interests
-    const interests = [
-        'Science', 'Biology', 'Chemistry', 'Physics', 'Mathematics',
-        'Physical Education', 'Filipino', 'Computer Science', 'Business',
-        'Technology', 'History', 'Culinary Arts', 'Music', 'Arts',
-        'Health', 'Literature'
-    ];
+    //
+    // The same subjects the dashboard puts on books. They used to be their own
+    // list, which offered Biology, Physics, Mathematics, Computer Science,
+    // Technology, History and Culinary Arts, none of which a book can carry,
+    // while Math, Computer and English were on books but could not be chosen.
+    // An interest that cannot match a book is no use for recommending one.
+    const interests = SUBJECTS;
     let selectedInterests: string[] = [];
 
     // Security
