@@ -1,9 +1,10 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="main-layout">
-        <!-- Title at Top -->
-        <stackLayout row={0} col={0} class="title-container">
-            <label text="GD-Library" class="app-title" />
-        </stackLayout>
+        <!-- Header -->
+        <gridLayout row={0} col={0} rows="auto" columns="auto, *" class="header">
+            <button row={0} col={0} text="Back" class="back-btn" on:tap={goBack} />
+            <label row={0} col={1} text="Browsing" class="header-title" />
+        </gridLayout>
 
         <!-- Search Bar -->
         <stackLayout row={1} col={0} class="search-container">
@@ -21,15 +22,14 @@
                 {/if}
             </gridLayout>
         </stackLayout>
-        
+
         <!-- Main Content -->
         <stackLayout row={2} col={0} class="container">
             <stackLayout orientation="horizontal" class="buttons-container">
                 <button text="Subjects" class="subjects-btn" on:tap={goToSubjects} />
-                <button text="Browse more" class="recommendation-btn" on:tap={goToBrowseAll} />
             </stackLayout>
 
-            <!-- Books List - Expanded -->
+            <!-- Books List -->
             <scrollView class="books-scroll">
                 <stackLayout>
                     {#if isLoading}
@@ -74,9 +74,9 @@
         <!-- Bottom Buttons - Fixed at bottom -->
         <stackLayout row={3} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <button text="Library" class="nav-btn" class:nav-btn-active={currentPage === 'library'} />
-                <button text="My Shelf" class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} on:tap={goToMyShelf} />
-                <button text="Profile" class="nav-btn" class:nav-btn-active={currentPage === 'profile'} on:tap={goToProfile} />
+                <button text="Library" class="nav-btn" on:tap={goToLibrary} />
+                <button text="My Shelf" class="nav-btn" on:tap={goToMyShelf} />
+                <button text="Profile" class="nav-btn" on:tap={goToProfile} />
             </stackLayout>
         </stackLayout>
     </gridLayout>
@@ -88,25 +88,17 @@
 	import '@nativescript/firebase-firestore';
     import { navigate } from '@nativescript-community/svelte-native';
     import BookDetails from './BookDetails.svelte';
-    import Recommendations from './Recommendations.svelte';
     import Subjects from './Subjects.svelte';
     import Profile from './Profile.svelte';
-    import BrowseAll from './BrowseAll.svelte';
+    import Home from './Home.svelte';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     import MyShelf from './MyShelf.svelte';
-    // @ts-ignore
-    import { recommendBooks, recommendationReason } from '../services/recommendations.js';
-    // @ts-ignore
-    import { getCurrentUser } from '../services/firebase';
 
     let books: any[] = [];
-    let displayedBooks: any[] = [];
     let searchQuery = '';
-    let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'profile'
     let isLoading = false;
     let error: string | null = null;
-    let currentUser: any = null;
 
     // Matches on title or author, case-insensitively. Every whitespace-separated
     // term must appear somewhere, so "growth thompson" finds a book by matching
@@ -118,33 +110,15 @@
 
     $: searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
     $: filteredBooks = searchTerms.length === 0
-        ? displayedBooks
-        : displayedBooks.filter((book) => matchesSearch(book, searchTerms));
-
-    // Update displayed books when books or user changes
-    $: if (books.length > 0) {
-        if (currentUser) {
-            displayedBooks = recommendBooks(books, currentUser);
-        } else {
-            displayedBooks = books;
-        }
-    }
+        ? books
+        : books.filter((book) => matchesSearch(book, searchTerms));
 
     function clearSearch() {
         searchQuery = '';
     }
 
     onMount(() => {
-        // Load current user
-        getCurrentUser().then(user => {
-            currentUser = user;
-        });
-
-        // Load books
         loadBooks();
-
-        // Marks the user active whenever the library is opened, which is what
-        // the dashboard counts.
         recordActivity(true);
     });
 
@@ -156,23 +130,21 @@
     }
 
     function goToSubjects() {
-        // The library already has every book, so the subject pages work from
-        // that rather than reading Firestore again.
         navigate({
             page: Subjects,
             props: { books }
         } as any);
     }
 
-    function goToRecommendations() {
+    function goBack() {
         navigate({
-            page: Recommendations
+            page: Home
         } as any);
     }
 
-    function goToBrowseAll() {
+    function goToLibrary() {
         navigate({
-            page: BrowseAll
+            page: Home
         } as any);
     }
 
@@ -200,32 +172,21 @@
 				.get();
 
 			console.log("Firestore query completed. Found documents:", snapshot.docs.length);
-			console.log("All document IDs:", snapshot.docs.map(doc => doc.id));
 
 			books = snapshot.docs.map(doc => {
 				const data = doc.data();
-				console.log("Document data for", doc.id, ":", data);
-
+				
 				const title = data.title;
 				const author = data.author;
 				const detail = data.detail || '';
 				const fileUrl = data.fileUrl || null;
-				// Kept as written so bookSubjects can read either the list or the
-				// older single string.
 				const subjects = data.subjects || null;
 				const subject = data.subject || null;
-				// Carried through so recommendations and details see the same fields.
 				const yearLevels = data.yearLevels || null;
 
-				// Generate proper NativeScript image paths with lowercase for Android compatibility
 				const cleanTitle = title.replace(/\s+/g, '').toLowerCase();
 				const coverPath = `~/ebooks/cover/${cleanTitle}cover.jpg`;
 
-				console.log("Book title:", title);
-				console.log("Book author:", author);
-				console.log("Book detail:", detail);
-				console.log("Book file URL:", fileUrl);
-				console.log("Generated cover path:", coverPath);
 				return {
 					id: doc.id,
 					title,
@@ -236,11 +197,10 @@
 					subject,
 					yearLevels,
 					coverPath,
-					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
+					fallbackCover: "~/images/bookcoverbrown.jpg"
 				};
 			});
 
-			console.log("Final books array:", books);
 			console.log("Loaded books count:", books.length);
 		} catch (err) {
 			console.error("Error loading books:", err);
@@ -262,12 +222,20 @@
         background-color: white;
     }
 
-    .title-container {
+    .header {
         padding: 15 20;
         background-color: #033047;
     }
 
-    .app-title {
+    .back-btn {
+        font-size: 16;
+        color: white;
+        background-color: transparent;
+        border-width: 0;
+        padding: 0 10 0 0;
+    }
+
+    .header-title {
         font-size: 28;
         font-weight: bold;
         color: white;
@@ -279,8 +247,102 @@
         background-color: white;
     }
 
+    .search-bar {
+        font-size: 16;
+        padding: 10;
+        border-width: 1;
+        border-color: #ccc;
+        border-radius: 8;
+        background-color: #f5f5f5;
+    }
+
+    .search-clear {
+        font-size: 14;
+        color: #033047;
+        margin-left: 10;
+    }
+
     .container {
         padding: 0 20;
+    }
+
+    .buttons-container {
+        margin: 10 0;
+    }
+
+    .subjects-btn {
+        width: 100%;
+        height: 45;
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+        border-radius: 8;
+        font-size: 16;
+        font-weight: bold;
+    }
+
+    .recommendation-btn {
+        width: 100%;
+        height: 45;
+        background-color: white;
+        color: #033047;
+        border-width: 2;
+        border-color: #033047;
+        border-radius: 8;
+        font-size: 16;
+        font-weight: bold;
+    }
+
+    .books-scroll {
+        margin-top: 10;
+    }
+
+    .book-item {
+        padding: 15;
+        margin: 10 0;
+        background-color: #f9f9f9;
+        border-radius: 8;
+        border-width: 1;
+        border-color: #e0e0e0;
+    }
+
+    .book-info {
+        margin-left: 15;
+    }
+
+    .book-title {
+        font-size: 18;
+        font-weight: bold;
+        color: #033047;
+        margin-bottom: 5;
+    }
+
+    .book-author {
+        font-size: 14;
+        color: #666;
+    }
+
+    .loading-container,
+    .error-container,
+    .empty-container {
+        padding: 40 20;
+        text-align: center;
+    }
+
+    .loading-text,
+    .error-text,
+    .empty-text {
+        font-size: 16;
+        color: #666;
+    }
+
+    .retry-btn {
+        margin-top: 20;
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+        border-radius: 8;
+        padding: 15 30;
     }
 
     .bottom-container-fixed {
@@ -296,9 +358,9 @@
 
     .bottom-buttons {
         width: 100%;
-        border-width:4;
+        border-width: 4;
         border-color: #033047;
-		background-color: #033047;
+        background-color: #033047;
         border-radius: 8;
     }
 
@@ -311,7 +373,7 @@
         font-weight: bold;
         border-width: 2;
         border-radius: 4;
-		border-color: #033047;
+        border-color: #033047;
         margin: 0;
     }
 
@@ -319,123 +381,5 @@
         background-color: #033047;
         color: white;
         border-width: 0;
-    }
-
-    .search-clear {
-        background-color: transparent;
-        color: #033047;
-        font-size: 14;
-        font-weight: bold;
-        border-width: 0;
-        padding: 0 12;
-        margin: 0;
-        vertical-align: center;
-    }
-
-    .search-bar {
-        border-width: 2;
-        border-color: #ccc;
-        border-radius: 8;
-        font-size: 16;
-        padding: 10;
-        height: 45;
-        width: 100%;
-        background-color: white;
-    }
-
-    .buttons-container {
-        margin: 15 0;
-        width: 100%;
-        text-align: center;
-    }
-
-    .subjects-btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-        background-color: white;
-        color: #033047;
-        border-width: 4;
-        border-color: #033047;
-    }
-
-    .recommendation-btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-        background-color: white;
-        color: #033047;
-        border-width: 4;
-        border-color: #033047;
-    }
-
-	.book-info {
-		padding: 10 0;
-	}
-
-    .books-scroll {
-        height: 538;
-        border-width: 1;
-        border-color: #eee;
-        border-radius: 8;
-        margin: 10 0;
-        width: 100%;
-    }
-
-    .book-item {
-        padding: 20;
-        border-bottom-width: 1;
-        border-bottom-color: #f0f0f0;
-        margin: 5 0;
-        background-color: white;
-        border-radius: 8;
-        box-shadow: 0 1 3px rgba(0,0,0,0.1);
-    }
-
-    .book-item:active {
-        background-color: #f8f8f8;
-        opacity: 0.8;
-    }
-
-    .book-title {
-        font-size: 18;
-        font-weight: bold;
-        color: #033047;
-        margin-bottom: 5;
-        font-family: Milonga-Regular;
-    }
-
-    .book-author {
-        font-size: 14;
-        color: #666;
-    }
-
-    .loading-container,
-    .error-container,
-    .empty-container {
-        padding: 20;
-        text-align: center;
-    }
-
-    .loading-text,
-    .error-text,
-    .empty-text {
-        font-size: 16;
-        color: #666;
-    }
-
-    .retry-btn {
-        margin-top: 10;
-        padding: 10 20;
-        background-color: #033047;
-        color: white;
-        border-radius: 8;
-        font-size: 14;
     }
 </style>

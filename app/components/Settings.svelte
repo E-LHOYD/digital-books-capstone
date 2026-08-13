@@ -1,42 +1,97 @@
 <page actionBarHidden={true} class="page">
-    <stackLayout class="container">
-        <label text="Settings" class="title" />
+    <gridLayout rows="*, auto" columns="*">
+        <scrollView row={0} col={0}>
+            <stackLayout class="container">
+                <label text="Settings" class="title" />
 
-        <!-- User Info -->
-        <stackLayout class="setting-item">
-            <label text="Logged in as:" class="info-label" />
-            <label text={username || "Loading..."} class="username-display" />
-        </stackLayout>
+                <!-- Keep Logged In -->
+                <stackLayout class="setting-item">
+                    <stackLayout orientation="horizontal" class="checkbox-container">
+                        <label 
+                            text={keepLoggedIn ? "[✓]" : "[  ]"} 
+                            class="checkbox-btn" 
+                            on:tap={() => keepLoggedIn = !keepLoggedIn} 
+                        />
+                        <label text="Keep me logged in" class="setting-label" />
+                    </stackLayout>
+                </stackLayout>
 
-        <!-- Keep Logged In -->
-        <stackLayout class="setting-item">
-            <stackLayout orientation="horizontal" class="checkbox-container">
-                <label 
-                    text={keepLoggedIn ? "[✓]" : "[  ]"} 
-                    class="checkbox-btn" 
-                    on:tap={() => keepLoggedIn = !keepLoggedIn} 
-                />
-                <label text="Keep me logged in" class="setting-label" />
+                <!-- Change Password Button -->
+                <button text="Change Password" class="btn change-password" on:tap={() => showPasswordModal = true} />
+            </stackLayout>
+        </scrollView>
+
+        <!-- Bottom Navigation -->
+        <stackLayout row={1} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <button text="Library" class="nav-btn" on:tap={goToLibrary} />
+                <button text="My Shelf" class="nav-btn" on:tap={goToMyShelf} />
+                <button text="Profile" class="nav-btn" on:tap={goToProfile} />
             </stackLayout>
         </stackLayout>
+    </gridLayout>
 
-        <!-- Logout Button -->
-        <button text="Logout" class="btn logout" on:tap={handleLogout} />
-
-        <!-- Back Button -->
-        <button text="Back" class="btn back" on:tap={goBack} />
-    </stackLayout>
+    <!-- Change Password Modal -->
+    {#if showPasswordModal}
+        <gridLayout class="modal-overlay" rows="auto, *" columns="*">
+            <stackLayout row={0} col={0} class="modal-content">
+                <label text="Change Password" class="modal-title" />
+                
+                <label text="Current Password" class="input-label" />
+                <textField 
+                    hint="Enter current password" 
+                    secure={true} 
+                    text={currentPassword} 
+                    on:textChange={(e) => currentPassword = e.value} 
+                    class="modal-input" 
+                />
+                
+                <label text="New Password" class="input-label" />
+                <textField 
+                    hint="Enter new password" 
+                    secure={true} 
+                    text={newPassword} 
+                    on:textChange={(e) => newPassword = e.value} 
+                    class="modal-input" 
+                />
+                
+                <label text="Confirm New Password" class="input-label" />
+                <textField 
+                    hint="Confirm new password" 
+                    secure={true} 
+                    text={confirmPassword} 
+                    on:textChange={(e) => confirmPassword = e.value} 
+                    class="modal-input" 
+                />
+                
+                {#if passwordError}
+                    <label text={passwordError} class="error-message" textWrap={true} />
+                {/if}
+                
+                <stackLayout orientation="horizontal" class="modal-buttons">
+                    <button text="Cancel" class="btn modal-cancel" on:tap={() => showPasswordModal = false} />
+                    <button text="Change Password" class="btn modal-save" on:tap={handleChangePassword} />
+                </stackLayout>
+            </stackLayout>
+        </gridLayout>
+    {/if}
 </page>
 
 <script lang="ts">
     import { onMount } from 'svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
-    import Lockscreen from './Lockscreen.svelte';
-    import { logout, getSavedCredentials, saveCredentials, getCurrentUser, getUserProfile } from '../services/firebase';
+    import Profile from './Profile.svelte';
+    import MyShelf from './MyShelf.svelte';
+    // @ts-ignore
+    import { getSavedCredentials, saveCredentials, getCurrentUser, changePassword, login } from '../services/firebase';
 
     let keepLoggedIn = true; // Default to keep logged in
-    let username = ""; // User's username
+    let showPasswordModal = false;
+    let currentPassword = "";
+    let newPassword = "";
+    let confirmPassword = "";
+    let passwordError = "";
 
     onMount(async () => {
         // Load current keep logged in preference
@@ -46,25 +101,7 @@
         } else {
             keepLoggedIn = false;
         }
-
-        // Load user's username
-        await loadUsername();
     });
-
-    async function loadUsername() {
-        try {
-            const currentUser = await getCurrentUser();
-            if (currentUser && currentUser.uid) {
-                const userProfile = await getUserProfile(currentUser.uid);
-                if (userProfile && userProfile.username) {
-                    username = userProfile.username;
-                    console.log("Loaded username:", username);
-                }
-            }
-        } catch (error) {
-            console.error("Error loading username:", error);
-        }
-    }
 
     // Update keep logged in preference when checkbox is toggled
     $: if (keepLoggedIn !== undefined) {
@@ -74,25 +111,73 @@
         }
     }
 
-    async function handleLogout() {
-        try {
-            await logout();
-            console.log("User logged out successfully");
-            
-            // Navigate back to Lockscreen after logout
-            navigate({
-                page: Lockscreen
-            } as any);
-        } catch (error) {
-            console.error("Logout failed:", error);
-            alert("Logout failed. Please try again.");
-        }
-    }
-
-    function goBack() {
+    function goToLibrary() {
         navigate({
             page: Home
         } as any);
+    }
+
+    function goToMyShelf() {
+        navigate({
+            page: MyShelf
+        } as any);
+    }
+
+    function goToProfile() {
+        navigate({
+            page: Profile
+        } as any);
+    }
+
+    async function handleChangePassword() {
+        passwordError = "";
+        
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            passwordError = "Please fill in all fields";
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            passwordError = "New passwords do not match";
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            passwordError = "New password must be at least 6 characters";
+            return;
+        }
+        
+        try {
+            const currentUser = await getCurrentUser();
+            if (!currentUser || !currentUser.email) {
+                passwordError = "User not found";
+                return;
+            }
+            
+            // Re-authenticate with current password
+            await login(currentUser.email, currentPassword, true);
+            
+            // Change password
+            await changePassword(newPassword);
+            
+            // Update saved credentials if keeping logged in
+            if (keepLoggedIn) {
+                saveCredentials(currentUser.email, newPassword, true);
+            }
+            
+            showPasswordModal = false;
+            currentPassword = "";
+            newPassword = "";
+            confirmPassword = "";
+            alert("Password changed successfully!");
+        } catch (error) {
+            console.error("Error changing password:", error);
+            if (error.code === 'auth/wrong-password') {
+                passwordError = "Current password is incorrect";
+            } else {
+                passwordError = "Failed to change password. Please try again.";
+            }
+        }
     }
 </script>
 
@@ -161,6 +246,12 @@
         vertical-align: center;
     }
 
+    .change-password {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+    }
+
     .btn {
         width: 200;
         margin: 15 auto;
@@ -170,16 +261,110 @@
         font-weight: bold;
     }
 
-    .logout {
-        background-color: #c62828;
+    .bottom-container-fixed {
+        padding: 10 5;
+        vertical-align: bottom;
+        background-color: white;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+    }
+
+    .bottom-buttons {
+        width: 100%;
+        border-width: 4;
+        border-color: #033047;
+        background-color: #033047;
+        border-radius: 8;
+    }
+
+    .nav-btn {
+        width: 33.33%;
+        height: 65;
+        background-color: white;
+        color: #033047;
+        font-size: 18;
+        font-weight: bold;
+        border-width: 2;
+        border-radius: 4;
+        border-color: #033047;
+        margin: 0;
+    }
+
+    .nav-btn-active {
+        background-color: #033047;
         color: white;
         border-width: 0;
     }
 
-    .back {
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        height: 100%;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 8;
+        padding: 20;
+        margin: 20;
+        width: 90%;
+    }
+
+    .modal-title {
+        font-size: 20;
+        font-weight: bold;
+        color: #033047;
+        margin-bottom: 20;
+        text-align: center;
+    }
+
+    .input-label {
+        font-size: 14;
+        color: #666;
+        margin-bottom: 5;
+        margin-top: 10;
+    }
+
+    .modal-input {
+        border-width: 1;
+        border-color: #ccc;
+        border-radius: 8;
+        padding: 10;
+        margin: 5 0;
+    }
+
+    .error-message {
+        font-size: 14;
+        color: #c62828;
+        text-align: center;
+        margin: 10 0;
+        padding: 10;
+        background-color: #ffebee;
+        border-radius: 8;
+        border-width: 1;
+        border-color: #ef9a9a;
+    }
+
+    .modal-buttons {
+        margin-top: 20;
+        width: 100%;
+    }
+
+    .modal-cancel {
         background-color: white;
         color: #033047;
         border-width: 2;
         border-color: #033047;
+        width: 48%;
+    }
+
+    .modal-save {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+        width: 48%;
     }
 </style>

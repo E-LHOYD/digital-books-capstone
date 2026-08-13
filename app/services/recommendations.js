@@ -87,6 +87,8 @@ function scoreBook(book, preferred) {
  * student. Subject is a ranking, not a filter, so a student whose strand has no
  * matching books still gets the rest of the library rather than an empty page.
  *
+ * Now also uses the student's manually selected interests from their profile.
+ *
  * @param {any[]} books
  * @param {any} user
  * @param {number} [limit]
@@ -95,7 +97,12 @@ function scoreBook(book, preferred) {
 export function recommendBooks(books, user, limit = 20) {
     if (!Array.isArray(books)) return [];
 
-    const preferred = subjectsForTrack(studentTrack(user));
+    const trackSubjects = subjectsForTrack(studentTrack(user));
+    const userInterests = Array.isArray(user?.interests) ? user.interests : [];
+
+    // Combine strand/course subjects with user's selected interests
+    // Remove duplicates while preserving order
+    const preferred = [...new Set([...trackSubjects, ...userInterests])];
 
     return books
         .filter((book) => book && book.title)
@@ -118,14 +125,17 @@ export function recommendBooks(books, user, limit = 20) {
 export function recommendationReason(user) {
     const level = studentLevel(user);
     const track = studentTrack(user);
-    const preferred = subjectsForTrack(track);
+    const trackSubjects = subjectsForTrack(track);
+    const userInterests = Array.isArray(user?.interests) ? user.interests : [];
 
-    if (!level && preferred.length === 0) {
-        return 'Showing the whole library. Add your year level and strand or course to get a shorter list.';
+    if (!level && trackSubjects.length === 0 && userInterests.length === 0) {
+        return 'Showing the whole library. Add your year level, strand or course, and interests to get a shorter list.';
     }
 
     const parts = [];
     if (level) parts.push(`for ${level}`);
+    
+    const preferred = [...new Set([...trackSubjects, ...userInterests])];
     if (preferred.length > 0) parts.push(`leaning on ${preferred.join(', ')}`);
 
     return `Books ${parts.join(', ')}.`;

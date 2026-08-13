@@ -44,8 +44,8 @@
 </page>
 
 <script lang="ts">
-    import { Frame, isAndroid } from '@nativescript/core';
-    import { onDestroy } from 'svelte';
+    import { Frame, isAndroid, Application } from '@nativescript/core';
+    import { onDestroy, onMount } from 'svelte';
     import { getReaderUrl } from '../services/storage.js';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
@@ -214,6 +214,50 @@
     onDestroy(() => {
         stopPolling();
         if (saveTimer) clearTimeout(saveTimer);
+        // Remove screenshot prevention when leaving reader
+        if (isAndroid) {
+            try {
+                const activity = Application.android.foregroundActivity;
+                if (activity) {
+                    activity.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                }
+            } catch (error) {
+                console.error('Error removing screenshot prevention:', error);
+            }
+        }
+    });
+
+    onMount(() => {
+        // Prevent screenshots and screen recording on Android
+        if (isAndroid) {
+            try {
+                // Method 1: Set on activity window
+                const activity = Application.android.foregroundActivity;
+                if (activity && activity.getWindow) {
+                    activity.getWindow().setFlags(
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE
+                    );
+                }
+                
+                // Method 2: Set on current page's native view
+                setTimeout(() => {
+                    try {
+                        const frame = Frame.topmost();
+                        if (frame && frame.currentPage) {
+                            const page = frame.currentPage;
+                            if (page && page.nativeView) {
+                                page.nativeView.setSecure(true);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error setting secure on page:', e);
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('Error setting screenshot prevention:', error);
+            }
+        }
     });
 
     function retry() {

@@ -25,8 +25,22 @@ export function isBookFileUrl(url) {
 /**
  * URL of the reader page for a book, to be loaded in a WebView.
  * @param {string} fileUrl - The storage URL stored in Firestore
+ * @param {Object} options - Optional parameters
+ * @param {number} options.page - Page number to show (default: 1)
+ * @param {boolean} options.preview - If true, hide controls for preview mode
  * @returns {string}
  */
-export function getReaderUrl(fileUrl) {
-    return `${API_BASE_URL}/reader?url=${encodeURIComponent(fileUrl)}`;
+export function getReaderUrl(fileUrl, options = {}) {
+    const { page = 1, preview = false } = options;
+    let url = `${API_BASE_URL}/reader?url=${encodeURIComponent(fileUrl)}`;
+    
+    if (page > 1) {
+        url += `&page=${page}`;
+    }
+    
+    if (preview) {
+        url += '&preview=true';
+    }
+    
+    return url;
 }

@@ -3,9 +3,8 @@
         <!-- App Title -->
         <label text="GD-Library" class="title" />
 
-        <!-- Buttons -->
-        <button text="Login" class="btn login" on:tap={goToLogin} />
-        <button text="Sign Up" class="btn signup" on:tap={goToSignup} />
+        <!-- Loading indicator -->
+        <activityIndicator busy={true} class="loading-indicator" />
     </stackLayout>
 </page>
 
@@ -13,7 +12,6 @@
     import { onMount } from 'svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import Login from './Login.svelte';
-    import Signup from './Signup.svelte';
     import { autoLogin } from '../services/firebase';
     import Home from './Home.svelte';
 
@@ -34,9 +32,17 @@
                 } as any);
             } else {
                 console.log("No saved credentials or auto-login failed");
+                // Navigate to login after 2 seconds
+                setTimeout(() => {
+                    goToLogin();
+                }, 2000);
             }
         } catch (error) {
             console.error("Auto-login error:", error);
+            // Navigate to login after 2 seconds even on error
+            setTimeout(() => {
+                goToLogin();
+            }, 2000);
         }
     }
 
@@ -44,12 +50,6 @@
         navigate({
             page: Login
         });
-    }
-
-    function goToSignup() {
-        navigate({
-            page: Signup
-        } as any);
     }
 </script>
 
@@ -78,24 +78,8 @@
         color: #033047;
     }
 
-    .btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-    }
-
-    .login {
-        background-color: #033047;
-        color: white;
-    }
-
-    .signup {
-        background-color: white;
+    .loading-indicator {
+        margin-top: 40;
         color: #033047;
-        border-width: 4;
-        border-color: #033047;
     }
 </style>

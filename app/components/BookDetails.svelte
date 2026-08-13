@@ -1,11 +1,21 @@
 <page>
     <gridLayout rows="*" columns="*">
-    <stackLayout row={0} col={0} class="container">
+    <scrollView row={0} col={0}>
+        <stackLayout class="container">
 
-        <!-- Cover -->
-        <stackLayout class="detail-cover">
-            <label text="image" class="cover-text" />
-        </stackLayout>
+        <!-- Cover / First Page Preview -->
+        {#if book.fileUrl && book.fileUrl.length > 0}
+            <gridLayout class="detail-cover" rows="*" columns="*">
+                <webView
+                    src={getReaderUrl(book.fileUrl, { page: 1, preview: true })}
+                    class="cover-webview"
+                />
+            </gridLayout>
+        {:else}
+            <stackLayout class="detail-cover">
+                <label text="image" class="cover-text" />
+            </stackLayout>
+        {/if}
 
         <!-- Title -->
         <label text={book.title} class="detail-title" />
@@ -46,7 +56,8 @@
         <!-- Back Button -->
         <button text="Back" class="btn btn-back" on:tap={goBack} />
 
-    </stackLayout>
+        </stackLayout>
+    </scrollView>
 
         <!-- Shelf Selection Modal -->
         {#if showShelfModal}
@@ -58,12 +69,12 @@
                         <stackLayout>
                             {#if loadingShelves}
                                 <label text="Loading shelves…" class="empty-text" />
-                            {:else if shelves.length === 0}
+                            {:else if customShelves.length === 0}
                                 <label text="No shelves yet. Create one below." class="empty-text" textWrap="true" />
                             {/if}
-                            {#each shelves as shelf}
-                                <stackLayout 
-                                    class="shelf-item" 
+                            {#each customShelves as shelf}
+                                <stackLayout
+                                    class="shelf-item"
                                     on:tap={() => addToShelf(shelf.id)}
                                 >
                                     <label text={shelf.name} class="shelf-name" />
@@ -123,7 +134,7 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import Reader from './Reader.svelte';
-    import { isBookFileUrl } from '../services/storage.js';
+    import { isBookFileUrl, getReaderUrl } from '../services/storage.js';
     // @ts-ignore
     import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf } from '../services/shelf.js';
     // @ts-ignore
@@ -158,6 +169,7 @@
     let showShelfModal = false;
     let showCreateForm = false;
     let shelves: any[] = [];
+    let customShelves: any[] = [];
     let newShelfName = '';
     let loadingShelves = false;
     let shelfError = '';
@@ -183,14 +195,18 @@
             if (!userId) {
                 shelfError = 'You must be signed in to use shelves.';
                 shelves = [];
+                customShelves = [];
                 return;
             }
             shelves = await getUserShelves(userId);
+            // Filter out 'read' and 'viewed' shelves, only show custom shelves
+            customShelves = shelves.filter(shelf => shelf.id !== 'read' && shelf.id !== 'viewed');
         } catch (error: any) {
             // getUserShelves rethrows now, so a failure here is a real error
             // rather than "no shelves yet" and must not look like an empty list.
             console.error('Error loading shelves:', error);
             shelves = [];
+            customShelves = [];
             shelfError = 'Could not load your shelves. ' + (error?.message || '');
         } finally {
             loadingShelves = false;
@@ -360,12 +376,18 @@
 
     .detail-cover {
         width: 200;
-        height: 200;
+        height: 280;
         border-radius: 8;
         margin-bottom: 20;
         background-color: #f0f0f0;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
+    }
+
+    .cover-webview {
+        width: 100%;
+        height: 100%;
     }
 
     .cover-text {

@@ -16,9 +16,7 @@
                     </stackLayout>
                     <stackLayout class="shelf-preview">
                         {#if readBooks.length > 0}
-                            {#each readBooks.slice(0, 3) as book}
-                                <label text={book.title} class="preview-book" />
-                            {/each}
+                            <label text="Tap to view books" class="preview-text" />
                         {:else}
                             <label text="No books read yet" class="empty-text" />
                         {/if}
@@ -33,9 +31,7 @@
                     </stackLayout>
                     <stackLayout class="shelf-preview">
                         {#if viewedBooks.length > 0}
-                            {#each viewedBooks.slice(0, 3) as book}
-                                <label text={book.title} class="preview-book" />
-                            {/each}
+                            <label text="Tap to view books" class="preview-text" />
                         {:else}
                             <label text="No books viewed yet" class="empty-text" />
                         {/if}
@@ -89,7 +85,7 @@
             <stackLayout orientation="horizontal" class="bottom-buttons">
                 <button text="Library" class="nav-btn" on:tap={goToLibrary} />
                 <button text="My Shelf" class="nav-btn nav-btn-active" />
-                <button text="Settings" class="nav-btn" on:tap={goToSettings} />
+                <button text="Profile" class="nav-btn" on:tap={goToProfile} />
             </stackLayout>
         </stackLayout>
 
@@ -166,7 +162,7 @@
     // @ts-ignore
     import type { Shelf, Book } from '../types';
     import Home from './Home.svelte';
-    import Settings from './Settings.svelte';
+    import Profile from './Profile.svelte';
     import ShelfBooks from './ShelfBooks.svelte';
     import { Auth } from '@nativescript/firebase-auth';
     // @ts-ignore
@@ -490,9 +486,9 @@
         } as any);
     }
 
-    function goToSettings() {
+    function goToProfile() {
         navigate({
-            page: Settings
+            page: Profile
         } as any);
     }
 </script>
@@ -565,6 +561,13 @@
 
     .shelf-preview {
         padding-left: 10;
+    }
+
+    .preview-text {
+        font-size: 14;
+        color: #666;
+        font-style: italic;
+        padding-left: 15;
     }
 
     .preview-book {

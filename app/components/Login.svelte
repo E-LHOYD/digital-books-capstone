@@ -2,7 +2,7 @@
     <stackLayout class="container">
 
         <!-- Title -->
-        <label text="Login" class="title" />
+        <label text="Log In" class="title" />
 
         <!-- Input: Email / Username -->
         <textField hint="Email / Username" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
@@ -54,13 +54,7 @@
         </stackLayout>
 
         <!-- Login Button -->
-        <button text="Login" class="btn login" on:tap={handleLogin}/>
-
-        <!-- Sign Up Button -->
-        <button text="Sign Up" class="btn signup" on:tap={goToSignup} />
-
-        <!-- Back Button -->
-        <button text="Back" class="btn back" on:tap={() => navigate({ page: Lockscreen })} />
+        <button text="Log In" class="btn login" on:tap={handleLogin}/>
 
     </stackLayout>
 </page>
@@ -69,7 +63,6 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Lockscreen from './Lockscreen.svelte';
     import Home from './Home.svelte';
-    import Signup from './Signup.svelte';
     import { login, getUserByUsername, sendPasswordReset } from '../services/firebase';
 
     //Password eye icon
@@ -193,12 +186,6 @@
             page: Home
         });
     }
-
-    function goToSignup() {
-        navigate({
-            page: Signup
-        } as any);
-    }
 </script>
 
 <style>
@@ -285,19 +272,6 @@
     .login {
         background-color: #033047;
         color: white;
-    }
-
-    .signup {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-    }
-
-    .back {
-        background-color: white;
-        color: #033047;
-        border-width: 4;
-        border-color: #033047;
     }
 
     .error-message {

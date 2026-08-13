@@ -165,6 +165,28 @@ export async function logout() {
 }
 
 // =========================
+// 🔐 CHANGE PASSWORD
+// =========================
+/**
+ * Change user's password
+ * @param {string} newPassword - New password
+ * @returns {Promise<void>}
+ */
+export async function changePassword(newPassword) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error("No user logged in");
+        }
+        await user.updatePassword(newPassword);
+        console.log("Password changed successfully");
+    } catch (error) {
+        console.error("Error changing password:", error);
+        throw error;
+    }
+}
+
+// =========================
 // 🔐 AUTO LOGIN
 // =========================
 /**
@@ -223,6 +245,22 @@ export async function getUserProfile(uid) {
     } catch (error) {
         console.error("Error getting user profile:", error);
         return null;
+    }
+}
+
+/**
+ * Update user profile data in Firestore
+ * @param {string} uid - User's Firebase UID
+ * @param {Object} data - Data to update
+ * @returns {Promise<void>}
+ */
+export async function updateUserProfile(uid, data) {
+    try {
+        await db.collection('users').doc(uid).update(data);
+        console.log("User profile updated successfully");
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
     }
 }
 
