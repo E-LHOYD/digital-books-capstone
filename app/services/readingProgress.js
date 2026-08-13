@@ -233,3 +233,96 @@ export async function deleteReadingProgress(bookId) {
         return false;
     }
 }
+
+/**
+ * Set bookmark for a book at specific page
+ */
+export async function setBookmark(bookId, pageNumber) {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return false;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .get();
+
+        const existingData = progressDoc.exists ? progressDoc.data() : {};
+        
+        await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .set({
+                ...existingData,
+                userId,
+                bookId,
+                bookmark: pageNumber,
+                bookmarkedAt: new Date()
+            }, { merge: true });
+
+        return true;
+    } catch (error) {
+        console.error('Error setting bookmark:', error);
+        return false;
+    }
+}
+
+/**
+ * Remove bookmark for a book
+ */
+export async function removeBookmark(bookId) {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return false;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .get();
+
+        if (progressDoc.exists) {
+            await firebase()
+                .firestore()
+                .collection('readingProgress')
+                .doc(`${userId}_${bookId}`)
+                .update({
+                    bookmark: null,
+                    bookmarkedAt: null
+                });
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error removing bookmark:', error);
+        return false;
+    }
+}
+
+/**
+ * Get bookmark for a book
+ */
+export async function getBookmark(bookId) {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return null;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .get();
+
+        if (progressDoc.exists) {
+            const data = progressDoc.data();
+            return data.bookmark || null;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error getting bookmark:', error);
+        return null;
+    }
+}

@@ -1,21 +1,37 @@
 <page actionBarHidden={true} class="reader-page">
-    <gridLayout rows="auto, auto, *" columns="*">
+    <gridLayout rows="auto, auto, auto, *" columns="*">
 
         <!-- Top bar -->
-        <gridLayout row={0} col={0} rows="auto" columns="auto, *, auto" class="reader-bar">
+        <gridLayout row={0} col={0} rows="auto" columns="auto, *, auto, auto" class="reader-bar">
             <button row={0} col={0} text="Back" class="reader-back" on:tap={goBack} />
             <label row={0} col={1} text={book.title} class="reader-title" textWrap="false" />
             <label row={0} col={2} text={`${currentPage} / ${totalPages}`} class="reader-page-counter" />
+            <button 
+                row={0} 
+                col={3} 
+                text={hasBookmark ? '🔖' : '📑'} 
+                class="reader-bookmark"
+                class:highlighted={hasBookmark}
+                on:tap={toggleBookmark}
+            />
         </gridLayout>
 
+        <!-- Bookmark indicator -->
+        {#if hasBookmark}
+            <gridLayout row={1} col={0} rows="auto" columns="*, auto" class="bookmark-indicator">
+                <label row={0} col={0} text={`🔖 Bookmarked: Page ${bookmarkPage}`} class="bookmark-text" />
+                <button row={0} col={1} text="Go to bookmark" class="bookmark-btn" on:tap={goToBookmark} />
+            </gridLayout>
+        {/if}
+
         <!-- Progress bar -->
-        <gridLayout row={1} col={0} rows="auto" columns="*" class="reader-progress-container">
+        <gridLayout row={2} col={0} rows="auto" columns="*" class="reader-progress-container">
             <progress row={0} col={0} value={progressPercentage} maxValue="100" class="reader-progress-bar" />
             <label row={0} col={0} text={`${progressPercentage.toFixed(1)}%`} class="reader-progress-text" />
         </gridLayout>
 
         <!-- Book -->
-        <gridLayout row={2} col={0} rows="*" columns="*">
+        <gridLayout row={3} col={0} rows="*" columns="*">
             <webView
                 bind:this={webViewRef}
                 row={0}
@@ -50,7 +66,7 @@
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     // @ts-ignore
-    import { saveReadingProgress, getReadingProgress } from '../services/readingProgress.js';
+    import { saveReadingProgress, getReadingProgress, setBookmark, removeBookmark, getBookmark } from '../services/readingProgress.js';
 
     export let book: any;
 
@@ -68,8 +84,11 @@
     let furthestPage = 1;
     let saveTimer: any = null;
     let pollTimer: any = null;
+    let hasBookmark = false;
+    let bookmarkPage = null;
+    let currentReaderUrl = '';
 
-    $: readerUrl = `${getReaderUrl(book.fileUrl)}${attempt ? `&retry=${attempt}` : ''}`;
+    $: readerUrl = getReaderUrl(book.fileUrl) + (attempt ? `&retry=${attempt}` : '');
 
     function onLoadStarted() {
         isLoading = true;
@@ -98,6 +117,13 @@
                 currentPage = furthestPage;
                 totalPages = progress.totalPages || 0;
                 progressPercentage = progress.percentage || 0;
+            }
+            
+            // Load bookmark
+            const bookmark = await getBookmark(book.id);
+            if (bookmark) {
+                hasBookmark = true;
+                bookmarkPage = bookmark;
             }
         } catch (error) {
             console.error('Error loading progress:', error);
@@ -279,6 +305,28 @@
         // it onto the navigation stack.
         Frame.topmost()?.goBack();
     }
+
+    async function toggleBookmark() {
+        if (hasBookmark) {
+            // Remove bookmark
+            await removeBookmark(book.id);
+            hasBookmark = false;
+            bookmarkPage = null;
+        } else {
+            // Set bookmark at current page
+            await setBookmark(book.id, currentPage);
+            hasBookmark = true;
+            bookmarkPage = currentPage;
+        }
+    }
+
+    async function goToBookmark() {
+        if (bookmarkPage) {
+            // Reload the reader at the bookmarked page
+            attempt += 1;
+            readerUrl = getReaderUrl(book.fileUrl) + `&page=${bookmarkPage}`;
+        }
+    }
 </script>
 
 <style>
@@ -313,6 +361,32 @@
         font-size: 14;
         vertical-align: center;
         margin-right: 10;
+    }
+
+    .reader-bookmark {
+        color: white;
+        font-size: 20;
+        background-color: transparent;
+        border-width: 0;
+        margin-right: 10;
+        padding: 0 8;
+    }
+
+    .reader-bookmark:highlighted {
+        color: #ffd700;
+    }
+
+    .bookmark-indicator {
+        background-color: #ffd700;
+        padding: 8 10;
+    }
+
+    .bookmark-btn {
+        color: #033047;
+        font-size: 14;
+        background-color: white;
+        border-radius: 4;
+        padding: 8 12;
     }
 
     .reader-progress-container {
