@@ -18,7 +18,6 @@ const TRACK_SUBJECTS = {
     HUMSS: ['Literature', 'English', 'Filipino', 'Arts'],
     GAS: ['English', 'Filipino', 'Math', 'Science', 'Literature'],
     TVL: ['Computer', 'Business', 'Health'],
-    SPORTS: ['Physical Education', 'Health', 'Science'],
     'ARTS & DESIGN': ['Arts', 'Music', 'Literature'],
 
     // College courses
@@ -63,7 +62,6 @@ export function subjectsForTrack(track) {
     if (text.includes('COMPUTER') || text.includes('INFORMATION TECH')) return TRACK_SUBJECTS.BSCS;
     if (text.includes('BUSINESS') || text.includes('ACCOUNT')) return TRACK_SUBJECTS.BSBA;
     if (text.includes('ARTS') || text.includes('DESIGN')) return TRACK_SUBJECTS['ARTS & DESIGN'];
-    if (text.includes('SPORT')) return TRACK_SUBJECTS.SPORTS;
 
     return [];
 }
