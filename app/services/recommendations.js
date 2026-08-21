@@ -79,11 +79,11 @@ function scoreBook(book, preferred) {
 }
 
 /**
- * Books to recommend to a student, best first.
+ * Books to recommend to a student, arranged randomly.
  *
  * Year level is a filter: a book aimed at Grade 11 is not offered to a college
- * student. Subject is a ranking, not a filter, so a student whose strand has no
- * matching books still gets the rest of the library rather than an empty page.
+ * student. Subject is now also a filter - only books matching the student's
+ * subjects are shown. If no subjects are set, all books are shown.
  *
  * Now also uses the student's manually selected interests from their profile.
  *
@@ -95,23 +95,35 @@ function scoreBook(book, preferred) {
 export function recommendBooks(books, user, limit = 20) {
     if (!Array.isArray(books)) return [];
 
-    const trackSubjects = subjectsForTrack(studentTrack(user));
+    const track = studentTrack(user);
+    const trackSubjects = subjectsForTrack(track);
     const userInterests = Array.isArray(user?.interests) ? user.interests : [];
 
     // Combine strand/course subjects with user's selected interests
     // Remove duplicates while preserving order
     const preferred = [...new Set([...trackSubjects, ...userInterests])];
 
-    return books
+    let filteredBooks = books
         .filter((book) => book && book.title)
-        .filter((book) => matchesYearLevel(book, user))
-        .map((book) => ({ book, score: scoreBook(book, preferred) }))
-        .sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return String(a.book.title).localeCompare(String(b.book.title));
-        })
-        .slice(0, limit)
-        .map((entry) => entry.book);
+        .filter((book) => matchesYearLevel(book, user));
+
+    // If the student has preferred subjects, filter to only show books that match
+    // at least one of their subjects. This prevents BSCS students from seeing BSBA books.
+    if (preferred.length > 0) {
+        filteredBooks = filteredBooks.filter((book) => {
+            const subjects = bookSubjects(book);
+            return subjects.some((subject) => preferred.includes(subject));
+        });
+    }
+
+    // Shuffle the filtered books randomly using Fisher-Yates algorithm
+    const shuffled = [...filteredBooks];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled.slice(0, limit);
 }
 
 /**

@@ -98,7 +98,7 @@
     // @ts-ignore
     import { recommendBooks, recommendationReason } from '../services/recommendations.js';
     // @ts-ignore
-    import { getCurrentUser } from '../services/firebase';
+    import { getCurrentUser, getUserProfile } from '../services/firebase';
 
     let books: any[] = [];
     let displayedBooks: any[] = [];
@@ -121,27 +121,45 @@
         ? displayedBooks
         : displayedBooks.filter((book) => matchesSearch(book, searchTerms));
 
-    // Update displayed books when books or user changes
-    $: if (books.length > 0) {
-        if (currentUser) {
-            displayedBooks = recommendBooks(books, currentUser);
-        } else {
-            displayedBooks = books;
-        }
-    }
+
 
     function clearSearch() {
         searchQuery = '';
     }
 
+
+
     onMount(() => {
-        // Load current user
-        getCurrentUser().then(user => {
-            currentUser = user;
+        // Load current user and their profile
+        getCurrentUser().then(async (authUser) => {
+            if (authUser) {
+                // Fetch the full user profile from Firestore
+                const userProfile = await getUserProfile(authUser.uid);
+                // Merge auth user with profile data
+                currentUser = { ...authUser, ...userProfile };
+            }
         });
 
         // Load books
         loadBooks();
+
+        // Force refresh displayedBooks after books load to ensure random shuffle
+        const interval = setInterval(() => {
+            if (books.length > 0) {
+                if (currentUser) {
+                    displayedBooks = recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+                } else {
+                    // Shuffle all books randomly for non-logged-in users
+                    const shuffled = [...books];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    displayedBooks = shuffled;
+                }
+                clearInterval(interval);
+            }
+        }, 100);
 
         // Marks the user active whenever the library is opened, which is what
         // the dashboard counts.
@@ -265,6 +283,7 @@
     .title-container {
         padding: 15 20;
         background-color: #033047;
+        vertical-align: center;
     }
 
     .app-title {
@@ -277,6 +296,7 @@
     .search-container {
         padding: 10 20;
         background-color: white;
+        margin-bottom: 10;
     }
 
     .container {

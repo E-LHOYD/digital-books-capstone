@@ -117,8 +117,25 @@
         searchQuery = '';
     }
 
+
+
     onMount(() => {
         loadBooks();
+        
+        // Force shuffle books after they load to ensure random arrangement
+        const interval = setInterval(() => {
+            if (books.length > 0) {
+                // Shuffle all books randomly
+                const shuffled = [...books];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                books = shuffled;
+                clearInterval(interval);
+            }
+        }, 100);
+        
         recordActivity(true);
     });
 
@@ -245,6 +262,7 @@
     .search-container {
         padding: 10 20;
         background-color: white;
+        margin-bottom: 10;
     }
 
     .search-bar {
