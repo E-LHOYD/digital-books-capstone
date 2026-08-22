@@ -1,11 +1,26 @@
 <page actionBarHidden={true} class="page">
-    <stackLayout class="container">
-        <!-- App Title -->
-        <label text="GD-Library" class="title" />
+    <gridLayout rows="auto, *, auto, auto, auto, *, auto, auto" columns="*" class="container">
+        <!-- Kicker -->
+        <label row="0" text="SCHOOL LIBRARY" class="kicker" />
 
-        <!-- Loading indicator -->
-        <activityIndicator busy={true} class="loading-indicator" />
-    </stackLayout>
+        <!-- Logo: shelf bars -->
+        <stackLayout row="2" orientation="horizontal" class="logo">
+            <stackLayout class="bar bar-1" />
+            <stackLayout class="bar bar-2" />
+            <stackLayout class="bar bar-3" rotate="8" />
+        </stackLayout>
+
+        <!-- Wordmark -->
+        <label row="3" text="GD-Library" class="title" />
+        <label row="4" text="— — — — — — —" class="rule" />
+
+        <!-- Loading -->
+        <activityIndicator row="6" busy={true} class="loading-indicator" />
+        <gridLayout row="7" columns="*, auto" class="meta">
+            <label col="0" text="LOADING" class="meta-label" />
+            <label col="1" text="V1.0" class="meta-label" />
+        </gridLayout>
+    </gridLayout>
 </page>
 
 <script lang="ts">
@@ -26,20 +41,17 @@
             const user = await autoLogin();
             if (user) {
                 console.log("Auto-login successful:", user.email);
-                // Navigate directly to Home if auto-login succeeds
                 navigate({
                     page: Home
                 } as any);
             } else {
                 console.log("No saved credentials or auto-login failed");
-                // Navigate to login after 2 seconds
                 setTimeout(() => {
                     goToLogin();
                 }, 2000);
             }
         } catch (error) {
             console.error("Auto-login error:", error);
-            // Navigate to login after 2 seconds even on error
             setTimeout(() => {
                 goToLogin();
             }, 2000);
@@ -54,32 +66,69 @@
 </script>
 
 <style>
-
     .page {
-        background-image: url("~/images/pastelblurlights.jpg");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: center;
+        background-color: #033047;
     }
-    
-    .container {
-        vertical-align: center;
-        align-items: center;
-        padding: 20;
 
+    .container {
+        padding: 24 24 32 24;
     }
+
+    .kicker {
+        color: #ffffff;
+        opacity: 0.8;
+        font-size: 12;
+        letter-spacing: 0.14;
+        horizontal-align: left;
+    }
+
+    .logo {
+        horizontal-align: left;
+        margin-bottom: 8;
+    }
+
+    .bar {
+        width: 15;
+        background-color: #ffffff;
+        margin-right: 6;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 72; }
+    .bar-2 { height: 56; }
+    .bar-3 { height: 64; opacity: 0.55; }
 
     .title {
-        font-size: 65;
+        color: #ffffff;
+        font-size: 44;
         font-weight: bold;
-        margin-bottom: 60;
-        text-align: center;
-        font-family: Milonga-Regular;
-        color: #033047;
+        font-family: Archivo, sans-serif;
+        horizontal-align: left;
+        margin-top: 16;
+    }
+
+    .rule {
+        color: #ffffff;
+        opacity: 0.9;
+        font-size: 14;
+        horizontal-align: left;
+        margin-top: 8;
     }
 
     .loading-indicator {
-        margin-top: 40;
-        color: #033047;
+        color: #ffffff;
+        horizontal-align: left;
+        margin-bottom: 10;
+    }
+
+    .meta {
+        width: 100%;
+    }
+
+    .meta-label {
+        color: #ffffff;
+        opacity: 0.7;
+        font-size: 11;
+        letter-spacing: 0.1;
     }
 </style>

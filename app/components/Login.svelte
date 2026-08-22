@@ -1,62 +1,76 @@
 <page actionBarHidden={true} class="page">
-    <stackLayout class="container">
+    <gridLayout rows="auto, auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
+        </stackLayout>
+        <stackLayout row="1" class="divider" />
 
-        <!-- Title -->
-        <label text="Log In" class="title" />
+        <!-- Form -->
+        <stackLayout row="2" class="container">
+            <label text="Log in" class="title" />
 
-        <!-- Input: Email / Username -->
-        <textField hint="Email / Username" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
+            <label text="EMAIL / USERNAME" class="field-label" />
+            <textField hint="name@school.edu" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
 
-        <!-- Password input with toggle -->
-        <gridLayout columns="*, auto" class="password-container">
-        <textField
-            hint="Password"
-            text={password}
-            on:textChange={(e) => password = e.value}
-            secure={isSecure}
-            class="input password-input"
-            col={0}
-        />
-        <button
-            text={isSecure ? "Show" : "Hide"}
-            class="toggle-btn"
-            col={1}
-            on:tap={() => (isSecure = !isSecure)}
-        />
-        </gridLayout>
+            <label text="PASSWORD" class="field-label" />
+            <gridLayout columns="*, auto" class="password-row">
+                <textField
+                    hint="Password"
+                    text={password}
+                    on:textChange={(e) => password = e.value}
+                    secure={isSecure}
+                    class="input password-input"
+                    col={0}
+                />
+                <button
+                    text={isSecure ? "Show" : "Hide"}
+                    class="toggle-btn"
+                    col={1}
+                    on:tap={() => (isSecure = !isSecure)}
+                />
+            </gridLayout>
 
-        <!-- Error Message -->
-        {#if errorMessage}
-            <label text={errorMessage} class="error-message" textWrap={true} />
-        {/if}
+            <!-- Error Message -->
+            {#if errorMessage}
+                <label text={errorMessage} class="error-message" textWrap={true} />
+            {/if}
 
-        <!-- Reset Notice -->
-        {#if noticeMessage}
-            <label text={noticeMessage} class="notice-message" textWrap={true} />
-        {/if}
+            <!-- Reset Notice -->
+            {#if noticeMessage}
+                <label text={noticeMessage} class="notice-message" textWrap={true} />
+            {/if}
 
-        <!-- Forgot Password -->
-        <button
-            text={isSendingReset ? "Sending..." : "Forgot Password?"}
-            class="link-btn"
-            isEnabled={!isSendingReset}
-            on:tap={handleForgotPassword}
-        />
-
-        <!-- Keep Logged In Checkbox -->
-        <stackLayout orientation="horizontal" class="checkbox-container">
-            <label 
-                text={keepLoggedIn ? "[✓]" : "[  ]"} 
-                class="checkbox-btn" 
-                on:tap={() => keepLoggedIn = !keepLoggedIn} 
-            />
-            <label text="Keep me logged in" class="checkbox-label" />
+            <!-- Keep logged in + forgot password -->
+            <gridLayout columns="auto, *, auto" class="options-row">
+                <stackLayout col={0} orientation="horizontal" class="checkbox-container">
+                    <label
+                        text={keepLoggedIn ? "■" : " "}
+                        class="checkbox-btn"
+                        on:tap={() => keepLoggedIn = !keepLoggedIn}
+                    />
+                    <label text="Keep me logged in" class="checkbox-label" />
+                </stackLayout>
+                <button
+                    col={2}
+                    text={isSendingReset ? "Sending..." : "Forgot password?"}
+                    class="link-btn"
+                    isEnabled={!isSendingReset}
+                    on:tap={handleForgotPassword}
+                />
+            </gridLayout>
         </stackLayout>
 
-        <!-- Login Button -->
-        <button text="Log In" class="btn login" on:tap={handleLogin}/>
-
-    </stackLayout>
+        <!-- Login Button pinned at bottom -->
+        <stackLayout row="4" class="footer">
+            <button text="Log in" class="btn login" on:tap={handleLogin}/>
+        </stackLayout>
+    </gridLayout>
 </page>
 
 <script lang="ts">
@@ -120,16 +134,16 @@
     async function handleLogin() {
         // Clear previous error message
         errorMessage = "";
-        
+
         if (!loginInput || !password) {
             errorMessage = "Please fill in all fields";
             console.log("Please fill in all fields");
             return;
         }
-        
+
         try {
             let email;
-            
+
             if (isEmail(loginInput)) {
                 // Direct email login
                 console.log("Login attempt with email:", loginInput);
@@ -137,16 +151,16 @@
             } else {
                 // Username login - get email from Firestore
                 console.log("Login attempt with username:", loginInput);
-                
+
                 try {
                     const userData = await getUserByUsername(loginInput);
                     console.log("Found user in Firestore:", userData);
-                    
+
                     if (!userData || !userData.email) {
                         errorMessage = "User not found or missing email in profile";
                         return;
                     }
-                    
+
                     email = userData.email;
                     console.log("Authenticating with email:", email);
                 } catch (usernameError) {
@@ -155,11 +169,11 @@
                     return;
                 }
             }
-            
+
             console.log("Attempting Firebase login with email:", email);
             const user = await login(email, password, keepLoggedIn);
             console.log("Login successful:", user);
-            
+
             // Navigate to Home on successful login
             goToHome();
         } catch (error) {
@@ -167,7 +181,7 @@
             console.error("Error code:", error.code);
             console.error("Error message:", error.message);
             console.error("Error details:", JSON.stringify(error, null, 2));
-            
+
             // Show specific error message based on error type
             if (error.code === 'auth/user-not-found') {
                 errorMessage = "User not found. Please check your username or email.";
@@ -180,7 +194,7 @@
             }
         }
     }
-    
+
     function goToHome() {
         navigate({
             page: Home
@@ -190,74 +204,125 @@
 
 <style>
     .page {
-        background-color: white;
+        background-color: #f3f2f2;
     }
 
-    .container {
-        vertical-align: center;
-        padding: 20;
-    }
-
-    .title {
-        font-size: 40;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 30;
-        color: #033047;
-    }
-
-    .input {
-        border-width: 1;
-        border-color: #ccc;
-        border-radius: 8;
-        font-size: 16;
-        padding: 10;
-        height: 50;
-        margin: 10 0;
-    }
-
-    .password-container {
-        margin: 10 0;
-        width: 100%;
-        height: 50;
-        border-width: 1;
-        border-color: #ccc;
-        border-radius: 8;
-        background-color: white;
-        vertical-align: center;
+    .screen {
         padding: 0;
     }
 
+    .header {
+        padding: 20 20 16 20;
+        horizontal-align: left;
+    }
+
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
+    }
+
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
+    }
+
+    .container {
+        padding: 28 20 0 20;
+    }
+
+    .title {
+        font-size: 34;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        text-align: left;
+        margin-bottom: 24;
+    }
+
+    .field-label {
+        font-size: 12;
+        letter-spacing: 0.1;
+        color: #201e1d;
+        margin-bottom: 6;
+    }
+
+    .input {
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
+        background-color: #ffffff;
+        font-size: 16;
+        padding: 10;
+        height: 48;
+        margin: 0 0 16 0;
+        color: #201e1d;
+    }
+
+    .password-row {
+        margin-bottom: 16;
+    }
+
     .password-input {
-        width: 100%;
-        padding-left: 10;
-        border-color: transparent;
-        border-width: 0;
+        margin: 0 8 0 0;
     }
 
     .toggle-btn {
-        width: 60;
-        height: 50;
-        background-color: transparent;
+        width: 72;
+        height: 48;
+        background-color: #ffffff;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         font-size: 14;
+        color: #201e1d;
+    }
+
+    .options-row {
+        margin: 4 0 0 0;
+    }
+
+    .checkbox-container {
+        vertical-align: center;
+    }
+
+    .checkbox-btn {
+        width: 24;
+        height: 24;
+        background-color: #ffffff;
         color: #033047;
-        border-width: 0;
-    }
-
-    .btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-    }
-
-    .notice-message {
-        color: #1a5fb4;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         font-size: 14;
-        margin: 6 0;
         text-align: center;
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .checkbox-label {
+        font-size: 14;
+        color: #201e1d;
+        vertical-align: center;
     }
 
     .link-btn {
@@ -267,49 +332,40 @@
         border-width: 0;
         margin: 0;
         padding: 6 0;
-    }
-
-    .login {
-        background-color: #033047;
-        color: white;
+        text-decoration: underline;
     }
 
     .error-message {
-        font-size: 14;
-        color: #c62828;
-        text-align: center;
-        margin: 10 0;
-        padding: 10;
-        background-color: #ffebee;
-        border-radius: 8;
-        border-width: 1;
-        border-color: #ef9a9a;
-    }
-
-    .checkbox-container {
-        margin: 15 0;
-        width: 100%;
-        horizontal-align: left;
-    }
-
-    .checkbox-btn {
-        width: 40;
-        height: 30;
-        background-color: white;
-        color: #033047;
-        border-width: 2;
+        font-size: 13;
+        color: #022638;
+        margin: 0 0 12 0;
+        padding: 10 12;
+        background-color: #d8e2e9;
+        border-radius: 0;
+        border-width: 0 0 0 4;
         border-color: #033047;
-        border-radius: 4;
-        font-size: 20;
-        font-weight: bold;
-        margin-right: 10;
-        text-align: center;
-        vertical-align: center;
     }
 
-    .checkbox-label {
-        font-size: 16;
+    .notice-message {
         color: #033047;
-        vertical-align: center;
+        font-size: 13;
+        margin: 0 0 12 0;
+    }
+
+    .footer {
+        padding: 0 20 24 20;
+    }
+
+    .btn.login {
+        width: 100%;
+        height: 48;
+        margin: 0;
+        padding: 10;
+        border-radius: 0;
+        font-size: 16;
+        font-weight: bold;
+        background-color: #033047;
+        color: #ffffff;
+        text-align: left;
     }
 </style>
