@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    The window background Android paints from the moment the icon is tapped
+    until the first NativeScript page renders. It was solid white, which is the
+    blank flash before the splash screen appears: the app was showing a white
+    window, then swapping it for the navy Lockscreen.
+
+    Painting it the same navy the Lockscreen uses makes that swap invisible.
+    Deliberately just a flat colour and no logo: the Lockscreen draws its own
+    wordmark and shelf bars, and a logo here would jump as the two hand over.
+-->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#FFFFFF" />
+            <solid android:color="@color/ns_splashBackground" />
         </shape>
     </item>
 </layer-list>
