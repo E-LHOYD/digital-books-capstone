@@ -98,6 +98,11 @@
     .bar-2 { height: 56; }
     .bar-3 { height: 64; opacity: 0.55; }
 
+    /* Archivo lives in app/fonts as Archivo-Regular.ttf and Archivo-Bold.ttf,
+       both reporting the family name "Archivo", so font-weight picks the right
+       file. The sans-serif fallback matters: a missing font file fails silently
+       on Android and the wordmark would otherwise render in whatever the
+       platform chose. */
     .title {
         color: #ffffff;
         font-size: 44;
