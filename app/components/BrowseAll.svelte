@@ -213,6 +213,8 @@
 					subjects,
 					subject,
 					yearLevels,
+					publishedDate: data.publishedDate || null,
+					releaseDate: data.releaseDate || null,
 					coverPath,
 					fallbackCover: "~/images/bookcoverbrown.jpg"
 				};

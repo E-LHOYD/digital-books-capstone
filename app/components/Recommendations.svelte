@@ -142,6 +142,8 @@
                     author: data.author ?? '',
                     detail: data.detail || '',
                     fileUrl: data.fileUrl || null,
+                    publishedDate: data.publishedDate || null,
+                    releaseDate: data.releaseDate || null,
                     subjects: data.subjects || null,
                     subject: data.subject || null,
                     yearLevels: data.yearLevels || null,

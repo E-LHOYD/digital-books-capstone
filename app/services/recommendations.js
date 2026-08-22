@@ -1,13 +1,25 @@
 // Picking which books to put in front of a student.
 //
-// The old version scanned each book's title and description for words like
-// "advanced", "bscs" or "math". That guessed at data the dashboard already
-// records properly, and it dropped any book whose text happened not to mention
-// the right word. This works from the fields books actually carry: the year
-// levels the book is aimed at, and its subjects.
+// Three things decide the list, in this order:
+//
+//   year level  a filter. A book aimed at Grade 11 is not offered to a college
+//               student, and a book with no level set suits everyone.
+//   subjects    a filter, then a ranking. A student is not shown books from
+//               outside their subjects, and within what is left the closest
+//               matches come first.
+//   chance      the tie-breaker. Books on the same score are shuffled, so the
+//               page looks different each visit without a refresh button.
+//
+// A student's subjects come from two places, and they are not worth the same.
+// The interests they picked at signup are an explicit choice, so they outweigh
+// the subjects merely implied by their strand or course.
 
-import { bookSubjects } from './subjects';
+import { SUBJECTS, bookSubjects } from './subjects';
 import { matchesYearLevel, studentLevel } from './yearLevels';
+
+// An interest chosen by hand counts double a subject inferred from a strand.
+const INTEREST_WEIGHT = 2;
+const TRACK_WEIGHT = 1;
 
 // Which subjects each strand or course leans on. Only the canonical subject
 // labels appear here, so every entry can actually match a book.
@@ -26,6 +38,22 @@ const TRACK_SUBJECTS = {
     BSIS: ['Computer', 'Business', 'Math'],
     BSBA: ['Business', 'Math', 'English']
 };
+
+// Signup used to offer sixteen interests of its own before it was pointed at
+// the library's subject list. Accounts made then still hold labels no book can
+// carry, and reading them literally would leave those students matching
+// nothing. The ones with an obvious home are translated; History and Culinary
+// Arts have none, so they are dropped rather than forced somewhere wrong.
+const LEGACY_INTERESTS = {
+    mathematics: 'Math',
+    'computer science': 'Computer',
+    technology: 'Computer',
+    biology: 'Science',
+    chemistry: 'Science',
+    physics: 'Science'
+};
+
+const CANONICAL_SUBJECTS = new Map(SUBJECTS.map((s) => [s.toLowerCase(), s]));
 
 /**
  * The student's strand or course, whichever their signup filled in.
@@ -67,25 +95,61 @@ export function subjectsForTrack(track) {
 }
 
 /**
- * How well a book suits a student, as a count of the subjects they share.
- * @param {any} book
- * @param {string[]} preferred
- * @returns {number}
+ * The interests a student chose, as subjects a book can actually carry.
+ *
+ * Anything that cannot be matched to a subject is dropped, so it neither ranks
+ * a book nor narrows the list to nothing.
+ *
+ * @param {any} user
+ * @returns {string[]}
  */
-function scoreBook(book, preferred) {
-    if (preferred.length === 0) return 0;
-    const subjects = bookSubjects(book);
-    return subjects.filter((subject) => preferred.includes(subject)).length;
+export function interestSubjects(user) {
+    if (!Array.isArray(user?.interests)) return [];
+
+    const out = [];
+
+    for (const raw of user.interests) {
+        if (typeof raw !== 'string') continue;
+
+        const text = raw.trim().toLowerCase();
+        if (!text) continue;
+
+        const subject = CANONICAL_SUBJECTS.get(text) ?? LEGACY_INTERESTS[text];
+        if (subject && !out.includes(subject)) out.push(subject);
+    }
+
+    return out;
 }
 
 /**
- * Books to recommend to a student, arranged randomly.
- *
- * Year level is a filter: a book aimed at Grade 11 is not offered to a college
- * student. Subject is now also a filter - only books matching the student's
- * subjects are shown. If no subjects are set, all books are shown.
- *
- * Now also uses the student's manually selected interests from their profile.
+ * How closely a book fits, counting an interest twice over a track subject.
+ * @param {any} book
+ * @param {string[]} interests
+ * @param {string[]} trackSubjects
+ * @returns {number}
+ */
+export function scoreBook(book, interests, trackSubjects) {
+    let score = 0;
+
+    for (const subject of bookSubjects(book)) {
+        if (interests.includes(subject)) score += INTEREST_WEIGHT;
+        if (trackSubjects.includes(subject)) score += TRACK_WEIGHT;
+    }
+
+    return score;
+}
+
+/** Fisher-Yates, in place. */
+function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+}
+
+/**
+ * Books to recommend to a student, closest fit first.
  *
  * @param {any[]} books
  * @param {any} user
@@ -95,35 +159,42 @@ function scoreBook(book, preferred) {
 export function recommendBooks(books, user, limit = 20) {
     if (!Array.isArray(books)) return [];
 
-    const track = studentTrack(user);
-    const trackSubjects = subjectsForTrack(track);
-    const userInterests = Array.isArray(user?.interests) ? user.interests : [];
+    const interests = interestSubjects(user);
+    const trackSubjects = subjectsForTrack(studentTrack(user));
+    const preferred = [...new Set([...interests, ...trackSubjects])];
 
-    // Combine strand/course subjects with user's selected interests
-    // Remove duplicates while preserving order
-    const preferred = [...new Set([...trackSubjects, ...userInterests])];
-
-    let filteredBooks = books
+    const atLevel = books
         .filter((book) => book && book.title)
         .filter((book) => matchesYearLevel(book, user));
 
-    // If the student has preferred subjects, filter to only show books that match
-    // at least one of their subjects. This prevents BSCS students from seeing BSBA books.
+    // Keeping a student inside their own subjects is the point of the filter,
+    // but an empty page is worse than a loose one: if nothing survives, the
+    // whole year-appropriate library is shown rather than nothing at all.
+    let candidates = atLevel;
+
     if (preferred.length > 0) {
-        filteredBooks = filteredBooks.filter((book) => {
-            const subjects = bookSubjects(book);
-            return subjects.some((subject) => preferred.includes(subject));
-        });
+        const onSubject = atLevel.filter((book) =>
+            bookSubjects(book).some((subject) => preferred.includes(subject))
+        );
+
+        if (onSubject.length > 0) candidates = onSubject;
     }
 
-    // Shuffle the filtered books randomly using Fisher-Yates algorithm
-    const shuffled = [...filteredBooks];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    // Grouped by score so the closest fits lead, shuffled inside each group so
+    // equally good books take turns at the top.
+    const byScore = new Map();
+
+    for (const book of candidates) {
+        const score = scoreBook(book, interests, trackSubjects);
+        if (!byScore.has(score)) byScore.set(score, []);
+        byScore.get(score).push(book);
     }
 
-    return shuffled.slice(0, limit);
+    const ordered = [...byScore.keys()]
+        .sort((a, b) => b - a)
+        .flatMap((score) => shuffle(byScore.get(score)));
+
+    return ordered.slice(0, limit);
 }
 
 /**
@@ -134,19 +205,26 @@ export function recommendBooks(books, user, limit = 20) {
  */
 export function recommendationReason(user) {
     const level = studentLevel(user);
-    const track = studentTrack(user);
-    const trackSubjects = subjectsForTrack(track);
-    const userInterests = Array.isArray(user?.interests) ? user.interests : [];
+    const interests = interestSubjects(user);
+    const trackSubjects = subjectsForTrack(studentTrack(user));
 
-    if (!level && trackSubjects.length === 0 && userInterests.length === 0) {
+    if (!level && interests.length === 0 && trackSubjects.length === 0) {
         return 'Showing the whole library. Add your year level, strand or course, and interests to get a shorter list.';
     }
 
     const parts = [];
+
     if (level) parts.push(`for ${level}`);
-    
-    const preferred = [...new Set([...trackSubjects, ...userInterests])];
-    if (preferred.length > 0) parts.push(`leaning on ${preferred.join(', ')}`);
+    if (interests.length > 0) parts.push(`led by your interests in ${interests.join(', ')}`);
+
+    // Only the track subjects the interests have not already claimed, so the
+    // sentence does not name the same subject twice. Reads as a follow-on when
+    // there are interests to follow, and stands alone when there are not.
+    const extra = trackSubjects.filter((s) => !interests.includes(s));
+
+    if (extra.length > 0) {
+        parts.push(`${interests.length > 0 ? 'then' : 'leaning on'} ${extra.join(', ')}`);
+    }
 
     return `Books ${parts.join(', ')}.`;
 }

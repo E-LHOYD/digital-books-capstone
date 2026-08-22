@@ -1,4 +1,4 @@
-<page>
+<page actionBarHidden={true}>
     <gridLayout rows="*" columns="*">
     <scrollView row={0} col={0}>
         <stackLayout class="container">
@@ -18,13 +18,25 @@
         {/if}
 
         <!-- Title -->
-        <label text={book.title} class="detail-title" />
+        <label text={book.title} class="detail-title" textWrap="true" />
 
         <!-- Author -->
         <label text={book.author} class="detail-author" />
 
         <!-- Description -->
         <label text={book.detail || 'No description available'} textWrap="true" class="detail-description" />
+
+        <!-- Published / Release dates -->
+        {#if book.publishedDate || book.releaseDate}
+            <stackLayout class="detail-dates">
+                {#if book.publishedDate}
+                    <label text={`Published: ${formatDate(book.publishedDate)}`} class="detail-date" />
+                {/if}
+                {#if book.releaseDate}
+                    <label text={`Released: ${formatDate(book.releaseDate)}`} class="detail-date" />
+                {/if}
+            </stackLayout>
+        {/if}
 
         <!-- Reading progress -->
         {#if readingPercent !== null}
@@ -148,6 +160,20 @@
     // A book is only readable if its Firestore document carries a usable
     // storage URL in `fileUrl`. The admin dashboard uploads it and writes it there.
     $: canRead = isBookFileUrl(book.fileUrl);
+
+    // Dates are stored by the dashboard as YYYY-MM-DD strings. Formatted by
+    // hand rather than with toLocaleDateString, which needs Intl support that
+    // is not guaranteed in the Android runtime.
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+    function formatDate(value: any): string {
+        const m = String(value ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return String(value ?? '');
+        const month = MONTHS[Number(m[2]) - 1];
+        if (!month) return String(value);
+        return `${month} ${Number(m[3])}, ${m[1]}`;
+    }
 
     // Reading progress for this book, shown once there is something to show.
     let readingPercent: number | null = null;
@@ -414,9 +440,20 @@
     .detail-description {
         font-size: 16;
         color: #333;
-        margin-bottom: 30;
+        margin-bottom: 12;
         padding: 0 10;
         text-align: center;
+    }
+
+    .detail-dates {
+        margin-bottom: 30;
+    }
+
+    .detail-date {
+        font-size: 14;
+        color: #666;
+        text-align: center;
+        margin-bottom: 2;
     }
 
     .buttons-row {

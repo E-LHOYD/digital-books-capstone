@@ -86,9 +86,9 @@
     let pollTimer: any = null;
     let hasBookmark = false;
     let bookmarkPage = null;
-    let currentReaderUrl = '';
+    let jumpPage = 0;
 
-    $: readerUrl = getReaderUrl(book.fileUrl) + (attempt ? `&retry=${attempt}` : '');
+    $: readerUrl = getReaderUrl(book.fileUrl, jumpPage > 1 ? { page: jumpPage } : {}) + (attempt ? `&retry=${attempt}` : '');
 
     function onLoadStarted() {
         isLoading = true;
@@ -320,11 +320,54 @@
         }
     }
 
-    async function goToBookmark() {
-        if (bookmarkPage) {
-            // Reload the reader at the bookmarked page
-            attempt += 1;
-            readerUrl = getReaderUrl(book.fileUrl) + `&page=${bookmarkPage}`;
+    // Reload the book with a page param. Drive it through the reactive
+    // readerUrl declaration: assigning readerUrl directly does not work,
+    // because bumping `attempt` re-runs the `$:` statement, which
+    // overwrites the assignment with a URL that has no page param.
+    function reloadAtPage(page: number) {
+        jumpPage = page;
+        attempt += 1;
+        isLoading = true;
+    }
+
+    function goToBookmark() {
+        if (!bookmarkPage) return;
+        const target = bookmarkPage;
+
+        // Prefer scrolling inside the already-loaded WebView — reloading the
+        // whole PDF just to jump pages is slow on big books. The reader page
+        // renders one canvas.pdf-page per page, in order, and scrolls on the
+        // window, so scrollIntoView on the target canvas is enough.
+        const view = resolveWebView();
+        const native = view?.android;
+        if (isAndroid && native && typeof native.evaluateJavascript === 'function') {
+            const js =
+                '(function(){' +
+                `var c=document.querySelectorAll('canvas.pdf-page')[${target - 1}];` +
+                'if(!c)return false;' +
+                "c.scrollIntoView({behavior:'smooth',block:'start'});" +
+                'return true;})()';
+            try {
+                native.evaluateJavascript(js, new android.webkit.ValueCallback({
+                    onReceiveValue(value: any) {
+                        if (String(value) === 'true') {
+                            // The 1s progress poll confirms the page shortly;
+                            // update immediately so the counter doesn't lag.
+                            currentPage = target;
+                        } else {
+                            // Target page not rendered yet (book still
+                            // drawing) — fall back to a reload, which waits
+                            // for render and then scrolls server-side.
+                            reloadAtPage(target);
+                        }
+                    }
+                }));
+            } catch (error) {
+                console.error('Bookmark scroll failed, reloading instead:', error);
+                reloadAtPage(target);
+            }
+        } else {
+            reloadAtPage(target);
         }
     }
 </script>

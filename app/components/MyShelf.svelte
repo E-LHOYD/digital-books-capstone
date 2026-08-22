@@ -286,6 +286,8 @@
                     author: data.author,
                     detail: data.detail || '',
                     fileUrl: data.fileUrl || null,
+                    publishedDate: data.publishedDate || null,
+                    releaseDate: data.releaseDate || null,
                     coverPath: `~/ebooks/cover/${data.title.replace(/\s+/g, '').toLowerCase()}cover.jpg`,
                 };
             });
