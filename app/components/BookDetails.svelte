@@ -1,7 +1,8 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
+        <!-- Header: back button + logo + wordmark -->
         <stackLayout row="0" orientation="horizontal" class="header">
+            <button text="←" class="back-btn" on:tap={goBack} />
             <stackLayout orientation="horizontal" class="logo">
                 <stackLayout class="bar bar-1" />
                 <stackLayout class="bar bar-2" />
@@ -33,6 +34,14 @@
 
         <!-- Author -->
         <label text={book.author} class="detail-author" />
+
+        <!-- Subjects -->
+        {#if book.subjects && book.subjects.length > 0}
+            <stackLayout class="detail-subjects">
+                <label text="Subjects:" class="subjects-label" />
+                <label text={book.subjects.join(', ')} class="subjects-text" textWrap="true" />
+            </stackLayout>
+        {/if}
 
         <!-- Description -->
         <label text={book.detail || 'No description available'} textWrap="true" class="detail-description" />
@@ -75,9 +84,6 @@
             <button text="Read Book" class="btn btn-primary" on:tap={readBook} isEnabled={canRead} />
             <button text="Add to Shelf" class="btn btn-secondary" on:tap={showShelfSelector} />
         </stackLayout>
-
-        <!-- Back Button -->
-        <button text="Back" class="btn btn-back" on:tap={goBack} />
 
         </stackLayout>
     </scrollView>
@@ -421,6 +427,16 @@
         horizontal-align: left;
     }
 
+    .back-btn {
+        font-size: 24;
+        font-weight: bold;
+        color: #033047;
+        background-color: transparent;
+        border-width: 0;
+        padding: 0;
+        margin-right: 15;
+    }
+
     .logo {
         vertical-align: center;
         margin-right: 10;
@@ -530,6 +546,23 @@
         text-align: center;
     }
 
+    .detail-subjects {
+        margin-bottom: 20;
+        padding: 0 10;
+    }
+
+    .subjects-label {
+        font-size: 14;
+        font-weight: bold;
+        color: #033047;
+        margin-bottom: 5;
+    }
+
+    .subjects-text {
+        font-size: 16;
+        color: #666;
+    }
+
     .detail-description {
         font-size: 16;
         color: #333;
@@ -572,12 +605,6 @@
         color: #033047;
         border-width: 2;
         border-color: #201e1d;
-    }
-
-    .btn-back {
-        background-color: #666;
-        color: white;
-        width: 200;
     }
 
     .notice {
