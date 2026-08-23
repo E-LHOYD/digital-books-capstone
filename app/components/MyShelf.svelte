@@ -759,10 +759,10 @@
     .shelf-delete-btn {
         background-color: transparent;
         color: #c62828;
-        font-size: 13;
+        font-size: 11;
         font-weight: bold;
         border-width: 0;
-        padding: 8 10;
+        padding: 4 8;
         margin: 0;
     }
 
