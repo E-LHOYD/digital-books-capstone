@@ -1,7 +1,8 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
+        <!-- Header: back button + logo + wordmark -->
         <stackLayout row="0" orientation="horizontal" class="header">
+            <button text="←" class="back-btn" on:tap={goBack} />
             <stackLayout orientation="horizontal" class="logo">
                 <stackLayout class="bar bar-1" />
                 <stackLayout class="bar bar-2" />
@@ -66,6 +67,7 @@
     import SubjectBooks from './SubjectBooks.svelte';
     import MyShelf from './MyShelf.svelte';
     import Profile from './Profile.svelte';
+    import Home from './Home.svelte';
     // @ts-ignore
     import { DEFAULT_SUBJECTS, hasSubject } from '../services/subjects.js';
 
@@ -90,7 +92,9 @@
     }
 
     function goBack() {
-        Frame.topmost()?.goBack();
+        navigate({
+            page: Home
+        } as any);
     }
 
     function goToMyShelf() {
@@ -118,6 +122,17 @@
     .header {
         padding: 20 20 16 20;
         horizontal-align: left;
+    }
+
+    .back-btn {
+        font-size: 24;
+        font-weight: bold;
+        color: #033047;
+        background-color: transparent;
+        border-width: 0;
+        padding: 0;
+        margin-right: 15;
+        vertical-align: center;
     }
 
     .logo {
