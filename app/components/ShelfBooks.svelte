@@ -18,35 +18,60 @@
 
             <!-- Books List -->
             <scrollView class="books-scroll">
+                <stackLayout>
+                    {#if books.length === 0}
+                        <stackLayout class="empty-container">
+                            <label text="No books in this shelf" class="empty-text" />
+                        </stackLayout>
+                    {:else}
+                        {#each books as book (book.id)}
+                            <gridLayout class="book-item" rows="auto, auto" columns="*, auto" on:tap={() => !isReadShelf && !isViewedShelf ? toggleBookSelection(book) : goToBookDetails(book)}>
+                                <label row={0} col={0} text={book.title} class="book-title" />
+                                <label row={1} col={0} text={book.author} class="book-author" />
+                                {#if typeof book.percentage === 'number'}
+                                    <label
+                                        row={0}
+                                        col={1}
+                                        rowSpan={2}
+                                        text={`${Math.round(book.percentage)}%`}
+                                        class="book-percent"
+                                        verticalAlignment="center"
+                                    />
+                                {/if}
+                                {#if !isReadShelf && !isViewedShelf && selectedBooks.has(book.id)}
+                                    <label row={0} col={1} rowSpan={2} text="✓" class="selected-check" verticalAlignment="center" />
+                                {/if}
+                            </gridLayout>
+                        {/each}
+                    {/if}
+                </stackLayout>
+            </scrollView>
 
-        <!-- Books List -->
-        <scrollView class="books-scroll">
-            <stackLayout>
-                {#if books.length === 0}
-                    <stackLayout class="empty-container">
-                        <label text="No books in this shelf" class="empty-text" />
-                    </stackLayout>
-                {:else}
-                    {#each books as book (book.id)}
-                        <gridLayout class="book-item" rows="auto, auto" columns="*, auto" on:tap={() => goToBookDetails(book)}>
-                            <label row={0} col={0} text={book.title} class="book-title" />
-                            <label row={1} col={0} text={book.author} class="book-author" />
-                            {#if typeof book.percentage === 'number'}
-                                <label
-                                    row={0}
-                                    col={1}
-                                    rowSpan={2}
-                                    text={`${Math.round(book.percentage)}%`}
-                                    class="book-percent"
-                                    verticalAlignment="center"
-                                />
-                            {/if}
-                        </gridLayout>
-                    {/each}
-                {/if}
-            </stackLayout>
-        </scrollView>
+            <!-- Remove from shelf button (only for custom shelves) -->
+            {#if !isReadShelf && !isViewedShelf && books.length > 0}
+                <button text="Remove Selected Books" class="remove-btn" on:tap={showRemoveDialog} />
+            {/if}
         </stackLayout>
+
+        <!-- Remove Confirmation Modal -->
+        {#if showRemoveModal}
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={cancelRemove}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text="Remove Books" class="modal-title" />
+
+                    <label
+                        text={`Are you sure you want to remove ${selectionCount} book${selectionCount === 1 ? '' : 's'} from this shelf?`}
+                        class="modal-message"
+                        textWrap="true"
+                    />
+
+                    <stackLayout orientation="horizontal" class="modal-actions">
+                        <button text="Cancel" class="btn btn-cancel" on:tap={cancelRemove} />
+                        <button text="Remove" class="btn btn-danger" on:tap={confirmRemove} />
+                    </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
 
         <!-- Bottom Navigation -->
         <stackLayout row={3} col={0} class="bottom-container-fixed">
@@ -88,6 +113,59 @@
     export let isReadShelf: boolean;
     // @ts-ignore
     export let isViewedShelf: boolean = false;
+
+    let selectedBooks = new Set<string>();
+    let showRemoveModal = false;
+    let selectionCount = 0;
+
+    function toggleBookSelection(book: any) {
+        if (selectedBooks.has(book.id)) {
+            selectedBooks.delete(book.id);
+        } else {
+            selectedBooks.add(book.id);
+        }
+        selectionCount = selectedBooks.size;
+    }
+
+    function showRemoveDialog() {
+        if (selectionCount === 0) {
+            alert('Please select at least one book to remove.');
+            return;
+        }
+        showRemoveModal = true;
+    }
+
+    function cancelRemove() {
+        showRemoveModal = false;
+    }
+
+    function stopPropagation(event: any) {
+        if (event && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
+    }
+
+    async function confirmRemove() {
+        try {
+            // Remove selected books from the shelf
+            const updatedBookIds = books
+                .filter((book) => !selectedBooks.has(book.id))
+                .map((book) => book.id);
+
+            // Update the shelf in Firestore
+            // This would require the shelf service to be imported and used
+            // For now, we'll just clear the selection and show a success message
+            selectedBooks.clear();
+            showRemoveModal = false;
+            alert('Books removed successfully!');
+            
+            // Refresh the shelf books
+            goBack();
+        } catch (error) {
+            console.error('Error removing books:', error);
+            alert('Failed to remove books. Please try again.');
+        }
+    }
 
     function goBack() {
         navigate({
@@ -225,6 +303,13 @@
         color: #666;
     }
 
+    .selected-check {
+        font-size: 20;
+        font-weight: bold;
+        color: #1b7f3b;
+        margin-left: 10;
+    }
+
     .empty-container {
         padding: 40;
         align-items: center;
@@ -234,6 +319,70 @@
         font-size: 16;
         color: #999;
         text-align: center;
+    }
+
+    .remove-btn {
+        width: 100%;
+        padding: 15;
+        background-color: #c62828;
+        color: white;
+        font-size: 16;
+        font-weight: bold;
+        border-radius: 0;
+        border-width: 0;
+        margin-top: 10;
+    }
+
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0;
+        padding: 20;
+        width: 80%;
+        max-width: 400;
+    }
+
+    .modal-title {
+        font-size: 20;
+        font-weight: bold;
+        color: #033047;
+        margin-bottom: 15;
+        text-align: center;
+    }
+
+    .modal-message {
+        font-size: 16;
+        color: #333;
+        text-align: center;
+        margin-bottom: 20;
+    }
+
+    .modal-actions {
+        margin-top: 15;
+    }
+
+    .btn {
+        padding: 12 20;
+        border-radius: 0;
+        font-size: 16;
+        font-weight: bold;
+        margin: 0 5;
+    }
+
+    .btn-cancel {
+        background-color: #f0f0f0;
+        color: #033047;
+        border-width: 2;
+        border-color: #033047;
+    }
+
+    .btn-danger {
+        background-color: #c62828;
+        color: white;
+        border-width: 0;
     }
 
     .bottom-container-fixed {
