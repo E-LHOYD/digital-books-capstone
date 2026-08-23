@@ -43,7 +43,7 @@
         <!-- Bottom Navigation -->
         <stackLayout row={3} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goBack}>
+                <stackLayout class="nav-btn nav-btn-active" on:tap={goToLibrary}>
                     <label text="📚" class="nav-icon" />
                     <label text="Library" class="nav-text" />
                 </stackLayout>
@@ -92,6 +92,12 @@
     }
 
     function goBack() {
+        navigate({
+            page: Home
+        } as any);
+    }
+
+    function goToLibrary() {
         navigate({
             page: Home
         } as any);

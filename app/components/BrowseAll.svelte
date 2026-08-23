@@ -80,7 +80,7 @@
         <!-- Bottom Buttons - Fixed at bottom -->
         <stackLayout row={4} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                <stackLayout class="nav-btn nav-btn-active" on:tap={goToLibrary}>
                     <label text="📚" class="nav-icon" />
                     <label text="Library" class="nav-text" />
                 </stackLayout>
