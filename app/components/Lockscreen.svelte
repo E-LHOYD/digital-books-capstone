@@ -1,5 +1,5 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, *, auto, auto, auto" columns="*" class="container">
+    <gridLayout rows="auto, *, auto, auto, auto, *, auto, auto" columns="*" class="container">
         <!-- Kicker -->
         <label row="0" text="SCHOOL LIBRARY" class="kicker" />
 
@@ -13,6 +13,13 @@
         <!-- Wordmark -->
         <label row="3" text="GD-Library" class="title" />
         <label row="4" text="— — — — — — —" class="rule" />
+
+        <!-- Loading -->
+        <activityIndicator row="6" busy={true} class="loading-indicator" />
+        <gridLayout row="7" columns="*, auto" class="meta">
+            <label col="0" text="LOADING" class="meta-label" />
+            <label col="1" text="V1.0" class="meta-label" />
+        </gridLayout>
     </gridLayout>
 </page>
 
@@ -111,5 +118,22 @@
         font-size: 14;
         horizontal-align: left;
         margin-top: 8;
+    }
+
+    .loading-indicator {
+        color: #ffffff;
+        horizontal-align: left;
+        margin-bottom: 10;
+    }
+
+    .meta {
+        width: 100%;
+    }
+
+    .meta-label {
+        color: #ffffff;
+        opacity: 0.7;
+        font-size: 11;
+        letter-spacing: 0.1;
     }
 </style>
