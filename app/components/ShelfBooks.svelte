@@ -24,8 +24,8 @@
                             <label text="No books in this shelf" class="empty-text" />
                         </stackLayout>
                     {:else}
-                        {#each books as book (book.id)}
-                            <gridLayout class="book-item" rows="auto, auto" columns="*, auto" on:tap={() => !isReadShelf && !isViewedShelf ? toggleBookSelection(book) : goToBookDetails(book)}>
+                        {#each books as book (book.id + '-' + refreshKey)}
+                            <gridLayout class="book-item" rows="auto, auto" columns="*, auto, auto" on:tap={() => goToBookDetails(book)}>
                                 <label row={0} col={0} text={book.title} class="book-title" />
                                 <label row={1} col={0} text={book.author} class="book-author" />
                                 {#if typeof book.percentage === 'number'}
@@ -38,8 +38,17 @@
                                         verticalAlignment="center"
                                     />
                                 {/if}
-                                {#if !isReadShelf && !isViewedShelf && selectedBooks.has(book.id)}
-                                    <label row={0} col={1} rowSpan={2} text="✓" class="selected-check" verticalAlignment="center" />
+                                {#if !isReadShelf && !isViewedShelf}
+                                    <button
+                                        row={0}
+                                        col={2}
+                                        rowSpan={2}
+                                        text={isSelected(book.id) ? "✓" : "○"}
+                                        class="select-checkbox"
+                                        style={isSelected(book.id) ? "color: #1b7f3b;" : "color: #033047;"}
+                                        on:tap={(e) => { e.stopPropagation(); toggleBookSelection(book); }}
+                                        verticalAlignment="center"
+                                    />
                                 {/if}
                             </gridLayout>
                         {/each}
@@ -114,18 +123,26 @@
     // @ts-ignore
     export let isViewedShelf: boolean = false;
 
-    let selectedBooks = new Set<string>();
+    let selectedBooks: string[] = [];
     let showRemoveModal = false;
     let selectionCount = 0;
+    let refreshKey = 0;
 
     function toggleBookSelection(book: any) {
-        if (selectedBooks.has(book.id)) {
-            selectedBooks.delete(book.id);
+        if (selectedBooks.includes(book.id)) {
+            selectedBooks = selectedBooks.filter(id => id !== book.id);
         } else {
-            selectedBooks.add(book.id);
+            selectedBooks = [...selectedBooks, book.id];
         }
-        selectionCount = selectedBooks.size;
+        selectionCount = selectedBooks.length;
+        refreshKey = refreshKey + 1;
     }
+
+    function isSelected(bookId: string): boolean {
+        return selectedBooks.includes(bookId);
+    }
+
+    $: refreshKey;
 
     function showRemoveDialog() {
         if (selectionCount === 0) {
@@ -149,13 +166,14 @@
         try {
             // Remove selected books from the shelf
             const updatedBookIds = books
-                .filter((book) => !selectedBooks.has(book.id))
+                .filter((book) => !selectedBooks.includes(book.id))
                 .map((book) => book.id);
 
             // Update the shelf in Firestore
             // This would require the shelf service to be imported and used
             // For now, we'll just clear the selection and show a success message
-            selectedBooks.clear();
+            selectedBooks = [];
+            selectionCount = 0;
             showRemoveModal = false;
             alert('Books removed successfully!');
             
@@ -303,11 +321,16 @@
         color: #666;
     }
 
-    .selected-check {
+    .select-checkbox {
         font-size: 20;
         font-weight: bold;
-        color: #1b7f3b;
+        color: #033047;
+        background-color: transparent;
+        border-width: 0;
+        padding: 0;
         margin-left: 10;
+        width: 30;
+        height: 30;
     }
 
     .empty-container {
