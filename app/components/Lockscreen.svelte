@@ -1,5 +1,5 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, *, auto, auto, auto, *, auto, auto" columns="*" class="container">
+    <gridLayout rows="auto, *, auto, auto, auto, *, auto" columns="*" class="container">
         <!-- Kicker -->
         <label row="0" text="SCHOOL LIBRARY" class="kicker" />
 
@@ -16,10 +16,7 @@
 
         <!-- Loading -->
         <activityIndicator row="6" busy={true} class="loading-indicator" />
-        <gridLayout row="7" columns="*, auto" class="meta">
-            <label col="0" text="LOADING" class="meta-label" />
-            <label col="1" text="V1.0" class="meta-label" />
-        </gridLayout>
+        <label row="7" text="LOADING" class="meta-label" />
     </gridLayout>
 </page>
 
@@ -126,14 +123,11 @@
         margin-bottom: 10;
     }
 
-    .meta {
-        width: 100%;
-    }
-
     .meta-label {
         color: #ffffff;
         opacity: 0.7;
         font-size: 11;
         letter-spacing: 0.1;
+        horizontal-align: left;
     }
 </style>
