@@ -46,11 +46,6 @@
                 {/if}
             </stackLayout>
         </scrollView>
-
-        <!-- Remove from shelf button (only for custom shelves) -->
-        {#if !isReadShelf && !isViewedShelf && books.length > 0}
-            <button text="Remove Selected Books" class="remove-btn" on:tap={showRemoveDialog} />
-        {/if}
         </stackLayout>
 
         <!-- Bottom Navigation -->
@@ -105,11 +100,6 @@
             page: BookDetails,
             props: { book }
         } as any);
-    }
-
-    function showRemoveDialog() {
-        // For now, this is a placeholder for future functionality
-        alert('Remove books functionality will be implemented in the next update.');
     }
 
     function goToLibrary() {
@@ -244,17 +234,6 @@
         font-size: 16;
         color: #999;
         text-align: center;
-    }
-
-    .remove-btn {
-        width: 100%;
-        padding: 15;
-        background-color: #c62828;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        border-radius: 0;
-        border-width: 0;
     }
 
     .bottom-container-fixed {
