@@ -46,7 +46,7 @@
                                         text={isSelected(book.id) ? "✓" : "○"}
                                         class="select-checkbox"
                                         style={isSelected(book.id) ? "color: #1b7f3b;" : "color: #033047;"}
-                                        on:tap={(e) => { e.stopPropagation(); toggleBookSelection(book); }}
+                                        on:tap={toggleBookSelection.bind(null, book)}
                                         verticalAlignment="center"
                                     />
                                 {/if}
