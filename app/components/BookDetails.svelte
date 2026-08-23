@@ -1,6 +1,17 @@
-<page actionBarHidden={true}>
-    <gridLayout rows="*" columns="*">
-    <scrollView row={0} col={0}>
+<page actionBarHidden={true} class="page">
+    <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
+        </stackLayout>
+        <stackLayout row="1" class="divider" />
+
+    <scrollView row={2} col={0}>
         <stackLayout class="container">
 
         <!-- Cover / First Page Preview -->
@@ -73,7 +84,7 @@
 
         <!-- Shelf Selection Modal -->
         {#if showShelfModal}
-            <gridLayout row={0} col={0} class="modal-overlay" on:tap={hideShelfModal}>
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideShelfModal}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Select a Shelf" class="modal-title" />
                     
@@ -125,7 +136,7 @@
 
         <!-- Result Modal -->
         {#if resultKind}
-            <gridLayout row={0} col={0} class="modal-overlay" on:tap={hideResult}>
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideResult}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
@@ -138,6 +149,25 @@
                 </stackLayout>
             </gridLayout>
         {/if}
+
+        <!-- Bottom Navigation -->
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
+            </stackLayout>
+        </stackLayout>
+
     </gridLayout>
 </page>
 
@@ -146,6 +176,8 @@
     import { navigate } from '@nativescript-community/svelte-native';
     import Home from './Home.svelte';
     import Reader from './Reader.svelte';
+    import MyShelf from './MyShelf.svelte';
+    import Profile from './Profile.svelte';
     import { isBookFileUrl, getReaderUrl } from '../services/storage.js';
     // @ts-ignore
     import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf } from '../services/shelf.js';
@@ -264,6 +296,24 @@
         } as any);
     }
 
+    function goToLibrary() {
+        navigate({
+            page: Home
+        } as any);
+    }
+
+    function goToMyShelf() {
+        navigate({
+            page: MyShelf
+        } as any);
+    }
+
+    function goToProfile() {
+        navigate({
+            page: Profile
+        } as any);
+    }
+
     async function showShelfSelector() {
         showShelfModal = true;
         shelfError = '';
@@ -358,6 +408,49 @@
 </script>
 
 <style>
+    .page {
+        background-color: #f3f2f2;
+    }
+
+    .screen {
+        padding: 0;
+    }
+
+    .header {
+        padding: 20 20 16 20;
+        horizontal-align: left;
+    }
+
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
+    }
+
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
+    }
+
     .progress-line {
         margin-bottom: 16;
         horizontal-align: center;
@@ -396,14 +489,14 @@
     }
 
     .container {
-        padding: 20;
+        padding: 28 20 0 20;
         align-items: center;
     }
 
     .detail-cover {
         width: 200;
         height: 280;
-        border-radius: 8;
+        border-radius: 0;
         margin-bottom: 20;
         background-color: #f0f0f0;
         justify-content: center;
@@ -464,7 +557,7 @@
         font-size: 18;
         font-weight: bold;
         padding: 15 30;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
         margin: 0 5;
     }
@@ -478,7 +571,7 @@
         background-color: #f0f0f0;
         color: #033047;
         border-width: 2;
-        border-color: #033047;
+        border-color: #201e1d;
     }
 
     .btn-back {
@@ -490,10 +583,10 @@
     .notice {
         padding: 12;
         background-color: #fff3f0;
-        border-radius: 8;
+        border-radius: 0;
         margin-bottom: 20;
         width: 100%;
-        border-width: 1;
+        border-width: 2;
         border-color: #ffccc7;
     }
 
@@ -511,7 +604,7 @@
 
     .modal-content {
         background-color: white;
-        border-radius: 12;
+        border-radius: 0;
         padding: 20;
         width: 80%;
         max-width: 400;
@@ -532,9 +625,9 @@
 
     .shelf-item {
         padding: 15;
-        border-width: 1;
-        border-color: #e0e0e0;
-        border-radius: 8;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         margin-bottom: 10;
         background-color: #f9f9f9;
     }
@@ -561,7 +654,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 12 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
         margin: 0 5;
     }
@@ -572,7 +665,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 12 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 2;
         border-color: #033047;
         margin: 0 5;
@@ -581,17 +674,17 @@
     .create-form {
         margin-top: 15;
         padding-top: 15;
-        border-width: 1;
-        border-color: #e0e0e0;
-        border-radius: 8;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
     }
 
     .shelf-input {
         font-size: 16;
         padding: 12;
-        border-width: 1;
-        border-color: #ccc;
-        border-radius: 8;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         margin-bottom: 10;
     }
 
@@ -605,7 +698,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 10 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
         margin: 0 5;
     }
@@ -616,9 +709,52 @@
         font-size: 16;
         font-weight: bold;
         padding: 10 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 2;
         border-color: #033047;
         margin: 0 5;
+    }
+
+    .bottom-container-fixed {
+        padding: 0 20 24 20;
+    }
+
+    .bottom-buttons {
+        width: 100%;
+        border-width: 4;
+        border-color: #033047;
+        background-color: #033047;
+        border-radius: 8;
+    }
+
+    .nav-btn {
+        width: 33.33%;
+        height: 65;
+        background-color: white;
+        color: #033047;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 2;
+        border-radius: 4;
+        border-color: #033047;
+        margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
+    }
+
+    .nav-btn-active {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
     }
 </style>

@@ -1,12 +1,18 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, auto, *, auto" columns="*" class="main-layout">
-        <!-- Title at Top -->
-        <stackLayout row={0} col={0} class="title-container">
-            <label text="GD-Library" class="app-title" />
+    <gridLayout rows="auto, auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
         </stackLayout>
+        <stackLayout row="1" class="divider" />
 
         <!-- Search Bar -->
-        <stackLayout row={1} col={0} class="search-container">
+        <stackLayout row={2} col={0} class="search-container">
             <gridLayout rows="auto" columns="*, auto">
                 <textField
                     row={0}
@@ -23,7 +29,7 @@
         </stackLayout>
         
         <!-- Main Content -->
-        <stackLayout row={2} col={0} class="container">
+        <stackLayout row={3} col={0} class="container">
             <stackLayout orientation="horizontal" class="buttons-container">
                 <button text="Subjects" class="subjects-btn" on:tap={goToSubjects} />
                 <button text="Browse more" class="recommendation-btn" on:tap={goToBrowseAll} />
@@ -72,11 +78,20 @@
         </stackLayout>
 
         <!-- Bottom Buttons - Fixed at bottom -->
-        <stackLayout row={3} col={0} class="bottom-container-fixed">
+        <stackLayout row={4} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <button text="Library" class="nav-btn" class:nav-btn-active={currentPage === 'library'} />
-                <button text="My Shelf" class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} on:tap={goToMyShelf} />
-                <button text="Profile" class="nav-btn" class:nav-btn-active={currentPage === 'profile'} on:tap={goToProfile} />
+                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'library'} on:tap={() => currentPage = 'library'}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'profile'} on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
             </stackLayout>
         </stackLayout>
     </gridLayout>
@@ -195,12 +210,14 @@
     }
 
     function goToProfile() {
+        currentPage = 'profile';
         navigate({
             page: Profile
         } as any);
     }
 
     function goToMyShelf() {
+        currentPage = 'my-shelf';
         navigate({
             page: MyShelf
         } as any);
@@ -273,74 +290,62 @@
 
 <style>
     .page {
-		background-color: white;
+        background-color: #f3f2f2;
     }
 
-    .main-layout {
-        width: 100%;
-        height: 100%;
-        background-color: white;
+    .screen {
+        padding: 0;
     }
 
-    .title-container {
-        padding: 15 20;
-        background-color: #033047;
+    .header {
+        padding: 20 20 16 20;
+        horizontal-align: left;
+    }
+
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
         vertical-align: center;
     }
 
-    .app-title {
-        font-size: 28;
-        font-weight: bold;
-        color: white;
-        text-align: center;
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
     }
 
     .search-container {
-        padding: 10 20;
-        background-color: white;
-        margin-bottom: 10;
+        padding: 20 20 0 20;
     }
 
-    .container {
-        padding: 0 20;
-    }
-
-    .bottom-container-fixed {
-        padding: 10 5;
-        vertical-align: bottom;
-        background-color: white;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-    }
-
-    .bottom-buttons {
-        width: 100%;
-        border-width:4;
-        border-color: #033047;
-		background-color: #033047;
-        border-radius: 8;
-    }
-
-    .nav-btn {
-        width: 33.33%;
-        height: 65;
-        background-color: white;
-        color: #033047;
-        font-size: 18;
-        font-weight: bold;
+    .search-bar {
         border-width: 2;
-        border-radius: 4;
-		border-color: #033047;
-        margin: 0;
-    }
-
-    .nav-btn-active {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
+        border-color: #201e1d;
+        border-radius: 0;
+        background-color: #ffffff;
+        font-size: 16;
+        padding: 10;
+        height: 48;
+        margin: 0 0 16 0;
+        color: #201e1d;
     }
 
     .search-clear {
@@ -354,15 +359,8 @@
         vertical-align: center;
     }
 
-    .search-bar {
-        border-width: 2;
-        border-color: #ccc;
-        border-radius: 8;
-        font-size: 16;
-        padding: 10;
-        height: 45;
-        width: 100%;
-        background-color: white;
+    .container {
+        padding: 0 20;
     }
 
     .buttons-container {
@@ -397,9 +395,9 @@
         border-color: #033047;
     }
 
-	.book-info {
-		padding: 10 0;
-	}
+    .book-info {
+        padding: 10 0;
+    }
 
     .books-scroll {
         height: 538;
@@ -430,7 +428,7 @@
         font-weight: bold;
         color: #033047;
         margin-bottom: 5;
-        font-family: Milonga-Regular;
+        font-family: Archivo, sans-serif;
     }
 
     .book-author {
@@ -459,5 +457,48 @@
         color: white;
         border-radius: 8;
         font-size: 14;
+    }
+
+    .bottom-container-fixed {
+        padding: 0 20 24 20;
+    }
+
+    .bottom-buttons {
+        width: 100%;
+        border-width: 4;
+        border-color: #033047;
+        background-color: #033047;
+        border-radius: 8;
+    }
+
+    .nav-btn {
+        width: 33.33%;
+        height: 65;
+        background-color: white;
+        color: #033047;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 2;
+        border-radius: 4;
+        border-color: #033047;
+        margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
+    }
+
+    .nav-btn-active {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
     }
 </style>

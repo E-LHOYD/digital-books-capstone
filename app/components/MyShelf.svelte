@@ -1,17 +1,24 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, *, auto" columns="*" class="main-layout">
-        <!-- Header -->
-        <stackLayout row={0} col={0} class="header-container">
-            <label text="My Shelf" class="header-title" />
+    <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
         </stackLayout>
+        <stackLayout row="1" class="divider" />
         
         <!-- Main Content -->
-        <scrollView row={1} col={0} class="scroll-container">
+        <scrollView row={2} col={0} class="scroll-container">
             <stackLayout class="content">
                 <!-- Read Shelf -->
                 <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('read')}>
                     <stackLayout class="shelf-header">
-                        <label text="📚 Read" class="shelf-name" />
+                        <label text="📚" class="shelf-icon" />
+                        <label text="Read" class="shelf-name" />
                         <label text={readBooks.length + ' books'} class="shelf-count" />
                     </stackLayout>
                     <stackLayout class="shelf-preview">
@@ -26,7 +33,8 @@
                 <!-- Viewed Shelf -->
                 <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('viewed')}>
                     <stackLayout class="shelf-header">
-                        <label text="👁️ Viewed" class="shelf-name" />
+                        <label text="👁️" class="shelf-icon" />
+                        <label text="Viewed" class="shelf-name" />
                         <label text={viewedBooks.length + ' books'} class="shelf-count" />
                     </stackLayout>
                     <stackLayout class="shelf-preview">
@@ -81,11 +89,20 @@
         </scrollView>
 
         <!-- Bottom Navigation -->
-        <stackLayout row={2} col={0} class="bottom-container-fixed">
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <button text="Library" class="nav-btn" on:tap={goToLibrary} />
-                <button text="My Shelf" class="nav-btn nav-btn-active" />
-                <button text="Profile" class="nav-btn" on:tap={goToProfile} />
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn nav-btn-active">
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
             </stackLayout>
         </stackLayout>
 
@@ -497,44 +514,53 @@
 
 <style>
     .page {
-        background-color: white;
+        background-color: #f3f2f2;
     }
 
-    .main-layout {
-        width: 100%;
-        height: 100%;
-        background-color: white;
+    .screen {
+        padding: 0;
     }
 
-    .header-container {
-        padding: 20;
-        background-color: #033047;
+    .header {
+        padding: 20 20 16 20;
+        horizontal-align: left;
     }
 
-    .header-title {
-        font-size: 28;
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
         font-weight: bold;
-        color: white;
-        text-align: center;
-        font-family: Milonga-Regular;
-    }
-
-    .scroll-container {
-        padding: 20;
-    }
-
-    .content {
-        margin-bottom: 80;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
     }
 
     .shelf-item {
         padding: 20;
-        margin-bottom: 15;
+        margin: 0 0 16 0;
         background-color: white;
         border-width: 2;
-        border-color: #033047;
-        border-radius: 12;
-        box-shadow: 0 2 8px rgba(0,0,0,0.1);
+        border-color: #201e1d;
+        border-radius: 0;
+    }
+
+    .content {
+        padding: 0 10;
     }
 
     .shelf-item:active {
@@ -547,18 +573,25 @@
         margin-bottom: 10;
     }
 
+    .shelf-icon {
+        font-size: 20;
+        margin-right: 10;
+        vertical-align: center;
+    }
+
     .shelf-name {
         font-size: 20;
         font-weight: bold;
         color: #033047;
-        width: 70%;
+        vertical-align: center;
+        flex-grow: 1;
     }
 
     .shelf-count {
         font-size: 14;
         color: #666;
         text-align: right;
-        width: 30%;
+        vertical-align: center;
     }
 
     .shelf-preview {
@@ -594,7 +627,7 @@
         color: white;
         font-size: 16;
         font-weight: bold;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
     }
 
@@ -602,8 +635,8 @@
         padding: 15;
         margin-top: 10;
         background-color: #fff3f0;
-        border-radius: 8;
-        border-width: 1;
+        border-radius: 0;
+        border-width: 2;
         border-color: #ffccc7;
     }
 
@@ -614,14 +647,7 @@
     }
 
     .bottom-container-fixed {
-        padding: 10 5;
-        vertical-align: bottom;
-        background-color: white;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
+        padding: 0 20 24 20;
     }
 
     .bottom-buttons {
@@ -637,12 +663,24 @@
         height: 65;
         background-color: white;
         color: #033047;
-        font-size: 18;
+        font-size: 14;
         font-weight: bold;
         border-width: 2;
         border-radius: 4;
         border-color: #033047;
         margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
     }
 
     .nav-btn-active {
@@ -659,7 +697,7 @@
 
     .modal-content {
         background-color: white;
-        border-radius: 12;
+        border-radius: 0;
         padding: 20;
         width: 80%;
         max-width: 400;
@@ -676,9 +714,9 @@
     .shelf-input {
         font-size: 16;
         padding: 12;
-        border-width: 1;
-        border-color: #ccc;
-        border-radius: 8;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         margin-bottom: 15;
     }
 
@@ -692,7 +730,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 12 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
         margin: 0 5;
     }
@@ -734,7 +772,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 12 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 0;
         margin: 0 5;
     }
@@ -745,7 +783,7 @@
         font-size: 16;
         font-weight: bold;
         padding: 12 20;
-        border-radius: 8;
+        border-radius: 0;
         border-width: 2;
         border-color: #033047;
         margin: 0 5;

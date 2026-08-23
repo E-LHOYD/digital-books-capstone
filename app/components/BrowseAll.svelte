@@ -1,13 +1,18 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, auto, *, auto" columns="*" class="main-layout">
-        <!-- Header -->
-        <gridLayout row={0} col={0} rows="auto" columns="auto, *" class="header">
-            <button row={0} col={0} text="Back" class="back-btn" on:tap={goBack} />
-            <label row={0} col={1} text="Browsing" class="header-title" />
-        </gridLayout>
+    <gridLayout rows="auto, auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
+        </stackLayout>
+        <stackLayout row="1" class="divider" />
 
         <!-- Search Bar -->
-        <stackLayout row={1} col={0} class="search-container">
+        <stackLayout row={2} col={0} class="search-container">
             <gridLayout rows="auto" columns="*, auto">
                 <textField
                     row={0}
@@ -24,7 +29,7 @@
         </stackLayout>
 
         <!-- Main Content -->
-        <stackLayout row={2} col={0} class="container">
+        <stackLayout row={3} col={0} class="container">
             <stackLayout orientation="horizontal" class="buttons-container">
                 <button text="Subjects" class="subjects-btn" on:tap={goToSubjects} />
             </stackLayout>
@@ -72,11 +77,20 @@
         </stackLayout>
 
         <!-- Bottom Buttons - Fixed at bottom -->
-        <stackLayout row={3} col={0} class="bottom-container-fixed">
+        <stackLayout row={4} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <button text="Library" class="nav-btn" on:tap={goToLibrary} />
-                <button text="My Shelf" class="nav-btn" on:tap={goToMyShelf} />
-                <button text="Profile" class="nav-btn" on:tap={goToProfile} />
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
             </stackLayout>
         </stackLayout>
     </gridLayout>
@@ -232,54 +246,73 @@
 
 <style>
     .page {
-		background-color: white;
+        background-color: #f3f2f2;
     }
 
-    .main-layout {
-        width: 100%;
-        height: 100%;
-        background-color: white;
+    .screen {
+        padding: 0;
     }
 
     .header {
-        padding: 15 20;
-        background-color: #033047;
+        padding: 20 20 16 20;
+        horizontal-align: left;
     }
 
-    .back-btn {
-        font-size: 16;
-        color: white;
-        background-color: transparent;
-        border-width: 0;
-        padding: 0 10 0 0;
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
     }
 
-    .header-title {
-        font-size: 28;
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
         font-weight: bold;
-        color: white;
-        text-align: center;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
+    }
+
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
     }
 
     .search-container {
-        padding: 10 20;
-        background-color: white;
-        margin-bottom: 10;
+        padding: 20 20 0 20;
     }
 
     .search-bar {
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
+        background-color: #ffffff;
         font-size: 16;
         padding: 10;
-        border-width: 1;
-        border-color: #ccc;
-        border-radius: 8;
-        background-color: #f5f5f5;
+        height: 48;
+        margin: 0 0 16 0;
+        color: #201e1d;
     }
 
     .search-clear {
-        font-size: 14;
+        background-color: transparent;
         color: #033047;
-        margin-left: 10;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 0;
+        padding: 0 12;
+        margin: 0;
+        vertical-align: center;
     }
 
     .container {
@@ -287,30 +320,35 @@
     }
 
     .buttons-container {
-        margin: 10 0;
+        margin: 15 0;
+        width: 100%;
+        text-align: center;
     }
 
     .subjects-btn {
-        width: 100%;
-        height: 45;
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-        border-radius: 8;
+        width: 150;
+        margin: 10;
+        padding: 10;
+        border-radius: 100;
         font-size: 16;
         font-weight: bold;
+        background-color: white;
+        color: #033047;
+        border-width: 4;
+        border-color: #033047;
     }
 
     .recommendation-btn {
-        width: 100%;
-        height: 45;
-        background-color: white;
-        color: #033047;
-        border-width: 2;
-        border-color: #033047;
-        border-radius: 8;
+        width: 150;
+        margin: 10;
+        padding: 10;
+        border-radius: 100;
         font-size: 16;
         font-weight: bold;
+        background-color: white;
+        color: #033047;
+        border-width: 4;
+        border-color: #033047;
     }
 
     .books-scroll {
@@ -366,14 +404,7 @@
     }
 
     .bottom-container-fixed {
-        padding: 10 5;
-        vertical-align: bottom;
-        background-color: white;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
+        padding: 0 20 24 20;
     }
 
     .bottom-buttons {
@@ -389,12 +420,24 @@
         height: 65;
         background-color: white;
         color: #033047;
-        font-size: 18;
+        font-size: 14;
         font-weight: bold;
         border-width: 2;
         border-radius: 4;
         border-color: #033047;
         margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
     }
 
     .nav-btn-active {

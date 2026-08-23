@@ -1,14 +1,18 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, *" columns="*" class="main-layout">
-
-        <!-- Header -->
-        <gridLayout row={0} col={0} rows="auto" columns="auto, *" class="header">
-            <button row={0} col={0} text="Back" class="back-btn" on:tap={goBack} />
-            <label row={0} col={1} text="Subjects" class="header-title" />
-        </gridLayout>
+    <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
+        </stackLayout>
+        <stackLayout row="1" class="divider" />
 
         <!-- Subject list -->
-        <scrollView row={1} col={0} class="subjects-scroll">
+        <scrollView row={2} col={0} class="subjects-scroll">
             <stackLayout>
                 <label
                     text="Browse the library by subject. A book can appear under more than one."
@@ -35,6 +39,24 @@
             </stackLayout>
         </scrollView>
 
+        <!-- Bottom Navigation -->
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <stackLayout class="nav-btn" on:tap={goBack}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
+            </stackLayout>
+        </stackLayout>
+
     </gridLayout>
 </page>
 
@@ -42,6 +64,8 @@
     import { Frame } from '@nativescript/core';
     import { navigate } from '@nativescript-community/svelte-native';
     import SubjectBooks from './SubjectBooks.svelte';
+    import MyShelf from './MyShelf.svelte';
+    import Profile from './Profile.svelte';
     // @ts-ignore
     import { SUBJECTS, hasSubject } from '../services/subjects.js';
 
@@ -68,43 +92,66 @@
     function goBack() {
         Frame.topmost()?.goBack();
     }
+
+    function goToMyShelf() {
+        navigate({
+            page: MyShelf
+        } as any);
+    }
+
+    function goToProfile() {
+        navigate({
+            page: Profile
+        } as any);
+    }
 </script>
 
 <style>
     .page {
-        background-color: #f5f5f5;
+        background-color: #f3f2f2;
     }
 
-    .main-layout {
-        width: 100%;
-        height: 100%;
+    .screen {
+        padding: 0;
     }
 
     .header {
-        background-color: #033047;
-        padding: 10 12;
+        padding: 20 20 16 20;
+        horizontal-align: left;
     }
 
-    .back-btn {
-        background-color: transparent;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        border-width: 0;
-        padding: 6 12;
-        margin: 0;
-    }
-
-    .header-title {
-        color: white;
-        font-size: 18;
-        font-weight: bold;
+    .logo {
         vertical-align: center;
-        margin-left: 6;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
+    }
+
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
     }
 
     .subjects-scroll {
-        padding: 12 16;
+        padding: 28 20 0 20;
     }
 
     .intro-text {
@@ -117,9 +164,9 @@
         padding: 16;
         margin-bottom: 10;
         background-color: white;
-        border-radius: 8;
-        border-width: 1;
-        border-color: #eee;
+        border-radius: 0;
+        border-width: 2;
+        border-color: #201e1d;
     }
 
     .subject-item:active {
@@ -141,5 +188,48 @@
         font-size: 13;
         color: #666;
         vertical-align: center;
+    }
+
+    .bottom-container-fixed {
+        padding: 0 20 24 20;
+    }
+
+    .bottom-buttons {
+        width: 100%;
+        border-width: 4;
+        border-color: #033047;
+        background-color: #033047;
+        border-radius: 8;
+    }
+
+    .nav-btn {
+        width: 33.33%;
+        height: 65;
+        background-color: white;
+        color: #033047;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 2;
+        border-radius: 4;
+        border-color: #033047;
+        margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
+    }
+
+    .nav-btn-active {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
     }
 </style>

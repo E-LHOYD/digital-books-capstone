@@ -1,10 +1,22 @@
-<page>
-    <stackLayout class="container">
-        <!-- Header -->
-        <stackLayout class="header">
-            <label text={shelfName} class="shelf-title" />
-            <button text="← Back" class="back-btn" on:tap={goBack} />
+<page actionBarHidden={true} class="page">
+    <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
+        <!-- Header: logo + wordmark -->
+        <stackLayout row="0" orientation="horizontal" class="header">
+            <stackLayout orientation="horizontal" class="logo">
+                <stackLayout class="bar bar-1" />
+                <stackLayout class="bar bar-2" />
+                <stackLayout class="bar bar-3" rotate="8" />
+            </stackLayout>
+            <label text="GD-Library" class="brand" />
         </stackLayout>
+        <stackLayout row="1" class="divider" />
+
+        <stackLayout row={2} col={0} class="container">
+            <!-- Shelf Title -->
+            <label text={shelfName} class="shelf-title" />
+
+            <!-- Books List -->
+            <scrollView class="books-scroll">
 
         <!-- Books List -->
         <scrollView class="books-scroll">
@@ -38,13 +50,35 @@
         {#if !isReadShelf && !isViewedShelf && books.length > 0}
             <button text="Remove Selected Books" class="remove-btn" on:tap={showRemoveDialog} />
         {/if}
-    </stackLayout>
+        </stackLayout>
+
+        <!-- Bottom Navigation -->
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn nav-btn-active">
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
+            </stackLayout>
+        </stackLayout>
+
+    </gridLayout>
 </page>
 
 <script lang="ts">
     import { navigate } from '@nativescript-community/svelte-native';
     import MyShelf from './MyShelf.svelte';
     import BookDetails from './BookDetails.svelte';
+    import Profile from './Profile.svelte';
+    import Home from './Home.svelte';
     // @ts-ignore
     import type { Book } from '../types';
 
@@ -76,42 +110,82 @@
         // For now, this is a placeholder for future functionality
         alert('Remove books functionality will be implemented in the next update.');
     }
+
+    function goToLibrary() {
+        navigate({
+            page: Home
+        } as any);
+    }
+
+    function goToProfile() {
+        navigate({
+            page: Profile
+        } as any);
+    }
 </script>
 
 <style>
-    .container {
-        padding: 20;
+    .page {
+        background-color: #f3f2f2;
+    }
+
+    .screen {
+        padding: 0;
     }
 
     .header {
-        margin-bottom: 20;
+        padding: 20 20 16 20;
+        horizontal-align: left;
+    }
+
+    .logo {
+        vertical-align: center;
+        margin-right: 10;
+    }
+
+    .bar {
+        width: 5;
+        background-color: #201e1d;
+        margin-right: 2;
+        vertical-align: bottom;
+    }
+
+    .bar-1 { height: 22; }
+    .bar-2 { height: 17; }
+    .bar-3 { height: 19; background-color: #033047; }
+
+    .brand {
+        font-size: 15;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        vertical-align: center;
+    }
+
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
+    }
+
+    .container {
+        padding: 28 20 0 20;
     }
 
     .shelf-title {
-        font-size: 28;
+        font-size: 34;
         font-weight: bold;
-        color: #033047;
-        text-align: center;
-        margin-bottom: 15;
-        font-family: Milonga-Regular;
-    }
-
-    .back-btn {
-        width: 120;
-        padding: 10;
-        background-color: #033047;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        border-radius: 8;
-        border-width: 0;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        text-align: left;
+        margin-bottom: 24;
     }
 
     .books-scroll {
         height: 450;
-        border-width: 1;
-        border-color: #eee;
-        border-radius: 8;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
         margin-bottom: 15;
     }
 
@@ -121,7 +195,7 @@
         border-bottom-color: #f0f0f0;
         margin: 5 0;
         background-color: white;
-        border-radius: 8;
+        border-radius: 0;
         box-shadow: 0 1 3px rgba(0,0,0,0.1);
     }
 
@@ -167,7 +241,50 @@
         color: white;
         font-size: 16;
         font-weight: bold;
+        border-radius: 0;
+        border-width: 0;
+    }
+
+    .bottom-container-fixed {
+        padding: 0 20 24 20;
+    }
+
+    .bottom-buttons {
+        width: 100%;
+        border-width: 4;
+        border-color: #033047;
+        background-color: #033047;
         border-radius: 8;
+    }
+
+    .nav-btn {
+        width: 33.33%;
+        height: 65;
+        background-color: white;
+        color: #033047;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 2;
+        border-radius: 4;
+        border-color: #033047;
+        margin: 0;
+        vertical-align: center;
+    }
+
+    .nav-icon {
+        font-size: 20;
+        margin-bottom: 4;
+        text-align: center;
+    }
+
+    .nav-text {
+        font-size: 12;
+        text-align: center;
+    }
+
+    .nav-btn-active {
+        background-color: #033047;
+        color: white;
         border-width: 0;
     }
 </style>
