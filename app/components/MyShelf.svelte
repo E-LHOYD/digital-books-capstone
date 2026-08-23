@@ -65,9 +65,7 @@
                         </stackLayout>
                         <stackLayout class="shelf-preview">
                             {#if (shelf.bookIds?.length || 0) > 0}
-                                {#each getShelfBooks(shelf).slice(0, 3) as book}
-                                    <label text={book.title} class="preview-book" />
-                                {/each}
+                                <label text="Tap to view books" class="preview-text" />
                             {:else}
                                 <label text="Empty shelf" class="empty-text" />
                             {/if}
