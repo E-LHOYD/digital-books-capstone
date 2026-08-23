@@ -67,7 +67,7 @@
     import MyShelf from './MyShelf.svelte';
     import Profile from './Profile.svelte';
     // @ts-ignore
-    import { SUBJECTS, hasSubject } from '../services/subjects.js';
+    import { DEFAULT_SUBJECTS, hasSubject } from '../services/subjects.js';
 
     // Passed in from the library so this page does not refetch what the
     // library already holds.
@@ -75,7 +75,7 @@
 
     // Every subject is listed, including ones with nothing in them yet, so the
     // set of subjects reads as fixed rather than as whatever happens to exist.
-    $: subjectRows = SUBJECTS.map((subject: string) => ({
+    $: subjectRows = DEFAULT_SUBJECTS.map((subject: string) => ({
         subject,
         books: books.filter((book) => hasSubject(book, subject))
     })).map((row) => ({ ...row, count: row.books.length }));

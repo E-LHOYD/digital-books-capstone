@@ -15,10 +15,10 @@
             <label text="Edit Interests (Select 3)" class="title" />
             
             <flexboxLayout class="interests-grid" flexWrap="wrap">
-                {#each SUBJECTS as interest}
-                    <button 
-                        text={interest} 
-                        class="interest-btn" 
+                {#each DEFAULT_SUBJECTS as interest}
+                    <button
+                        text={interest}
+                        class="interest-btn"
                         class:interest-btn-selected={tempSelectedInterests.includes(interest)}
                         on:tap={() => toggleTempInterest(interest)}
                         disabled={tempSelectedInterests.length >= 3 && !tempSelectedInterests.includes(interest)}
@@ -59,7 +59,7 @@
     import Profile from './Profile.svelte';
     import Home from './Home.svelte';
     import MyShelf from './MyShelf.svelte';
-    import { SUBJECTS } from '../services/subjects';
+    import { DEFAULT_SUBJECTS } from '../services/subjects';
     // @ts-ignore
     import { updateUserProfile } from '../services/firebase';
 

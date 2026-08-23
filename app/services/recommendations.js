@@ -14,7 +14,7 @@
 // The interests they picked at signup are an explicit choice, so they outweigh
 // the subjects merely implied by their strand or course.
 
-import { SUBJECTS, bookSubjects } from './subjects';
+import { DEFAULT_SUBJECTS, bookSubjects } from './subjects';
 import { matchesYearLevel, studentLevel } from './yearLevels';
 
 // An interest chosen by hand counts double a subject inferred from a strand.
@@ -53,7 +53,7 @@ const LEGACY_INTERESTS = {
     physics: 'Science'
 };
 
-const CANONICAL_SUBJECTS = new Map(SUBJECTS.map((s) => [s.toLowerCase(), s]));
+const CANONICAL_SUBJECTS = new Map(DEFAULT_SUBJECTS.map((s) => [s.toLowerCase(), s]));
 
 /**
  * The student's strand or course, whichever their signup filled in.

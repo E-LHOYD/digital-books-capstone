@@ -66,7 +66,7 @@
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     // @ts-ignore
-    import { saveReadingProgress, getReadingProgress, setBookmark, removeBookmark, getBookmark } from '../services/readingProgress.js';
+    import { saveReadingProgress, getReadingProgress, setBookmark, removeBookmark, getBookmark, startReadingSession, endReadingSession } from '../services/readingProgress.js';
 
     export let book: any;
 
@@ -105,6 +105,8 @@
         } else {
             // Load existing progress
             loadExistingProgress();
+            // Start reading session for duration tracking
+            startReadingSession(book.id);
             startPolling();
         }
     }
@@ -295,6 +297,9 @@
     function goBack() {
         stopPolling();
         if (saveTimer) clearTimeout(saveTimer);
+
+        // End reading session to track duration
+        endReadingSession();
 
         // Save progress before leaving
         if (totalPages > 0) {

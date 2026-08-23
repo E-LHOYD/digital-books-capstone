@@ -11,6 +11,121 @@ import { Auth } from '@nativescript/firebase-auth';
 const READ_THRESHOLD_PERCENT = 10;
 
 /**
+ * Reading session tracking
+ */
+let currentSessionStart = null;
+let currentBookId = null;
+
+/**
+ * Start a reading session for a book
+ */
+export function startReadingSession(bookId) {
+    currentBookId = bookId;
+    currentSessionStart = new Date();
+    console.log(`Started reading session for book ${bookId} at ${currentSessionStart}`);
+}
+
+/**
+ * End the current reading session and update duration
+ */
+export async function endReadingSession() {
+    if (!currentSessionStart || !currentBookId) {
+        console.log('No active reading session to end');
+        return;
+    }
+
+    const sessionEnd = new Date();
+    const sessionDurationMs = sessionEnd - currentSessionStart;
+    const sessionDurationMinutes = Math.round(sessionDurationMs / 1000 / 60);
+
+    console.log(`Ended reading session for book ${currentBookId}. Duration: ${sessionDurationMinutes} minutes`);
+
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${currentBookId}`)
+            .get();
+
+        const existingData = progressDoc.exists ? progressDoc.data() : {};
+        const totalDurationMinutes = (existingData.totalDurationMinutes || 0) + sessionDurationMinutes;
+        const sessionCount = (existingData.sessionCount || 0) + 1;
+
+        await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${currentBookId}`)
+            .set({
+                ...existingData,
+                userId,
+                bookId: currentBookId,
+                totalDurationMinutes,
+                sessionCount,
+                lastSessionDuration: sessionDurationMinutes,
+                lastSessionEndedAt: sessionEnd
+            }, { merge: true });
+
+        console.log(`Updated reading duration for book ${currentBookId}: ${totalDurationMinutes} total minutes, ${sessionCount} sessions`);
+    } catch (error) {
+        console.error('Error updating reading duration:', error);
+    } finally {
+        currentSessionStart = null;
+        currentBookId = null;
+    }
+}
+
+/**
+ * Get total reading duration for a book
+ */
+export async function getReadingDuration(bookId) {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return 0;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .get();
+
+        if (progressDoc.exists) {
+            return progressDoc.data().totalDurationMinutes || 0;
+        }
+        return 0;
+    } catch (error) {
+        console.error('Error getting reading duration:', error);
+        return 0;
+    }
+}
+
+/**
+ * Get reading session count for a book
+ */
+export async function getReadingSessionCount(bookId) {
+    try {
+        const userId = getCurrentUserId();
+        if (!userId) return 0;
+
+        const progressDoc = await firebase()
+            .firestore()
+            .collection('readingProgress')
+            .doc(`${userId}_${bookId}`)
+            .get();
+
+        if (progressDoc.exists) {
+            return progressDoc.data().sessionCount || 0;
+        }
+        return 0;
+    } catch (error) {
+        console.error('Error getting reading session count:', error);
+        return 0;
+    }
+}
+
+/**
  * Get current user ID
  */
 // Auth is a class in @nativescript/firebase-auth, so it must be constructed.
