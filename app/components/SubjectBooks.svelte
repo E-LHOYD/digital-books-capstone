@@ -1,7 +1,8 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
+        <!-- Header: back button + logo + wordmark -->
         <stackLayout row="0" orientation="horizontal" class="header">
+            <button text="←" class="back-btn" on:tap={goBack} />
             <stackLayout orientation="horizontal" class="logo">
                 <stackLayout class="bar bar-1" />
                 <stackLayout class="bar bar-2" />
@@ -37,7 +38,7 @@
         <!-- Bottom Navigation -->
         <stackLayout row={3} col={0} class="bottom-container-fixed">
             <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goBack}>
+                <stackLayout class="nav-btn nav-btn-active" on:tap={goToLibrary}>
                     <label text="📚" class="nav-icon" />
                     <label text="Library" class="nav-text" />
                 </stackLayout>
@@ -61,6 +62,7 @@
     import BookDetails from './BookDetails.svelte';
     import MyShelf from './MyShelf.svelte';
     import Profile from './Profile.svelte';
+    import Home from './Home.svelte';
 
     export let subject: string;
     export let books: any[] = [];
@@ -73,7 +75,15 @@
     }
 
     function goBack() {
-        Frame.topmost()?.goBack();
+        navigate({
+            page: Home
+        } as any);
+    }
+
+    function goToLibrary() {
+        navigate({
+            page: Home
+        } as any);
     }
 
     function goToMyShelf() {
@@ -101,6 +111,17 @@
     .header {
         padding: 20 20 16 20;
         horizontal-align: left;
+    }
+
+    .back-btn {
+        font-size: 24;
+        font-weight: bold;
+        color: #033047;
+        background-color: transparent;
+        border-width: 0;
+        padding: 0;
+        margin-right: 15;
+        vertical-align: center;
     }
 
     .logo {
