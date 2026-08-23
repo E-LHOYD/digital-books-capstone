@@ -21,6 +21,24 @@
                     <label text={username || "Loading..."} class="username-display" />
                 </stackLayout>
 
+                <!-- Academic Info (for students) -->
+                {#if userRole === 'student'}
+                    <stackLayout class="setting-item">
+                        <label text="Program" class="info-label" />
+                        <label text={program || "Not specified"} class="info-display" />
+                    </stackLayout>
+
+                    <stackLayout class="setting-item">
+                        <label text="Year Level" class="info-label" />
+                        <label text={yearLevel || "Not specified"} class="info-display" />
+                    </stackLayout>
+                {:else if userRole === 'teacher'}
+                    <stackLayout class="setting-item">
+                        <label text="Department" class="info-label" />
+                        <label text={department || "Not specified"} class="info-display" />
+                    </stackLayout>
+                {/if}
+
                 <!-- Edit Interests Button -->
                 <stackLayout class="setting-item">
                     <label text="Interests" class="info-label" />
@@ -71,8 +89,12 @@
     let selectedInterests: string[] = [];
     let userId = "";
     let refresh = false;
+    let userRole = "";
+    let program = "";
+    let yearLevel = "";
+    let department = "";
 
-    export { refresh };
+    export { refresh, loadUserData };
 
     $: if (refresh) {
         loadUserData();
@@ -92,7 +114,17 @@
                 if (userProfile) {
                     username = userProfile.username || "";
                     selectedInterests = userProfile.interests || [];
-                    console.log("Loaded user data:", { username, interests: selectedInterests });
+                    userRole = userProfile.role || "student";
+                    
+                    // Load academic information based on role
+                    if (userRole === 'student') {
+                        program = userProfile.course || userProfile.strand || "Not specified";
+                        yearLevel = userProfile.year || userProfile.grade || "Not specified";
+                    } else if (userRole === 'teacher') {
+                        department = userProfile.department || "Not specified";
+                    }
+                    
+                    console.log("Loaded user data:", { username, interests: selectedInterests, userRole, program, yearLevel, department });
                 }
             }
         } catch (error) {
@@ -220,6 +252,11 @@
         font-size: 20;
         font-weight: bold;
         color: #033047;
+    }
+
+    .info-display {
+        font-size: 16;
+        color: #666;
     }
 
     .interests-display {
