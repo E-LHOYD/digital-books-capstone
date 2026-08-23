@@ -46,14 +46,14 @@
         <!-- Description -->
         <label text={book.detail || 'No description available'} textWrap="true" class="detail-description" />
 
-        <!-- Published / Release dates -->
+        <!-- Published / Upload dates -->
         {#if book.publishedDate || book.releaseDate}
             <stackLayout class="detail-dates">
                 {#if book.publishedDate}
                     <label text={`Published: ${formatDate(book.publishedDate)}`} class="detail-date" />
                 {/if}
                 {#if book.releaseDate}
-                    <label text={`Released: ${formatDate(book.releaseDate)}`} class="detail-date" />
+                    <label text={`Uploaded: ${formatDate(book.releaseDate)}`} class="detail-date" />
                 {/if}
             </stackLayout>
         {/if}
