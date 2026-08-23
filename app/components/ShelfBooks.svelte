@@ -38,7 +38,7 @@
                                         verticalAlignment="center"
                                     />
                                 {/if}
-                                {#if !isReadShelf && !isViewedShelf}
+                                {#if !isReadShelf && !isViewedShelf && selectionMode}
                                     <button
                                         row={0}
                                         col={2}
@@ -58,7 +58,14 @@
 
             <!-- Remove from shelf button (only for custom shelves) -->
             {#if !isReadShelf && !isViewedShelf && books.length > 0}
-                <button text="Remove Selected Books" class="remove-btn" on:tap={showRemoveDialog} />
+                {#if !selectionMode}
+                    <button text="Remove Books" class="remove-btn" on:tap={enterSelectionMode} />
+                {:else}
+                    <stackLayout orientation="horizontal" class="action-buttons">
+                        <button text="Cancel" class="action-btn btn-cancel" on:tap={exitSelectionMode} />
+                        <button text="Remove" class="action-btn btn-danger" on:tap={showRemoveDialog} />
+                    </stackLayout>
+                {/if}
             {/if}
         </stackLayout>
 
@@ -127,6 +134,7 @@
     let showRemoveModal = false;
     let selectionCount = 0;
     let refreshKey = 0;
+    let selectionMode = false;
 
     function toggleBookSelection(book: any) {
         if (selectedBooks.includes(book.id)) {
@@ -142,6 +150,20 @@
         return selectedBooks.includes(bookId);
     }
 
+    function enterSelectionMode() {
+        selectionMode = true;
+        selectedBooks = [];
+        selectionCount = 0;
+        refreshKey = refreshKey + 1;
+    }
+
+    function exitSelectionMode() {
+        selectionMode = false;
+        selectedBooks = [];
+        selectionCount = 0;
+        refreshKey = refreshKey + 1;
+    }
+
     $: refreshKey;
 
     function showRemoveDialog() {
@@ -154,6 +176,7 @@
 
     function cancelRemove() {
         showRemoveModal = false;
+        // Keep selection mode active when canceling the modal
     }
 
     function stopPropagation(event: any) {
@@ -172,8 +195,7 @@
             // Update the shelf in Firestore
             // This would require the shelf service to be imported and used
             // For now, we'll just clear the selection and show a success message
-            selectedBooks = [];
-            selectionCount = 0;
+            exitSelectionMode();
             showRemoveModal = false;
             alert('Books removed successfully!');
             
@@ -354,6 +376,33 @@
         border-radius: 0;
         border-width: 0;
         margin-top: 10;
+    }
+
+    .action-buttons {
+        orientation: horizontal;
+        margin-top: 10;
+    }
+
+    .action-btn {
+        width: 50%;
+        padding: 15;
+        font-size: 16;
+        font-weight: bold;
+        border-radius: 0;
+        border-width: 0;
+        margin: 0;
+    }
+
+    .action-btn.btn-cancel {
+        background-color: #f0f0f0;
+        color: #033047;
+        border-width: 2;
+        border-color: #033047;
+    }
+
+    .action-btn.btn-danger {
+        background-color: #c62828;
+        color: white;
     }
 
     .modal-overlay {
