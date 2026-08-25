@@ -134,7 +134,7 @@
     $: searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
     $: filteredBooks = searchTerms.length === 0
         ? displayedBooks
-        : displayedBooks.filter((book) => matchesSearch(book, searchTerms));
+        : books.filter((book) => matchesSearch(book, searchTerms));
 
 
 
