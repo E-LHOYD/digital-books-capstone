@@ -1,5 +1,5 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
+    <gridLayout rows="auto, auto, *, auto, auto" columns="*" class="screen">
         <!-- Header: back button + logo + wordmark -->
         <stackLayout row="0" orientation="horizontal" class="header">
             <button text="←" class="back-btn" on:tap={goBack} />
@@ -105,12 +105,10 @@
                 </stackLayout>
             </stackLayout>
         </stackLayout>
-    </gridLayout>
 
-    <!-- Shelf Selection Modal (outside main grid) -->
-    {#if showShelfModal}
-        <absoluteLayout class="modal-absolute">
-            <stackLayout class="modal-overlay" on:tap={hideShelfModal}>
+        <!-- Shelf Selection Modal -->
+        {#if showShelfModal}
+            <gridLayout row={0} rowSpan={5} col={0} class="modal-overlay" on:tap={hideShelfModal}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Select a Shelf" class="modal-title" />
                     
@@ -121,7 +119,7 @@
                             {:else if customShelves.length === 0}
                                 <label text="No shelves yet. Create one below." class="empty-text" textWrap="true" />
                             {/if}
-                            {#each customShelves as shelf}
+                            {#each customShelves as shelf (shelf.id)}
                                 <stackLayout
                                     class="shelf-item"
                                     on:tap={() => addToShelf(shelf.id)}
@@ -157,14 +155,12 @@
                         </stackLayout>
                     {/if}
                 </stackLayout>
-            </stackLayout>
-        </absoluteLayout>
-    {/if}
+            </gridLayout>
+        {/if}
 
-    <!-- Result Modal (outside main grid) -->
-    {#if resultKind}
-        <absoluteLayout class="modal-absolute">
-            <stackLayout class="modal-overlay" on:tap={hideResult}>
+        <!-- Result Modal -->
+        {#if resultKind}
+            <gridLayout row={0} rowSpan={5} col={0} class="modal-overlay" on:tap={hideResult}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
@@ -175,9 +171,27 @@
                         <button text="OK" class="btn btn-create" on:tap={hideResult} />
                     </stackLayout>
                 </stackLayout>
+            </gridLayout>
+        {/if}
+
+        <!-- Bottom Navigation -->
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
             </stackLayout>
-        </absoluteLayout>
-    {/if}
+        </stackLayout>
+    </gridLayout>
 </page>
 
 <script lang="ts">
@@ -631,11 +645,6 @@
        which is why this used to sit in the content flow instead of over it. */
     .modal-overlay {
         background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-absolute {
-        width: 100%;
-        height: 100%;
     }
 
     .modal-content {
