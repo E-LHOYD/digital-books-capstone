@@ -88,9 +88,29 @@
         </stackLayout>
     </scrollView>
 
-        <!-- Shelf Selection Modal -->
-        {#if showShelfModal}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideShelfModal}>
+        <!-- Bottom Navigation -->
+        <stackLayout row={3} col={0} class="bottom-container-fixed">
+            <stackLayout orientation="horizontal" class="bottom-buttons">
+                <stackLayout class="nav-btn" on:tap={goToLibrary}>
+                    <label text="📚" class="nav-icon" />
+                    <label text="Library" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
+                    <label text="📖" class="nav-icon" />
+                    <label text="My Shelf" class="nav-text" />
+                </stackLayout>
+                <stackLayout class="nav-btn" on:tap={goToProfile}>
+                    <label text="👤" class="nav-icon" />
+                    <label text="Profile" class="nav-text" />
+                </stackLayout>
+            </stackLayout>
+        </stackLayout>
+    </gridLayout>
+
+    <!-- Shelf Selection Modal (outside main grid) -->
+    {#if showShelfModal}
+        <absoluteLayout class="modal-absolute">
+            <stackLayout class="modal-overlay" on:tap={hideShelfModal}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Select a Shelf" class="modal-title" />
                     
@@ -137,12 +157,14 @@
                         </stackLayout>
                     {/if}
                 </stackLayout>
-            </gridLayout>
-        {/if}
+            </stackLayout>
+        </absoluteLayout>
+    {/if}
 
-        <!-- Result Modal -->
-        {#if resultKind}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideResult}>
+    <!-- Result Modal (outside main grid) -->
+    {#if resultKind}
+        <absoluteLayout class="modal-absolute">
+            <stackLayout class="modal-overlay" on:tap={hideResult}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
@@ -153,28 +175,9 @@
                         <button text="OK" class="btn btn-create" on:tap={hideResult} />
                     </stackLayout>
                 </stackLayout>
-            </gridLayout>
-        {/if}
-
-        <!-- Bottom Navigation -->
-        <stackLayout row={3} col={0} class="bottom-container-fixed">
-            <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goToLibrary}>
-                    <label text="📚" class="nav-icon" />
-                    <label text="Library" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" on:tap={goToMyShelf}>
-                    <label text="📖" class="nav-icon" />
-                    <label text="My Shelf" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" on:tap={goToProfile}>
-                    <label text="👤" class="nav-icon" />
-                    <label text="Profile" class="nav-text" />
-                </stackLayout>
             </stackLayout>
-        </stackLayout>
-
-    </gridLayout>
+        </absoluteLayout>
+    {/if}
 </page>
 
 <script lang="ts">
@@ -628,6 +631,11 @@
        which is why this used to sit in the content flow instead of over it. */
     .modal-overlay {
         background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-absolute {
+        width: 100%;
+        height: 100%;
     }
 
     .modal-content {
