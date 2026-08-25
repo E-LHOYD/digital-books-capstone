@@ -95,7 +95,18 @@ export async function getSubjectsForProgram(track) {
     if (typeof track !== 'string' || !track.trim()) return [];
 
     const text = track.trim().toUpperCase();
-    const mappings = await fetchProgramMappings();
+    const snapshot = await firebase()
+        .firestore()
+        .collection('programMappings')
+        .get();
+
+    const mappings = {};
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name && data.subjects) {
+            mappings[data.name.trim().toUpperCase()] = data.subjects;
+        }
+    });
 
     // Try exact match first
     if (mappings[text]) {
