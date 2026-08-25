@@ -113,7 +113,7 @@
                 const userProfile = await getUserProfile(currentUser.uid);
                 if (userProfile) {
                     username = userProfile.username || "";
-                    selectedInterests = userProfile.interests || [];
+                    selectedInterests = Array.isArray(userProfile.interests) ? userProfile.interests : [];
                     userRole = userProfile.role || "student";
                     
                     // Load academic information based on role
@@ -129,6 +129,7 @@
             }
         } catch (error) {
             console.error("Error loading user data:", error);
+            alert("Error loading profile data. Please try again.");
         }
     }
 
