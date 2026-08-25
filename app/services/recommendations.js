@@ -16,7 +16,7 @@
 
 import { DEFAULT_SUBJECTS, bookSubjects } from './subjects';
 import { matchesYearLevel, studentLevel } from './yearLevels';
-import { getSubjectsForProgram } from './mappings';
+import { getSubjectsForProgram, getSubjectsForDepartment } from './mappings';
 
 // An interest chosen by hand counts double a subject inferred from a strand.
 const INTEREST_WEIGHT = 2;
@@ -63,6 +63,16 @@ const CANONICAL_SUBJECTS = new Map(DEFAULT_SUBJECTS.map((s) => [s.toLowerCase(),
  */
 export function studentTrack(user) {
     const raw = user?.strand || user?.course || '';
+    return typeof raw === 'string' ? raw.trim() : '';
+}
+
+/**
+ * The teacher's department, if applicable.
+ * @param {any} user
+ * @returns {string}
+ */
+export function teacherDepartment(user) {
+    const raw = user?.department || '';
     return typeof raw === 'string' ? raw.trim() : '';
 }
 
@@ -136,14 +146,16 @@ export function interestSubjects(user) {
  * @param {any} book
  * @param {string[]} interests
  * @param {string[]} trackSubjects
+ * @param {string[]} [departmentSubjects]
  * @returns {number}
  */
-export function scoreBook(book, interests, trackSubjects) {
+export function scoreBook(book, interests, trackSubjects, departmentSubjects = []) {
     let score = 0;
 
     for (const subject of bookSubjects(book)) {
         if (interests.includes(subject)) score += INTEREST_WEIGHT;
         if (trackSubjects.includes(subject)) score += TRACK_WEIGHT;
+        if (departmentSubjects.includes(subject)) score += TRACK_WEIGHT;
     }
 
     return score;
@@ -171,7 +183,14 @@ export async function recommendBooks(books, user, limit = 20) {
 
     const interests = interestSubjects(user);
     const trackSubjects = await subjectsForTrack(studentTrack(user));
-    const preferred = [...new Set([...interests, ...trackSubjects])];
+    
+    // For teachers, also get department subjects
+    let departmentSubjects = [];
+    if (user?.role === 'teacher' || user?.role === 'Teacher') {
+        departmentSubjects = await getSubjectsForDepartment(teacherDepartment(user));
+    }
+    
+    const preferred = [...new Set([...interests, ...trackSubjects, ...departmentSubjects])];
 
     const atLevel = books
         .filter((book) => book && book.title)
@@ -195,7 +214,7 @@ export async function recommendBooks(books, user, limit = 20) {
     const byScore = new Map();
 
     for (const book of candidates) {
-        const score = scoreBook(book, interests, trackSubjects);
+        const score = scoreBook(book, interests, trackSubjects, departmentSubjects);
         if (!byScore.has(score)) byScore.set(score, []);
         byScore.get(score).push(book);
     }
@@ -217,8 +236,14 @@ export async function recommendationReason(user) {
     const level = studentLevel(user);
     const interests = interestSubjects(user);
     const trackSubjects = await subjectsForTrack(studentTrack(user));
+    
+    // For teachers, also get department subjects
+    let departmentSubjects = [];
+    if (user?.role === 'teacher' || user?.role === 'Teacher') {
+        departmentSubjects = await getSubjectsForDepartment(teacherDepartment(user));
+    }
 
-    if (!level && interests.length === 0 && trackSubjects.length === 0) {
+    if (!level && interests.length === 0 && trackSubjects.length === 0 && departmentSubjects.length === 0) {
         return 'Showing the whole library. Add your year level, strand or course, and interests to get a shorter list.';
     }
 
@@ -227,10 +252,10 @@ export async function recommendationReason(user) {
     if (level) parts.push(`for ${level}`);
     if (interests.length > 0) parts.push(`led by your interests in ${interests.join(', ')}`);
 
-    // Only the track subjects the interests have not already claimed, so the
+    // Only the track/department subjects the interests have not already claimed, so the
     // sentence does not name the same subject twice. Reads as a follow-on when
     // there are interests to follow, and stands alone when there are not.
-    const extra = trackSubjects.filter((s) => !interests.includes(s));
+    const extra = [...trackSubjects, ...departmentSubjects].filter((s) => !interests.includes(s));
 
     if (extra.length > 0) {
         parts.push(`${interests.length > 0 ? 'then' : 'leaning on'} ${extra.join(', ')}`);
