@@ -13,7 +13,7 @@
 
         <!-- Search Bar -->
         <stackLayout row={2} col={0} class="search-container">
-            <gridLayout rows="auto" columns="*, auto">
+            <gridLayout rows="auto" columns="*, auto, auto">
                 <textField
                     row={0}
                     col={0}
@@ -24,6 +24,7 @@
                 />
                 {#if searchQuery}
                     <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
+                    <button row={0} col={2} text="Search" class="search-btn" on:tap={performSearch} />
                 {/if}
             </gridLayout>
         </stackLayout>
@@ -47,21 +48,12 @@
                             <label text={error} class="error-text" />
                             <button text="Retry" class="retry-btn" on:tap={loadBooks} />
                         </stackLayout>
-                    {:else if books.length === 0}
+                    {:else if displayedBooks.length === 0}
                         <stackLayout class="empty-container">
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
-                    {:else if filteredBooks.length === 0}
-                        <stackLayout class="empty-container">
-                            <label
-                                text={`Nothing matches "${searchQuery}"`}
-                                class="empty-text"
-                                textWrap="true"
-                            />
-                            <button text="Clear search" class="retry-btn" on:tap={clearSearch} />
-                        </stackLayout>
                     {:else}
-                        {#each filteredBooks as book (book.id)}
+                        {#each displayedBooks as book (book.id)}
 							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
 								
 								<!-- Book Info -->
@@ -107,6 +99,7 @@
     import Subjects from './Subjects.svelte';
     import Profile from './Profile.svelte';
     import BrowseAll from './BrowseAll.svelte';
+    import SearchResults from './SearchResults.svelte';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     import MyShelf from './MyShelf.svelte';
@@ -123,23 +116,22 @@
     let error: string | null = null;
     let currentUser: any = null;
 
-    // Matches on title or author, case-insensitively. Every whitespace-separated
-    // term must appear somewhere, so "growth thompson" finds a book by matching
-    // one word against the title and the other against the author.
-    function matchesSearch(book: any, terms: string[]): boolean {
-        const haystack = `${book?.title ?? ''} ${book?.author ?? ''}`.toLowerCase();
-        return terms.every((term) => haystack.includes(term));
-    }
-
-    $: searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    $: filteredBooks = searchTerms.length === 0
-        ? displayedBooks
-        : books.filter((book) => matchesSearch(book, searchTerms));
-
-
-
     function clearSearch() {
         searchQuery = '';
+    }
+
+    function performSearch() {
+        if (searchQuery.trim()) {
+            console.log("=== HOME SEARCH DEBUG ===");
+            console.log("Search query:", searchQuery.trim());
+            console.log("Books being passed:", books.length);
+            console.log("Books titles:", books.map(b => b.title));
+            console.log("========================");
+            navigate({
+                page: SearchResults,
+                props: { searchQuery: searchQuery.trim(), books }
+            } as any);
+        }
     }
 
 
@@ -159,10 +151,10 @@
         loadBooks();
 
         // Force refresh displayedBooks after books load to ensure random shuffle
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
             if (books.length > 0) {
                 if (currentUser) {
-                    displayedBooks = recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+                    displayedBooks = await recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
                 } else {
                     // Shuffle all books randomly for non-logged-in users
                     const shuffled = [...books];
@@ -356,6 +348,18 @@
         border-width: 0;
         padding: 0 12;
         margin: 0;
+        vertical-align: center;
+    }
+
+    .search-btn {
+        background-color: #033047;
+        color: white;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 0;
+        padding: 0 15;
+        margin: 0 0 0 10;
+        border-radius: 0;
         vertical-align: center;
     }
 

@@ -16,6 +16,7 @@
 
 import { DEFAULT_SUBJECTS, bookSubjects } from './subjects';
 import { matchesYearLevel, studentLevel } from './yearLevels';
+import { getSubjectsForProgram } from './mappings';
 
 // An interest chosen by hand counts double a subject inferred from a strand.
 const INTEREST_WEIGHT = 2;
@@ -72,12 +73,21 @@ export function studentTrack(user) {
  * text, so "bscs", "BS Computer Science" and "BSCS " all have to land on the
  * same entry.
  *
+ * Now uses dynamic Firestore mappings first, then falls back to default TRACK_SUBJECTS.
+ *
  * @param {string} track
- * @returns {string[]}
+ * @returns {Promise<string[]>}
  */
-export function subjectsForTrack(track) {
+export async function subjectsForTrack(track) {
     if (typeof track !== 'string' || !track.trim()) return [];
 
+    // Try dynamic mappings first
+    const dynamicSubjects = await getSubjectsForProgram(track);
+    if (dynamicSubjects.length > 0) {
+        return dynamicSubjects;
+    }
+
+    // Fall back to default TRACK_SUBJECTS
     const text = track.trim().toUpperCase();
 
     if (TRACK_SUBJECTS[text]) return TRACK_SUBJECTS[text];
@@ -154,13 +164,13 @@ function shuffle(items) {
  * @param {any[]} books
  * @param {any} user
  * @param {number} [limit]
- * @returns {any[]}
+ * @returns {Promise<any[]>}
  */
-export function recommendBooks(books, user, limit = 20) {
+export async function recommendBooks(books, user, limit = 20) {
     if (!Array.isArray(books)) return [];
 
     const interests = interestSubjects(user);
-    const trackSubjects = subjectsForTrack(studentTrack(user));
+    const trackSubjects = await subjectsForTrack(studentTrack(user));
     const preferred = [...new Set([...interests, ...trackSubjects])];
 
     const atLevel = books
@@ -201,12 +211,12 @@ export function recommendBooks(books, user, limit = 20) {
  * A short line describing why these books were chosen, shown above the list so
  * the page is not a black box.
  * @param {any} user
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function recommendationReason(user) {
+export async function recommendationReason(user) {
     const level = studentLevel(user);
     const interests = interestSubjects(user);
-    const trackSubjects = subjectsForTrack(studentTrack(user));
+    const trackSubjects = await subjectsForTrack(studentTrack(user));
 
     if (!level && interests.length === 0 && trackSubjects.length === 0) {
         return 'Showing the whole library. Add your year level, strand or course, and interests to get a shorter list.';

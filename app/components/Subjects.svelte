@@ -15,12 +15,6 @@
         <!-- Subject list -->
         <scrollView row={2} col={0} class="subjects-scroll">
             <stackLayout>
-                <label
-                    text="Browse the library by subject. A book can appear under more than one."
-                    class="intro-text"
-                    textWrap="true"
-                />
-
                 {#each subjectRows as row}
                     <stackLayout
                         class="subject-item"

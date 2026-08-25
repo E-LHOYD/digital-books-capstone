@@ -14,18 +14,22 @@
 
         <!-- Search Bar -->
         <stackLayout row={2} col={0} class="search-container">
-            <gridLayout rows="auto" columns="*, auto">
+            <gridLayout rows="auto" columns="*, auto, auto">
                 <textField
                     row={0}
                     col={0}
                     hint="Search title or author"
                     class="search-bar"
                     text={searchQuery}
-                    on:textChange={(e) => (searchQuery = e?.value ?? e?.object?.text ?? '')}
+                    on:textChange={(e) => {
+                        searchQuery = e?.value ?? e?.object?.text ?? '';
+                        console.log("Search query changed:", searchQuery);
+                    }}
                 />
                 {#if searchQuery}
                     <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
                 {/if}
+                <button row={0} col={2} text="Search" class="search-btn" on:tap={performSearch} />
             </gridLayout>
         </stackLayout>
 
@@ -51,17 +55,8 @@
                         <stackLayout class="empty-container">
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
-                    {:else if filteredBooks.length === 0}
-                        <stackLayout class="empty-container">
-                            <label
-                                text={`Nothing matches "${searchQuery}"`}
-                                class="empty-text"
-                                textWrap="true"
-                            />
-                            <button text="Clear search" class="retry-btn" on:tap={clearSearch} />
-                        </stackLayout>
                     {:else}
-                        {#each filteredBooks as book (book.id)}
+                        {#each books as book (book.id)}
 							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
 								
 								<!-- Book Info -->
@@ -106,6 +101,7 @@
     import Subjects from './Subjects.svelte';
     import Profile from './Profile.svelte';
     import Home from './Home.svelte';
+    import SearchResults from './SearchResults.svelte';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     import MyShelf from './MyShelf.svelte';
@@ -115,21 +111,24 @@
     let isLoading = false;
     let error: string | null = null;
 
-    // Matches on title or author, case-insensitively. Every whitespace-separated
-    // term must appear somewhere, so "growth thompson" finds a book by matching
-    // one word against the title and the other against the author.
-    function matchesSearch(book: any, terms: string[]): boolean {
-        const haystack = `${book?.title ?? ''} ${book?.author ?? ''}`.toLowerCase();
-        return terms.every((term) => haystack.includes(term));
-    }
-
-    $: searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    $: filteredBooks = searchTerms.length === 0
-        ? books
-        : books.filter((book) => matchesSearch(book, searchTerms));
+    $: console.log("Reactive: searchQuery =", searchQuery);
 
     function clearSearch() {
         searchQuery = '';
+    }
+
+    function performSearch() {
+        console.log("=== BROWSE ALL SEARCH DEBUG ===");
+        console.log("Search query:", searchQuery.trim());
+        console.log("Books being passed:", books.length);
+        console.log("Books titles:", books.map(b => b.title));
+        console.log("===============================");
+        if (searchQuery.trim()) {
+            navigate({
+                page: SearchResults,
+                props: { searchQuery: searchQuery.trim(), books }
+            } as any);
+        }
     }
 
 
@@ -324,6 +323,18 @@
         border-width: 0;
         padding: 0 12;
         margin: 0;
+        vertical-align: center;
+    }
+
+    .search-btn {
+        background-color: #033047;
+        color: white;
+        font-size: 14;
+        font-weight: bold;
+        border-width: 0;
+        padding: 0 15;
+        margin: 0 0 0 10;
+        border-radius: 0;
         vertical-align: center;
     }
 

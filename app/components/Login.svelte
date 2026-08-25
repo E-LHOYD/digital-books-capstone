@@ -16,7 +16,7 @@
             <label text="Log in" class="title" />
 
             <label text="EMAIL / USERNAME" class="field-label" />
-            <textField hint="name@school.edu" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
+            <textField hint="email/username" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
 
             <label text="PASSWORD" class="field-label" />
             <gridLayout columns="*, auto" class="password-row">

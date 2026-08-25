@@ -549,8 +549,8 @@
     }
 
     .shelf-item {
-        padding: 20;
-        margin: 0 0 16 0;
+        padding: 12;
+        margin: 0 0 12 0;
         background-color: white;
         border-width: 2;
         border-color: #201e1d;
@@ -572,13 +572,13 @@
     }
 
     .shelf-icon {
-        font-size: 20;
-        margin-right: 10;
+        font-size: 16;
+        margin-right: 8;
         vertical-align: center;
     }
 
     .shelf-name {
-        font-size: 20;
+        font-size: 16;
         font-weight: bold;
         color: #033047;
         vertical-align: center;
@@ -586,35 +586,35 @@
     }
 
     .shelf-count {
-        font-size: 14;
+        font-size: 12;
         color: #666;
         text-align: right;
         vertical-align: center;
     }
 
     .shelf-preview {
-        padding-left: 10;
+        padding-left: 5;
     }
 
     .preview-text {
-        font-size: 14;
+        font-size: 12;
         color: #666;
         font-style: italic;
-        padding-left: 15;
+        padding-left: 10;
     }
 
     .preview-book {
-        font-size: 14;
+        font-size: 12;
         color: #666;
         margin-bottom: 5;
-        padding-left: 15;
+        padding-left: 10;
     }
 
     .empty-text {
-        font-size: 14;
+        font-size: 12;
         color: #999;
         font-style: italic;
-        padding-left: 15;
+        padding-left: 10;
     }
 
     .create-shelf-btn {

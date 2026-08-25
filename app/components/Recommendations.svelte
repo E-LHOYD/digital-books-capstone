@@ -75,16 +75,17 @@
     let isLoading = true;
     let recommendedBooks: any[] = [];
     let allBooks: any[] = [];
+    let reason = '';
 
     $: level = studentLevel(profile);
     $: track = studentTrack(profile);
-    $: reason = recommendationReason(profile);
 
     onMount(async () => {
         // Both are needed before anything can be ranked, and neither depends on
         // the other, so they run together.
         await Promise.all([loadProfile(), loadAllBooks()]);
-        recommendedBooks = recommendBooks(allBooks, profile);
+        recommendedBooks = await recommendBooks(allBooks, profile);
+        reason = await recommendationReason(profile);
         isLoading = false;
     });
 

@@ -589,7 +589,6 @@
     .btn {
         font-size: 18;
         font-weight: bold;
-        padding: 15 30;
         border-radius: 0;
         border-width: 0;
         margin: 0 5;
@@ -598,6 +597,7 @@
     .btn-primary {
         background-color: #033047;
         color: white;
+        padding: 13 28;
     }
 
     .btn-secondary {
@@ -605,6 +605,7 @@
         color: #033047;
         border-width: 2;
         border-color: #201e1d;
+        padding: 13 28;
     }
 
     .notice {
