@@ -14,34 +14,18 @@
         <!-- Main Content -->
         <scrollView row={2} col={0} class="scroll-container">
             <stackLayout class="content">
-                <!-- Read Shelf -->
-                <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('read')}>
+                <!-- Reading History Shelf (combined read + viewed) -->
+                <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('history')}>
                     <stackLayout class="shelf-header">
-                        <label text="📚" class="shelf-icon" />
-                        <label text="Read" class="shelf-name" />
-                        <label text={readBooks.length + ' books'} class="shelf-count" />
+                        <label text="📖" class="shelf-icon" />
+                        <label text="Reading History" class="shelf-name" />
+                        <label text={(readBooks.length + viewedBooks.length) + ' books'} class="shelf-count" />
                     </stackLayout>
                     <stackLayout class="shelf-preview">
-                        {#if readBooks.length > 0}
+                        {#if (readBooks.length + viewedBooks.length) > 0}
                             <label text="Tap to view books" class="preview-text" />
                         {:else}
-                            <label text="No books read yet" class="empty-text" />
-                        {/if}
-                    </stackLayout>
-                </stackLayout>
-
-                <!-- Viewed Shelf -->
-                <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('viewed')}>
-                    <stackLayout class="shelf-header">
-                        <label text="👁️" class="shelf-icon" />
-                        <label text="Viewed" class="shelf-name" />
-                        <label text={viewedBooks.length + ' books'} class="shelf-count" />
-                    </stackLayout>
-                    <stackLayout class="shelf-preview">
-                        {#if viewedBooks.length > 0}
-                            <label text="Tap to view books" class="preview-text" />
-                        {:else}
-                            <label text="No books viewed yet" class="empty-text" />
+                            <label text="No reading history yet" class="empty-text" />
                         {/if}
                     </stackLayout>
                 </stackLayout>
@@ -363,6 +347,7 @@
     function goToShelfBooks(shelfId: string) {
         const isReadShelf = shelfId === 'read';
         const isViewedShelf = shelfId === 'viewed';
+        const isHistoryShelf = shelfId === 'history';
         let shelfName = 'Shelf';
         let books: any[] = [];
 
@@ -372,6 +357,14 @@
         } else if (isViewedShelf) {
             shelfName = 'Viewed';
             books = viewedBooks;
+        } else if (isHistoryShelf) {
+            shelfName = 'Reading History';
+            // Combine read and viewed books, removing duplicates
+            const combinedMap = new Map();
+            [...readBooks, ...viewedBooks].forEach(book => {
+                if (book?.id) combinedMap.set(book.id, book);
+            });
+            books = Array.from(combinedMap.values());
         } else {
             const shelf = customShelves.find(s => s.id === shelfId);
             if (!shelf) {
@@ -389,7 +382,8 @@
                 shelfName, 
                 books,
                 isReadShelf,
-                isViewedShelf
+                isViewedShelf,
+                isHistoryShelf
             }
         } as any);
     }
@@ -548,9 +542,15 @@
         vertical-align: center;
     }
 
+    .divider {
+        height: 2;
+        background-color: #201e1d;
+        margin: 0 20;
+    }
+
     .shelf-item {
         padding: 12;
-        margin: 0 0 12 0;
+        margin: 0 0 5 0;
         background-color: white;
         border-width: 2;
         border-color: #201e1d;
@@ -558,7 +558,7 @@
     }
 
     .content {
-        padding: 0 10;
+        padding: 15 20 20 20;
     }
 
     .shelf-item:active {
@@ -620,7 +620,7 @@
     .create-shelf-btn {
         width: 100%;
         padding: 15;
-        margin-top: 10;
+        margin: 10 0 5 0;
         background-color: #033047;
         color: white;
         font-size: 16;
@@ -631,7 +631,7 @@
 
     .max-shelves-notice {
         padding: 15;
-        margin-top: 10;
+        margin: 10 0 5 0;
         background-color: #fff3f0;
         border-radius: 0;
         border-width: 2;

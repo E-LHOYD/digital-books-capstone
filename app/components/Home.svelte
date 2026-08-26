@@ -20,7 +20,7 @@
                     hint="Search title or author"
                     class="search-bar"
                     text={searchQuery}
-                    on:textChange={(e) => (searchQuery = e?.value ?? e?.object?.text ?? '')}
+                    on:textChange={handleSearchTextChange}
                 />
                 {#if searchQuery}
                     <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
@@ -134,6 +134,10 @@
         }
     }
 
+    function handleSearchTextChange(e: any) {
+        searchQuery = e?.value ?? e?.object?.text ?? '';
+    }
+
 
 
     // The list is built once, when both the books and the signed-in user are
@@ -178,7 +182,7 @@
     onMount(() => {
         // Load current user and their profile
         getCurrentUser()
-            .then(async (authUser) => {
+            .then(async (authUser: any) => {
                 if (authUser) {
                     // Fetch the full user profile from Firestore
                     const userProfile = await getUserProfile(authUser.uid);
@@ -186,7 +190,7 @@
                     currentUser = { ...authUser, ...userProfile };
                 }
             })
-            .catch((err) => {
+            .catch((err: any) => {
                 // A failed profile read should not leave the library empty; it
                 // just means the list cannot be personalised.
                 console.error("Could not read the current user:", err);
@@ -402,7 +406,7 @@
     }
 
     .buttons-container {
-        margin: 15 0;
+        margin: 0 0 5 0;
         width: 100%;
         text-align: center;
     }

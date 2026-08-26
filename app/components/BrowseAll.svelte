@@ -21,15 +21,12 @@
                     hint="Search title or author"
                     class="search-bar"
                     text={searchQuery}
-                    on:textChange={(e) => {
-                        searchQuery = e?.value ?? e?.object?.text ?? '';
-                        console.log("Search query changed:", searchQuery);
-                    }}
+                    on:textChange={handleSearchTextChange}
                 />
                 {#if searchQuery}
                     <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
+                    <button row={0} col={2} text="Search" class="search-btn" on:tap={performSearch} />
                 {/if}
-                <button row={0} col={2} text="Search" class="search-btn" on:tap={performSearch} />
             </gridLayout>
         </stackLayout>
 
@@ -129,6 +126,11 @@
                 props: { searchQuery: searchQuery.trim(), books }
             } as any);
         }
+    }
+
+    function handleSearchTextChange(e: any) {
+        searchQuery = e?.value ?? e?.object?.text ?? '';
+        console.log("Search query changed:", searchQuery);
     }
 
 
@@ -343,7 +345,7 @@
     }
 
     .buttons-container {
-        margin: 15 0;
+        margin: 0 0 5 0;
         width: 100%;
         text-align: center;
     }

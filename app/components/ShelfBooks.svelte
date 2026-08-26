@@ -38,7 +38,7 @@
                                         verticalAlignment="center"
                                     />
                                 {/if}
-                                {#if !isReadShelf && !isViewedShelf && selectionMode}
+                                {#if !isReadShelf && !isViewedShelf && !isHistoryShelf && selectionMode}
                                     <button
                                         row={0}
                                         col={2}
@@ -57,7 +57,7 @@
             </scrollView>
 
             <!-- Remove from shelf button (only for custom shelves) -->
-            {#if !isReadShelf && !isViewedShelf && books.length > 0}
+            {#if !isReadShelf && !isViewedShelf && !isHistoryShelf && books.length > 0}
                 {#if !selectionMode}
                     <button text="Remove Books" class="remove-btn" on:tap={enterSelectionMode} />
                 {:else}
@@ -129,6 +129,8 @@
     export let isReadShelf: boolean;
     // @ts-ignore
     export let isViewedShelf: boolean = false;
+    // @ts-ignore
+    export let isHistoryShelf: boolean = false;
 
     let selectedBooks: string[] = [];
     let showRemoveModal = false;
