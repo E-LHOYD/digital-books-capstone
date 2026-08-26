@@ -147,11 +147,22 @@
     let booksReady = false;
     let userReady = false;
 
-    function buildDisplayedBooks() {
+    // async because recommendBooks is: it awaits the subject mapping for the
+    // student's strand or course. Calling it without awaiting assigned a
+    // Promise to displayedBooks, so {#each} had nothing to iterate and the
+    // library came up empty.
+    async function buildDisplayedBooks() {
         if (!booksReady || !userReady) return;
 
         if (currentUser) {
-            displayedBooks = recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+            try {
+                displayedBooks = await recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+            } catch (err) {
+                // Ranking is a nicety; the library working is not. If the
+                // subject lookup fails, show everything rather than nothing.
+                console.error("Could not rank the library:", err);
+                displayedBooks = [...books];
+            }
             return;
         }
 

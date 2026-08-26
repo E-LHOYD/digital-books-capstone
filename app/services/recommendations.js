@@ -192,17 +192,22 @@ export async function recommendBooks(books, user, limit = 20) {
     
     const preferred = [...new Set([...interests, ...trackSubjects, ...departmentSubjects])];
 
-    const atLevel = books
-        .filter((book) => book && book.title)
-        .filter((book) => matchesYearLevel(book, user));
+    const usable = books.filter((book) => book && book.title);
+
+    // Year level is a filter, but not one worth showing an empty page over.
+    // A library whose books are tagged for other years would otherwise leave
+    // this student with nothing at all, the same way the subject filter below
+    // is allowed to relax rather than empty the list.
+    const atLevel = usable.filter((book) => matchesYearLevel(book, user));
+    const inScope = atLevel.length > 0 ? atLevel : usable;
 
     // Keeping a student inside their own subjects is the point of the filter,
     // but an empty page is worse than a loose one: if nothing survives, the
     // whole year-appropriate library is shown rather than nothing at all.
-    let candidates = atLevel;
+    let candidates = inScope;
 
     if (preferred.length > 0) {
-        const onSubject = atLevel.filter((book) =>
+        const onSubject = inScope.filter((book) =>
             bookSubjects(book).some((subject) => preferred.includes(subject))
         );
 
