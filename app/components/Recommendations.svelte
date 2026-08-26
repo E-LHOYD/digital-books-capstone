@@ -39,7 +39,7 @@
         {:else}
             <scrollView row={3} col={0} class="books-scroll">
                 <stackLayout>
-                    {#each recommendedBooks as book (book.id)}
+                    {#each recommendedBooks as book}
                         <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
                             <label text={book.title} class="book-title" textWrap={true} />
                             <label text={book.author} class="book-author" />

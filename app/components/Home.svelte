@@ -53,7 +53,7 @@
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
                     {:else}
-                        {#each displayedBooks as book (book.id)}
+                        {#each displayedBooks as book}
 							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
 								
 								<!-- Book Info -->
@@ -136,37 +136,60 @@
 
 
 
+    // The list is built once, when both the books and the signed-in user are
+    // known. It used to be built by a setInterval polling every 100ms for
+    // books.length > 0, which had two problems: it could fire before the user
+    // profile arrived and silently fall back to the logged-out shuffle, and it
+    // could fire *while the user was tapping a book*. That second case is what
+    // threw "View already has a parent": reassigning displayedBooks marked the
+    // list dirty, the tap navigated away, and BookDetails' init flushed the
+    // pending update, which tried to move list rows that were already mounted.
+    let booksReady = false;
+    let userReady = false;
+
+    function buildDisplayedBooks() {
+        if (!booksReady || !userReady) return;
+
+        if (currentUser) {
+            displayedBooks = recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+            return;
+        }
+
+        // Nobody signed in: no profile to rank against, so just vary the order.
+        const shuffled = [...books];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        displayedBooks = shuffled;
+    }
+
     onMount(() => {
         // Load current user and their profile
-        getCurrentUser().then(async (authUser) => {
-            if (authUser) {
-                // Fetch the full user profile from Firestore
-                const userProfile = await getUserProfile(authUser.uid);
-                // Merge auth user with profile data
-                currentUser = { ...authUser, ...userProfile };
-            }
-        });
+        getCurrentUser()
+            .then(async (authUser) => {
+                if (authUser) {
+                    // Fetch the full user profile from Firestore
+                    const userProfile = await getUserProfile(authUser.uid);
+                    // Merge auth user with profile data
+                    currentUser = { ...authUser, ...userProfile };
+                }
+            })
+            .catch((err) => {
+                // A failed profile read should not leave the library empty; it
+                // just means the list cannot be personalised.
+                console.error("Could not read the current user:", err);
+            })
+            .finally(() => {
+                userReady = true;
+                buildDisplayedBooks();
+            });
 
         // Load books
-        loadBooks();
-
-        // Force refresh displayedBooks after books load to ensure random shuffle
-        const interval = setInterval(async () => {
-            if (books.length > 0) {
-                if (currentUser) {
-                    displayedBooks = await recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
-                } else {
-                    // Shuffle all books randomly for non-logged-in users
-                    const shuffled = [...books];
-                    for (let i = shuffled.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                    }
-                    displayedBooks = shuffled;
-                }
-                clearInterval(interval);
-            }
-        }, 100);
+        loadBooks().finally(() => {
+            booksReady = true;
+            buildDisplayedBooks();
+        });
 
         // Marks the user active whenever the library is opened, which is what
         // the dashboard counts.

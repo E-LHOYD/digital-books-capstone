@@ -119,7 +119,7 @@
                             {:else if customShelves.length === 0}
                                 <label text="No shelves yet. Create one below." class="empty-text" textWrap="true" />
                             {/if}
-                            {#each customShelves as shelf (shelf.id)}
+                            {#each customShelves as shelf}
                                 <stackLayout
                                     class="shelf-item"
                                     on:tap={() => addToShelf(shelf.id)}
