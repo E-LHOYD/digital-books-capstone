@@ -22,10 +22,29 @@
                     text={searchQuery}
                     on:textChange={handleSearchTextChange}
                 />
-                {#if searchQuery}
-                    <button row={0} col={1} text="Clear" class="search-clear" on:tap={clearSearch} />
-                    <button row={0} col={2} text="Search" class="search-btn" on:tap={performSearch} />
-                {/if}
+                <!--
+                    Both buttons stay mounted and are collapsed when the field is
+                    empty, rather than being added and removed by an {#if}.
+                    Inserting children into a GridLayout after it has laid out is
+                    the same operation that throws "View already has a parent",
+                    and collapse takes no space, so the field still spans the row.
+                -->
+                <button
+                    row={0}
+                    col={1}
+                    text="Clear"
+                    class="search-clear"
+                    visibility={searchQuery ? 'visible' : 'collapse'}
+                    on:tap={clearSearch}
+                />
+                <button
+                    row={0}
+                    col={2}
+                    text="Search"
+                    class="search-btn"
+                    visibility={searchQuery ? 'visible' : 'collapse'}
+                    on:tap={performSearch}
+                />
             </gridLayout>
         </stackLayout>
         
