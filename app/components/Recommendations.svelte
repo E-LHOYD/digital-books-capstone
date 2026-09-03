@@ -149,6 +149,7 @@
                     subject: data.subject || null,
                     yearLevels: data.yearLevels || null,
                     coverPath: `~/ebooks/cover/${cleanTitle}cover.jpg`,
+                    coverUrl: data.coverUrl || null,
                     fallbackCover: '~/images/bookcoverbrown.jpg'
                 };
             });
@@ -262,6 +263,7 @@
         font-weight: bold;
         color: #033047;
         margin-bottom: 5;
+        text-transform: capitalize;
     }
 
     .book-author {

@@ -1,5 +1,5 @@
 <page actionBarHidden={true} class="page">
-    <gridLayout rows="auto, auto, auto, *, auto" columns="*" class="screen">
+    <gridLayout rows="auto, auto, auto, *" columns="*" class="screen">
         <!-- Header: logo + wordmark -->
         <stackLayout row="0" orientation="horizontal" class="header">
             <stackLayout orientation="horizontal" class="logo">
@@ -56,18 +56,14 @@
                     />
                     <label text="Keep me logged in" class="checkbox-label" />
                 </stackLayout>
-                <button
+                <label
                     col={2}
                     text={isSendingReset ? "Sending..." : "Forgot password?"}
                     class="link-btn"
-                    isEnabled={!isSendingReset}
                     on:tap={handleForgotPassword}
                 />
             </gridLayout>
-        </stackLayout>
 
-        <!-- Login Button pinned at bottom -->
-        <stackLayout row="4" class="footer">
             <button text="Log in" class="btn login" on:tap={handleLogin}/>
         </stackLayout>
     </gridLayout>
@@ -103,6 +99,10 @@
     }
 
     async function handleForgotPassword() {
+        // The trigger is a label now, which cannot be disabled, so a second tap
+        // while a reset is already in flight is turned away here instead.
+        if (isSendingReset) return;
+
         errorMessage = "";
         noticeMessage = "";
 
@@ -331,13 +331,11 @@
     }
 
     .link-btn {
-        background-color: transparent;
         color: #033047;
         font-size: 14;
-        border-width: 0;
-        margin: 0;
-        padding: 6 0;
         text-decoration: underline;
+        vertical-align: center;
+        padding: 6 0;
     }
 
     .error-message {
@@ -357,20 +355,16 @@
         margin: 0 0 12 0;
     }
 
-    .footer {
-        padding: 0 20 24 20;
-    }
-
     .btn.login {
         width: 100%;
         height: 48;
-        margin: 0;
+        margin: 24 0 0 0;
         padding: 10;
         border-radius: 0;
         font-size: 16;
         font-weight: bold;
         background-color: #033047;
         color: #ffffff;
-        text-align: left;
+        text-align: center;
     }
 </style>

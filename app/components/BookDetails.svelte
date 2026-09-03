@@ -15,8 +15,13 @@
     <scrollView row={2} col={0}>
         <stackLayout class="container">
 
-        <!-- Cover / First Page Preview -->
-        {#if book.fileUrl && book.fileUrl.length > 0}
+        <!-- Cover: the uploaded image when there is one, otherwise the first
+             page of the book rendered by the reader, as before. -->
+        {#if book.coverUrl}
+            <gridLayout class="detail-cover" rows="*" columns="*">
+                <image src={book.coverUrl} stretch="aspectFit" class="cover-image" />
+            </gridLayout>
+        {:else if book.fileUrl && book.fileUrl.length > 0}
             <gridLayout class="detail-cover" rows="*" columns="*">
                 <webView
                     src={getReaderUrl(book.fileUrl, { page: 1, preview: true })}
@@ -537,6 +542,11 @@
         overflow: hidden;
     }
 
+    .cover-image {
+        width: 100%;
+        height: 100%;
+    }
+
     .cover-webview {
         width: 100%;
         height: 100%;
@@ -554,6 +564,7 @@
         color: #033047;
         margin-bottom: 10;
         text-align: center;
+        text-transform: capitalize;
     }
 
     .detail-author {

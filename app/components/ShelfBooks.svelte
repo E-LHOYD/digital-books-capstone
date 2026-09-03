@@ -16,6 +16,22 @@
             <!-- Shelf Title -->
             <label text={shelfName} class="shelf-title" />
 
+            <!-- Sort -->
+            <scrollView orientation="horizontal" class="sort-scroll">
+                <stackLayout orientation="horizontal" class="sort-row">
+                    {#each SORT_OPTIONS as option}
+                        <label
+                            text={option.key === sortKey
+                                ? `${option.label} ${sortDir === 'asc' ? '\u2191' : '\u2193'}`
+                                : option.label}
+                            class="sort-chip"
+                            class:sort-chip-active={option.key === sortKey}
+                            on:tap={() => chooseSort(option.key)}
+                        />
+                    {/each}
+                </stackLayout>
+            </scrollView>
+
             <!-- Books List -->
             <scrollView class="books-scroll">
                 <stackLayout>
@@ -24,7 +40,7 @@
                             <label text="No books in this shelf" class="empty-text" />
                         </stackLayout>
                     {:else}
-                        {#each books as book (book.id + '-' + refreshKey)}
+                        {#each sortedBooks as book}
                             <gridLayout class="book-item" rows="auto, auto" columns="*, auto, auto" on:tap={() => goToBookDetails(book)}>
                                 <label row={0} col={0} text={book.title} class="book-title" />
                                 <label row={1} col={0} text={book.author} class="book-author" />
@@ -43,9 +59,11 @@
                                         row={0}
                                         col={2}
                                         rowSpan={2}
-                                        text={isSelected(book.id) ? "✓" : "○"}
+                                        text={selectedBooks.includes(book.id) ? "✓" : "○"}
                                         class="select-checkbox"
-                                        style={isSelected(book.id) ? "color: #1b7f3b;" : "color: #033047;"}
+                                        style={selectedBooks.includes(book.id)
+                                            ? "color: #1b7f3b;"
+                                            : "color: #033047;"}
                                         on:tap={toggleBookSelection.bind(null, book)}
                                         verticalAlignment="center"
                                     />
@@ -118,6 +136,8 @@
     import Home from './Home.svelte';
     // @ts-ignore
     import type { Book } from '../types';
+    // @ts-ignore
+    import { sortBooks, toTimestamp } from '../services/sortBooks.js';
 
     // @ts-ignore
     export let shelfId: string;
@@ -131,6 +151,52 @@
     export let isViewedShelf: boolean = false;
     // @ts-ignore
     export let isHistoryShelf: boolean = false;
+
+    // Sorting. Each option carries the direction that is useful first: titles
+    // read best A-Z, but the most-read and most-recently-opened books are the
+    // ones worth seeing at the top.
+    const SORT_OPTIONS = [
+        { key: 'title', label: 'Title', value: (b: any) => b.title, firstDir: 'asc' },
+        { key: 'author', label: 'Author', value: (b: any) => b.author, firstDir: 'asc' },
+        {
+            key: 'progress',
+            label: 'Progress',
+            value: (b: any) => (typeof b.percentage === 'number' ? b.percentage : null),
+            firstDir: 'desc'
+        },
+        {
+            key: 'published',
+            label: 'Published',
+            // Falls back to the release date for books uploaded before the
+            // dashboard collected a published date.
+            value: (b: any) => b.publishedDate || b.releaseDate,
+            firstDir: 'desc'
+        },
+        {
+            key: 'opened',
+            label: 'Last opened',
+            value: (b: any) => toTimestamp(b.lastOpenedAt),
+            firstDir: 'desc'
+        }
+    ];
+
+    let sortKey = 'title';
+    let sortDir = 'asc';
+
+    function chooseSort(key: string) {
+        if (sortKey === key) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            return;
+        }
+        const option = SORT_OPTIONS.find((o) => o.key === key);
+        sortKey = key;
+        sortDir = option ? option.firstDir : 'asc';
+    }
+
+    $: sortedBooks = (() => {
+        const option = SORT_OPTIONS.find((o) => o.key === sortKey);
+        return option ? sortBooks(books, option.value, sortDir) : books;
+    })();
 
     let selectedBooks: string[] = [];
     let showRemoveModal = false;
@@ -333,11 +399,38 @@
         margin-left: 10;
     }
 
+    .sort-scroll {
+        margin-bottom: 12;
+    }
+
+    .sort-row {
+        padding: 2 0;
+    }
+
+    .sort-chip {
+        font-size: 13;
+        color: #033047;
+        background-color: #ffffff;
+        border-width: 1;
+        border-color: #cccccc;
+        border-radius: 0;
+        padding: 6 12;
+        margin-right: 8;
+    }
+
+    .sort-chip-active {
+        background-color: #033047;
+        color: #ffffff;
+        border-color: #033047;
+        font-weight: bold;
+    }
+
     .book-title {
         font-size: 18;
         font-weight: bold;
         color: #033047;
         margin-bottom: 5;
+        text-transform: capitalize;
     }
 
     .book-author {

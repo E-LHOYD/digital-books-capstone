@@ -322,6 +322,8 @@
 					publishedDate: data.publishedDate || null,
 					releaseDate: data.releaseDate || null,
 					coverPath,
+					// The cover uploaded from the dashboard, when the book has one.
+					coverUrl: data.coverUrl || null,
 					fallbackCover: "~/images/bookcoverbrown.jpg" // fallback image
 				};
 			});
@@ -490,6 +492,7 @@
         color: #033047;
         margin-bottom: 5;
         font-family: Archivo, sans-serif;
+        text-transform: capitalize;
     }
 
     .book-author {

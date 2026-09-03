@@ -183,6 +183,7 @@
         color: #033047;
         margin-bottom: 4;
         font-family: Archivo, sans-serif;
+        text-transform: capitalize;
     }
 
     .book-author {

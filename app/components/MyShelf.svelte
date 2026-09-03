@@ -288,6 +288,7 @@
                     publishedDate: data.publishedDate || null,
                     releaseDate: data.releaseDate || null,
                     coverPath: `~/ebooks/cover/${data.title.replace(/\s+/g, '').toLowerCase()}cover.jpg`,
+                    coverUrl: data.coverUrl || null,
                 };
             });
         } catch (error) {
@@ -315,10 +316,21 @@
         return entry && typeof entry.percentage === 'number' ? entry.percentage : null;
     }
 
-    // Percentage is attached to the book objects themselves so the shelf page,
-    // which receives them as a prop, can show it without refetching.
+    /** When the book was last opened, for the shelf page's sort. */
+    function lastOpenedFor(book: any): any {
+        const entry = progressByBook[book?.id || ''];
+        return entry?.lastReadAt ?? null;
+    }
+
+    // Progress and last-opened are attached to the book objects themselves so
+    // the shelf page, which receives them as a prop, can show and sort by them
+    // without refetching.
     function withProgress(books: any[]): any[] {
-        return books.map((book) => ({ ...book, percentage: percentFor(book) }));
+        return books.map((book) => ({
+            ...book,
+            percentage: percentFor(book),
+            lastOpenedAt: lastOpenedFor(book)
+        }));
     }
 
     async function loadReadBooks(bookIds: string[]) {

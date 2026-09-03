@@ -402,6 +402,7 @@
         font-size: 16;
         vertical-align: center;
         margin-left: 6;
+        text-transform: capitalize;
     }
 
     .reader-page-counter {

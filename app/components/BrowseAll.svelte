@@ -72,7 +72,7 @@
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
                     {:else}
-                        {#each books as book (book.id)}
+                        {#each books as book}
 							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
 								
 								<!-- Book Info -->
@@ -155,22 +155,23 @@
 
 
     onMount(() => {
-        loadBooks();
-        
-        // Force shuffle books after they load to ensure random arrangement
-        const interval = setInterval(() => {
-            if (books.length > 0) {
-                // Shuffle all books randomly
-                const shuffled = [...books];
-                for (let i = shuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-                books = shuffled;
-                clearInterval(interval);
+        // Shuffled once, as soon as the books are in. This used to be a
+        // setInterval polling every 100ms for books.length > 0, which fired at
+        // an arbitrary moment and reassigned books -- including while the user
+        // was typing or tapping. Combined with the keyed each above, that threw
+        // "View already has a parent" during Svelte's flush, and an exception
+        // there leaves the scheduler wedged: the book list had already drawn,
+        // but nothing reactive updated afterwards. That is why the Clear and
+        // Search buttons never appeared on this page while they worked on Home.
+        loadBooks().finally(() => {
+            const shuffled = [...books];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-        }, 100);
-        
+            books = shuffled;
+        });
+
         recordActivity(true);
     });
 
@@ -251,6 +252,8 @@
 					publishedDate: data.publishedDate || null,
 					releaseDate: data.releaseDate || null,
 					coverPath,
+					// The cover uploaded from the dashboard, when the book has one.
+					coverUrl: data.coverUrl || null,
 					fallbackCover: "~/images/bookcoverbrown.jpg"
 				};
 			});
@@ -417,6 +420,7 @@
         font-weight: bold;
         color: #033047;
         margin-bottom: 5;
+        text-transform: capitalize;
     }
 
     .book-author {
