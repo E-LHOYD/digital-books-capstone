@@ -12,12 +12,19 @@
         </stackLayout>
         <stackLayout row="1" class="divider" />
 
-        <stackLayout row={2} col={0} class="container">
+        <!--
+            A grid, not a stack. The list used to be a fixed 450 tall inside a
+            stack, which makes the content height independent of the screen: on
+            anything shorter the buttons underneath fell off the bottom and were
+            never drawn. Here the action row is `auto` so it claims its height
+            first, and the list is `*` so it takes whatever is left.
+        -->
+        <gridLayout row={2} col={0} rows="auto, auto, *, auto" columns="*" class="container">
             <!-- Shelf Title -->
-            <label text={shelfName} class="shelf-title" />
+            <label row={0} col={0} text={shelfName} class="shelf-title" />
 
             <!-- Sort -->
-            <scrollView orientation="horizontal" class="sort-scroll">
+            <scrollView row={1} col={0} orientation="horizontal" class="sort-scroll">
                 <stackLayout orientation="horizontal" class="sort-row">
                     {#each SORT_OPTIONS as option}
                         <label
@@ -33,7 +40,7 @@
             </scrollView>
 
             <!-- Books List -->
-            <scrollView class="books-scroll">
+            <scrollView row={2} col={0} class="books-scroll">
                 <stackLayout>
                     {#if books.length === 0}
                         <stackLayout class="empty-container">
@@ -41,7 +48,7 @@
                         </stackLayout>
                     {:else}
                         {#each sortedBooks as book}
-                            <gridLayout class="book-item" rows="auto, auto" columns="*, auto, auto" on:tap={() => goToBookDetails(book)}>
+                            <gridLayout class="book-item" rows="auto, auto" columns="*, auto, auto" on:tap={() => onRowTap(book)}>
                                 <label row={0} col={0} text={book.title} class="book-title" />
                                 <label row={1} col={0} text={book.author} class="book-author" />
                                 {#if typeof book.percentage === 'number'}
@@ -54,7 +61,7 @@
                                         verticalAlignment="center"
                                     />
                                 {/if}
-                                {#if !isReadShelf && !isViewedShelf && !isHistoryShelf && selectionMode}
+                                {#if canRemove && selectionMode}
                                     <button
                                         row={0}
                                         col={2}
@@ -74,18 +81,31 @@
                 </stackLayout>
             </scrollView>
 
-            <!-- Remove from shelf button (only for custom shelves) -->
-            {#if !isReadShelf && !isViewedShelf && !isHistoryShelf && books.length > 0}
-                {#if !selectionMode}
-                    <button text="Remove Books" class="remove-btn" on:tap={enterSelectionMode} />
-                {:else}
-                    <stackLayout orientation="horizontal" class="action-buttons">
-                        <button text="Cancel" class="action-btn btn-cancel" on:tap={exitSelectionMode} />
-                        <button text="Remove" class="action-btn btn-danger" on:tap={showRemoveDialog} />
-                    </stackLayout>
+            <!-- Remove from shelf (custom shelves only) -->
+            <stackLayout row={3} col={0}>
+                {#if canRemove && books.length > 0}
+                    {#if !selectionMode}
+                        <button text="Remove Books" class="remove-btn" on:tap={enterSelectionMode} />
+                    {:else}
+                        <label
+                            text={selectionCount === 0
+                                ? 'Tap books to select them'
+                                : `${selectionCount} selected`}
+                            class="selection-hint"
+                        />
+                        <stackLayout orientation="horizontal" class="action-buttons">
+                            <button text="Cancel" class="action-btn btn-cancel" on:tap={exitSelectionMode} />
+                            <button
+                                text={removing ? 'Removing...' : 'Remove'}
+                                class="action-btn btn-danger"
+                                isEnabled={selectionCount > 0 && !removing}
+                                on:tap={showRemoveDialog}
+                            />
+                        </stackLayout>
+                    {/if}
                 {/if}
-            {/if}
-        </stackLayout>
+            </stackLayout>
+        </gridLayout>
 
         <!-- Remove Confirmation Modal -->
         {#if showRemoveModal}
@@ -103,6 +123,17 @@
                         <button text="Cancel" class="btn btn-cancel" on:tap={cancelRemove} />
                         <button text="Remove" class="btn btn-danger" on:tap={confirmRemove} />
                     </stackLayout>
+                </stackLayout>
+            </gridLayout>
+        {/if}
+
+        <!-- Result -->
+        {#if resultTitle}
+            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={closeResult}>
+                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text={resultTitle} class="modal-title" />
+                    <label text={resultMessage} class="modal-message" textWrap="true" />
+                    <button text="OK" class="btn btn-ok" on:tap={closeResult} />
                 </stackLayout>
             </gridLayout>
         {/if}
@@ -138,6 +169,8 @@
     import type { Book } from '../types';
     // @ts-ignore
     import { sortBooks, toTimestamp } from '../services/sortBooks.js';
+    // @ts-ignore
+    import { getCurrentUserId, removeBooksFromShelf } from '../services/shelf.js';
 
     // @ts-ignore
     export let shelfId: string;
@@ -201,8 +234,14 @@
     let selectedBooks: string[] = [];
     let showRemoveModal = false;
     let selectionCount = 0;
-    let refreshKey = 0;
     let selectionMode = false;
+    let removing = false;
+    let resultTitle = '';
+    let resultMessage = '';
+
+    // Read, Viewed and Reading history are worked out from reading progress
+    // rather than stored, so there is no shelf document to take a book off.
+    $: canRemove = !isReadShelf && !isViewedShelf && !isHistoryShelf;
 
     function toggleBookSelection(book: any) {
         if (selectedBooks.includes(book.id)) {
@@ -211,40 +250,44 @@
             selectedBooks = [...selectedBooks, book.id];
         }
         selectionCount = selectedBooks.length;
-        refreshKey = refreshKey + 1;
     }
 
-    function isSelected(bookId: string): boolean {
-        return selectedBooks.includes(bookId);
+    // While selecting, the whole row is the checkbox. Opening a book from a row
+    // being ticked is never what was meant, and the tick itself is a small
+    // target at the far edge of the screen.
+    function onRowTap(book: any) {
+        if (canRemove && selectionMode) {
+            toggleBookSelection(book);
+            return;
+        }
+        goToBookDetails(book);
     }
 
     function enterSelectionMode() {
         selectionMode = true;
         selectedBooks = [];
         selectionCount = 0;
-        refreshKey = refreshKey + 1;
     }
 
     function exitSelectionMode() {
         selectionMode = false;
         selectedBooks = [];
         selectionCount = 0;
-        refreshKey = refreshKey + 1;
     }
 
-    $: refreshKey;
-
     function showRemoveDialog() {
-        if (selectionCount === 0) {
-            alert('Please select at least one book to remove.');
-            return;
-        }
+        if (selectionCount === 0) return;
         showRemoveModal = true;
     }
 
     function cancelRemove() {
         showRemoveModal = false;
         // Keep selection mode active when canceling the modal
+    }
+
+    function closeResult() {
+        resultTitle = '';
+        resultMessage = '';
     }
 
     function stopPropagation(event: any) {
@@ -254,24 +297,38 @@
     }
 
     async function confirmRemove() {
-        try {
-            // Remove selected books from the shelf
-            const updatedBookIds = books
-                .filter((book) => !selectedBooks.includes(book.id))
-                .map((book) => book.id);
+        const ids = selectedBooks.slice();
+        const removed = ids.length;
 
-            // Update the shelf in Firestore
-            // This would require the shelf service to be imported and used
-            // For now, we'll just clear the selection and show a success message
+        showRemoveModal = false;
+        removing = true;
+
+        try {
+            const userId = getCurrentUserId();
+
+            if (!userId) {
+                throw new Error('You are not signed in.');
+            }
+
+            await removeBooksFromShelf(userId, shelfId, ids);
+
+            // The shelf on screen is this component's own copy, so it is updated
+            // here too. Previously the books were only ever removed on screen,
+            // and only by navigating away: nothing was written, and the message
+            // claiming otherwise was shown before anything had been attempted.
+            books = books.filter((book) => !ids.includes(book.id));
+
             exitSelectionMode();
-            showRemoveModal = false;
-            alert('Books removed successfully!');
-            
-            // Refresh the shelf books
-            goBack();
+
+            resultTitle = 'Removed';
+            resultMessage = `${removed} book${removed === 1 ? '' : 's'} removed from ${shelfName}. `
+                + 'They are still in the library and keep their reading progress.';
         } catch (error) {
             console.error('Error removing books:', error);
-            alert('Failed to remove books. Please try again.');
+            resultTitle = 'Could not remove';
+            resultMessage = 'The books are still on the shelf. Please try again.';
+        } finally {
+            removing = false;
         }
     }
 
@@ -370,7 +427,6 @@
     }
 
     .books-scroll {
-        height: 450;
         border-width: 2;
         border-color: #201e1d;
         border-radius: 0;
@@ -461,6 +517,20 @@
         text-align: center;
     }
 
+    .selection-hint {
+        font-size: 13;
+        color: #666;
+        text-align: center;
+        margin-bottom: 6;
+    }
+
+    .btn-ok {
+        background-color: #033047;
+        color: white;
+        border-width: 0;
+        margin-top: 5;
+    }
+
     .remove-btn {
         width: 100%;
         padding: 15;
@@ -471,11 +541,13 @@
         border-radius: 0;
         border-width: 0;
         margin-top: 10;
+        margin-bottom: 10;
     }
 
     .action-buttons {
         orientation: horizontal;
         margin-top: 10;
+        margin-bottom: 10;
     }
 
     .action-btn {

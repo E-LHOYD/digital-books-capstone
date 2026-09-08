@@ -242,6 +242,50 @@ export async function removeBookFromShelf(userId, shelfId, bookId) {
 }
 
 /**
+ * Remove several books from a shelf in one write.
+ *
+ * Not a loop over removeBookFromShelf: that reads the shelf and writes the
+ * whole bookIds array back, so several of them in flight together would each
+ * write an array built before the others landed and most of the removals would
+ * be lost. One read, one write, all the books.
+ */
+export async function removeBooksFromShelf(userId, shelfId, bookIds) {
+    if (!userId || !shelfId || !Array.isArray(bookIds) || bookIds.length === 0) {
+        return false;
+    }
+
+    try {
+        const docRef = firebase()
+            .firestore()
+            .collection('shelves')
+            .doc(userId)
+            .collection('userShelves')
+            .doc(shelfId);
+
+        const shelfDoc = await docRef.get();
+
+        if (!shelfDoc.exists) {
+            throw new Error('Shelf not found');
+        }
+
+        const shelf = shelfDoc.data();
+        const dropping = {};
+        bookIds.forEach((id) => {
+            dropping[id] = true;
+        });
+
+        await docRef.update({
+            bookIds: (shelf.bookIds || []).filter((id) => !dropping[id])
+        });
+
+        return true;
+    } catch (error) {
+        console.error('Error removing books from shelf:', error);
+        throw error;
+    }
+}
+
+/**
  * Delete a custom shelf
  */
 export async function deleteCustomShelf(userId, shelfId) {
