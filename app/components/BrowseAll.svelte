@@ -18,7 +18,7 @@
                 <textField
                     row={0}
                     col={0}
-                    hint="Search title or author"
+                    hint="Search title, author or book number"
                     class="search-bar"
                     text={searchQuery}
                     on:textChange={handleSearchTextChange}
@@ -242,6 +242,8 @@
 
 				return {
 					id: doc.id,
+					// Searched on alongside title and author.
+					bookNumber: data.bookNumber != null ? String(data.bookNumber) : '',
 					title,
 					author,
 					detail,

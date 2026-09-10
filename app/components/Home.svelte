@@ -17,7 +17,7 @@
                 <textField
                     row={0}
                     col={0}
-                    hint="Search title or author"
+                    hint="Search title, author or book number"
                     class="search-bar"
                     text={searchQuery}
                     on:textChange={handleSearchTextChange}
@@ -72,17 +72,33 @@
                             <label text="No books found" class="empty-text" />
                         </stackLayout>
                     {:else}
-                        {#each displayedBooks as book}
-							<stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
-								
-								<!-- Book Info -->
-								<stackLayout class="book-info">
-									<label text={book.title} class="book-title" />
-									<label text={book.author} class="book-author" />
-								</stackLayout>
-
-							</stackLayout>
-						{/each}
+                        <!-- Same two sections as the web library: the closest
+                             matches first, then every other book. -->
+                        {#if recommendedBooks.length > 0}
+                            <label text="Recommended for you" class="section-title" />
+                            {#each recommendedBooks as book}
+                                <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
+                                    <stackLayout class="book-info">
+                                        <label text={book.title} class="book-title" />
+                                        <label text={book.author} class="book-author" />
+                                    </stackLayout>
+                                </stackLayout>
+                            {/each}
+                        {/if}
+                        {#if moreBooks.length > 0}
+                            <label
+                                text={recommendedBooks.length > 0 ? 'More in the library' : 'All books'}
+                                class="section-title"
+                            />
+                            {#each moreBooks as book}
+                                <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
+                                    <stackLayout class="book-info">
+                                        <label text={book.title} class="book-title" />
+                                        <label text={book.author} class="book-author" />
+                                    </stackLayout>
+                                </stackLayout>
+                            {/each}
+                        {/if}
                     {/if}
                 </stackLayout>
             </scrollView>
@@ -105,6 +121,71 @@
                 </stackLayout>
             </stackLayout>
         </stackLayout>
+
+        <!--
+            Interests prompt. Shown over the whole screen when the account has
+            fewer than three interests, and not dismissable: three are required.
+            Always mounted and collapsed rather than added by an {#if}, for the
+            same "View already has a parent" reason as the search buttons above.
+            The empty tap on the overlay keeps taps from reaching the library
+            underneath.
+        -->
+        <gridLayout
+            row={0}
+            rowSpan={5}
+            col={0}
+            class="ip-overlay"
+            visibility={showInterestsPrompt ? 'visible' : 'collapse'}
+            on:tap={swallowTap}
+        >
+            <stackLayout class="ip-box" verticalAlignment="center" horizontalAlignment="center" on:tap={swallowTap}>
+                <label text="Choose your interests" class="ip-title" />
+                <label
+                    text="Pick 3 subjects you like. The library uses them to recommend books to you, and you can change them later from your profile."
+                    class="ip-hint"
+                    textWrap="true"
+                />
+                <flexboxLayout class="ip-grid" flexWrap="wrap">
+                    {#each DEFAULT_SUBJECTS as subject}
+                        <button
+                            text={subject}
+                            class="ip-option"
+                            class:ip-option-selected={pickedInterests.includes(subject)}
+                            isEnabled={!savingInterests && (pickedInterests.length < REQUIRED_INTERESTS || pickedInterests.includes(subject))}
+                            on:tap={() => toggleInterest(subject)}
+                        />
+                    {/each}
+                </flexboxLayout>
+                <label text={pickedInterests.length + '/' + REQUIRED_INTERESTS + ' selected'} class="ip-count" />
+                <label
+                    text={interestsError}
+                    class="ip-error"
+                    textWrap="true"
+                    visibility={interestsError ? 'visible' : 'collapse'}
+                />
+                <button
+                    text={savingInterests ? 'Saving…' : 'Save interests'}
+                    class="ip-save"
+                    isEnabled={!savingInterests && pickedInterests.length === REQUIRED_INTERESTS}
+                    on:tap={saveInterests}
+                />
+            </stackLayout>
+        </gridLayout>
+
+        <!--
+            First-time tour, opened once for a new account straight after the
+            interests above are saved. Same always-mounted overlay pattern.
+        -->
+        <gridLayout
+            row={0}
+            rowSpan={5}
+            col={0}
+            class="ip-overlay"
+            visibility={showTutorial ? 'visible' : 'collapse'}
+            on:tap={swallowTap}
+        >
+            <TutorialCard open={showTutorial} on:close={closeTutorial} />
+        </gridLayout>
     </gridLayout>
 </page>
 
@@ -122,13 +203,38 @@
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     import MyShelf from './MyShelf.svelte';
+    import TutorialCard from './TutorialCard.svelte';
     // @ts-ignore
     import { recommendBooks, recommendationReason } from '../services/recommendations.js';
     // @ts-ignore
-    import { getCurrentUser, getUserProfile } from '../services/firebase';
+    import { getCurrentUser, getUserProfile, updateUserProfile } from '../services/firebase';
+    // @ts-ignore
+    import { DEFAULT_SUBJECTS } from '../services/subjects';
 
     let books: any[] = [];
     let displayedBooks: any[] = [];
+
+    // How many recommendations lead the page before the rest of the library,
+    // the same as on the web.
+    const RECOMMENDED_COUNT = 12;
+    let recommendedBooks: any[] = [];
+    let moreBooks: any[] = [];
+
+    /**
+     * Split a ranked list into the two sections. Books the recommendation
+     * filters left out (another year level, unrelated subjects) go to the end
+     * of "More in the library", so every book in the library is still listed.
+     */
+    function splitSections(ranked: any[], all: any[]) {
+        const top = ranked.slice(0, RECOMMENDED_COUNT);
+        const shown = new Set(top.map((b) => b.id));
+        const rest = [...ranked.slice(RECOMMENDED_COUNT), ...all.filter((b) => !ranked.includes(b))]
+            .filter((b) => b && b.title && !shown.has(b.id));
+
+        recommendedBooks = top;
+        moreBooks = rest;
+        displayedBooks = [...top, ...rest];
+    }
     let searchQuery = '';
     let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'profile'
     let isLoading = false;
@@ -179,11 +285,14 @@
 
         if (currentUser) {
             try {
-                displayedBooks = await recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+                const ranked = await recommendBooks(books, currentUser, Number.MAX_SAFE_INTEGER);
+                splitSections(ranked, books);
             } catch (err) {
                 // Ranking is a nicety; the library working is not. If the
                 // subject lookup fails, show everything rather than nothing.
                 console.error("Could not rank the library:", err);
+                recommendedBooks = [];
+                moreBooks = [...books];
                 displayedBooks = [...books];
             }
             return;
@@ -195,7 +304,114 @@
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
+        recommendedBooks = [];
+        moreBooks = shuffled;
         displayedBooks = shuffled;
+    }
+
+    // ---------- interests prompt ----------
+    // Accounts are created from the dashboard without interests, and the
+    // library's ranking leans on them, so a reader with fewer than three is
+    // asked for them here before carrying on.
+    //
+    // Asked once per account: saving also writes interestsPrompted: true to the
+    // user document, and an account carrying that flag is never asked again,
+    // here or on the web.
+    const REQUIRED_INTERESTS = 3;
+    let showInterestsPrompt = false;
+    let pickedInterests: string[] = [];
+    let savingInterests = false;
+    let interestsError = '';
+
+    function validInterests(profile: any): string[] {
+        if (!Array.isArray(profile?.interests)) return [];
+        return profile.interests.filter((i: any) => typeof i === 'string' && i.trim());
+    }
+
+    function maybeAskForInterests(uid: string, profile: any) {
+        // No profile document means there is nothing to write interests into;
+        // that is for the administrator to fix, not the reader.
+        if (!uid || !profile) return;
+
+        if (profile.interestsPrompted) return;
+
+        const current = validInterests(profile);
+        if (current.length >= REQUIRED_INTERESTS) return;
+
+        // Keeps whatever the reader already has, so one or two carry over.
+        pickedInterests = current
+            .filter((i) => DEFAULT_SUBJECTS.includes(i))
+            .slice(0, REQUIRED_INTERESTS);
+        showInterestsPrompt = true;
+    }
+
+    function toggleInterest(subject: string) {
+        interestsError = '';
+        if (pickedInterests.includes(subject)) {
+            pickedInterests = pickedInterests.filter((s) => s !== subject);
+        } else if (pickedInterests.length < REQUIRED_INTERESTS) {
+            pickedInterests = [...pickedInterests, subject];
+        }
+    }
+
+    async function saveInterests() {
+        if (pickedInterests.length !== REQUIRED_INTERESTS) {
+            interestsError = `Please choose exactly ${REQUIRED_INTERESTS} interests.`;
+            return;
+        }
+
+        savingInterests = true;
+        interestsError = '';
+
+        try {
+            const interests = [...pickedInterests];
+            await updateUserProfile(currentUser.uid, { interests, interestsPrompted: true });
+            currentUser = { ...currentUser, interests, interestsPrompted: true };
+            showInterestsPrompt = false;
+
+            // A new account has just finished setting up, so this is when it
+            // gets the tour.
+            maybeShowTutorial(currentUser);
+
+            // Re-ranked with the new interests straight away, rather than on the
+            // next visit. If the books are still loading, buildDisplayedBooks
+            // waits for them and ranks with these interests when they arrive.
+            await buildDisplayedBooks();
+        } catch (err) {
+            console.error("Could not save interests:", err);
+            interestsError = 'Could not save your interests. Please try again.';
+        } finally {
+            savingInterests = false;
+        }
+    }
+
+    // ---------- first-time tour ----------
+    // Shown once, for an account that has been through the interests prompt
+    // and not yet seen the tour. Closing it (finish or skip) writes
+    // tutorialSeen: true, which the web version reads too.
+    let showTutorial = false;
+
+    function maybeShowTutorial(profile: any) {
+        if (!profile || !profile.interestsPrompted || profile.tutorialSeen) return;
+        if (validInterests(profile).length < REQUIRED_INTERESTS) return;
+        showTutorial = true;
+    }
+
+    async function closeTutorial() {
+        showTutorial = false;
+        if (!currentUser?.uid || currentUser.tutorialSeen) return;
+
+        currentUser = { ...currentUser, tutorialSeen: true };
+        try {
+            await updateUserProfile(currentUser.uid, { tutorialSeen: true });
+        } catch (err) {
+            // At worst the tour shows once more next time.
+            console.error("Could not record that the tour was seen:", err);
+        }
+    }
+
+    function swallowTap() {
+        // Intentionally empty: stops taps on the prompt reaching the page below.
     }
 
     onMount(() => {
@@ -207,6 +423,10 @@
                     const userProfile = await getUserProfile(authUser.uid);
                     // Merge auth user with profile data
                     currentUser = { ...authUser, ...userProfile };
+                    maybeAskForInterests(authUser.uid, userProfile);
+                    // Someone who picked their interests but left before the
+                    // tour finished gets it on their next visit instead.
+                    maybeShowTutorial(currentUser);
                 }
             })
             .catch((err: any) => {
@@ -312,6 +532,8 @@
 				console.log("Generated cover path:", coverPath);
 				return {
 					id: doc.id,
+					// Typed by the admin on upload; searched on alongside title and author.
+					bookNumber: data.bookNumber != null ? String(data.bookNumber) : '',
 					title,
 					author,
 					detail,
@@ -340,6 +562,90 @@
 </script>
 
 <style>
+    .ip-overlay {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .ip-box {
+        background-color: white;
+        border-width: 2;
+        border-color: #201e1d;
+        padding: 20;
+        width: 88%;
+    }
+
+    .ip-title {
+        font-size: 22;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        margin-bottom: 8;
+    }
+
+    .ip-hint {
+        font-size: 14;
+        color: #6f6e6a;
+        margin-bottom: 12;
+    }
+
+    .ip-grid {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .ip-option {
+        width: 48%;
+        height: 44;
+        margin: 4 0;
+        background-color: white;
+        color: #033047;
+        border-width: 2;
+        border-color: #201e1d;
+        border-radius: 0;
+        font-size: 14;
+        text-transform: none;
+    }
+
+    .ip-option-selected {
+        background-color: #033047;
+        color: white;
+    }
+
+    .ip-option:disabled {
+        opacity: 0.45;
+    }
+
+    .ip-count {
+        font-size: 14;
+        color: #666;
+        text-align: center;
+        margin: 10 0 6 0;
+    }
+
+    .ip-error {
+        font-size: 14;
+        color: #b3261e;
+        text-align: center;
+        margin-bottom: 6;
+    }
+
+    .ip-save {
+        background-color: #033047;
+        color: white;
+        font-size: 16;
+        font-weight: bold;
+        padding: 12;
+        border-radius: 0;
+        border-width: 0;
+        margin-top: 6;
+        text-transform: none;
+    }
+
+    .ip-save:disabled {
+        opacity: 0.55;
+    }
+
     .page {
         background-color: #f3f2f2;
     }
@@ -460,6 +766,14 @@
 
     .book-info {
         padding: 10 0;
+    }
+
+    .section-title {
+        font-size: 17;
+        font-weight: bold;
+        font-family: Archivo, sans-serif;
+        color: #201e1d;
+        margin: 12 0 6 0;
     }
 
     .books-scroll {

@@ -13,7 +13,10 @@
 
         <scrollView row={2} col={0}>
             <stackLayout class="container">
-                <label text="Profile" class="title" />
+                <gridLayout columns="*, auto" class="title-row">
+                    <label col={0} text="Profile" class="title" />
+                    <button col={1} text="?" class="help-btn" on:tap={() => (showTutorial = true)} />
+                </gridLayout>
 
                 <!-- User Info -->
                 <stackLayout class="setting-item">
@@ -71,6 +74,18 @@
                 </stackLayout>
             </stackLayout>
         </stackLayout>
+
+        <!-- The tour, on demand from the ? button. Always mounted and collapsed. -->
+        <gridLayout
+            row={0}
+            rowSpan={4}
+            col={0}
+            class="tour-overlay"
+            visibility={showTutorial ? 'visible' : 'collapse'}
+            on:tap={() => {}}
+        >
+            <TutorialCard open={showTutorial} on:close={() => (showTutorial = false)} />
+        </gridLayout>
     </gridLayout>
 </page>
 
@@ -82,6 +97,7 @@
     import Settings from './Settings.svelte';
     import MyShelf from './MyShelf.svelte';
     import EditInterests from './EditInterests.svelte';
+    import TutorialCard from './TutorialCard.svelte';
     // @ts-ignore
     import { logout, getCurrentUser, getUserProfile } from '../services/firebase';
 
@@ -93,6 +109,7 @@
     let program = "";
     let yearLevel = "";
     let department = "";
+    let showTutorial = false;
 
     export { refresh, loadUserData };
 
@@ -230,7 +247,28 @@
         font-family: Archivo, sans-serif;
         color: #201e1d;
         text-align: left;
+    }
+
+    .title-row {
         margin-bottom: 24;
+    }
+
+    .help-btn {
+        width: 44;
+        height: 44;
+        border-radius: 22;
+        border-width: 2;
+        border-color: #033047;
+        background-color: white;
+        color: #033047;
+        font-size: 20;
+        font-weight: bold;
+        padding: 0;
+        vertical-align: center;
+    }
+
+    .tour-overlay {
+        background-color: rgba(0, 0, 0, 0.6);
     }
 
     .setting-item {

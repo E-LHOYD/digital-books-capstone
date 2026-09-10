@@ -56,7 +56,8 @@
     let isLoading = false;
 
     function matchesSearch(book: any, terms: string[]): boolean {
-        const haystack = `${book?.title ?? ''} ${book?.author ?? ''}`.toLowerCase();
+        // Book number included, so "0042" finds the book numbered BK-0042.
+        const haystack = `${book?.bookNumber ?? ''} ${book?.title ?? ''} ${book?.author ?? ''}`.toLowerCase();
         const matches = terms.every((term) => haystack.includes(term));
         console.log(`Matching "${book.title}" by "${book.author}": haystack="${haystack}", terms=${JSON.stringify(terms)}, matches=${matches}`);
         return matches;
