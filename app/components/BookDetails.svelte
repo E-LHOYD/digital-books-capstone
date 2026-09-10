@@ -208,7 +208,7 @@
     import Profile from './Profile.svelte';
     import { isBookFileUrl, getReaderUrl } from '../services/storage.js';
     // @ts-ignore
-    import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf } from '../services/shelf.js';
+    import { addBookToShelf, getCurrentUserId, getUserShelves, createCustomShelf, MAX_CUSTOM_SHELVES, SHELF_LIMIT_MESSAGE } from '../services/shelf.js';
     // @ts-ignore
     import { getReadingProgress } from '../services/readingProgress.js';
     // @ts-ignore
@@ -426,8 +426,8 @@
             hideCreateShelfForm();
         } catch (error) {
             console.error('Error creating shelf:', error);
-            if ((error as any).message === 'Maximum 5 custom shelves reached') {
-                shelfError = 'You have reached the maximum of 5 custom shelves.';
+            if ((error as any).message === SHELF_LIMIT_MESSAGE) {
+                shelfError = `You have reached the maximum of ${MAX_CUSTOM_SHELVES} custom shelves.`;
             } else {
                 shelfError = 'Could not create the shelf. Please try again.';
             }

@@ -31,11 +31,11 @@
                 </stackLayout>
 
                 <!-- Create Shelf Button -->
-                {#if customShelves.length < 5}
+                {#if customShelves.length < MAX_CUSTOM_SHELVES}
                     <button text="+ Create New Shelf" class="create-shelf-btn" on:tap={showCreateShelfDialog} />
                 {:else}
                     <stackLayout class="max-shelves-notice">
-                        <label text="Maximum 5 custom shelves reached" class="notice-text" />
+                        <label text={SHELF_LIMIT_MESSAGE} class="notice-text" />
                     </stackLayout>
                 {/if}
 
@@ -165,7 +165,7 @@
     import ShelfBooks from './ShelfBooks.svelte';
     import { Auth } from '@nativescript/firebase-auth';
     // @ts-ignore
-    import { getUserShelves, createCustomShelf, deleteCustomShelf, getCurrentUserId } from '../services/shelf.js';
+    import { getUserShelves, createCustomShelf, deleteCustomShelf, getCurrentUserId, MAX_CUSTOM_SHELVES, SHELF_LIMIT_MESSAGE } from '../services/shelf.js';
     // @ts-ignore
     import { getAllReadingProgress } from '../services/readingProgress.js';
     // @ts-ignore
@@ -493,8 +493,8 @@
             console.error('Error creating shelf:', error);
             console.error('Error details:', JSON.stringify(error));
             hideCreateModal();
-            if (error.message === 'Maximum 5 custom shelves reached') {
-                showResult('error', 'You can only create up to 5 custom shelves.');
+            if (error.message === SHELF_LIMIT_MESSAGE) {
+                showResult('error', `You can only create up to ${MAX_CUSTOM_SHELVES} custom shelves.`);
             } else {
                 showResult('error', error.message || 'The shelf could not be created.');
             }

@@ -17,6 +17,11 @@ function getAuth() {
     return authInstance;
 }
 
+// How many shelves a reader can make, besides Read and Viewed. The web
+// version holds the same number, so a reader has the same limit on both.
+export const MAX_CUSTOM_SHELVES = 10;
+export const SHELF_LIMIT_MESSAGE = `Maximum ${MAX_CUSTOM_SHELVES} custom shelves reached`;
+
 export function getCurrentUserId() {
     const user = getAuth().currentUser;
     return user ? user.uid : null;
@@ -117,13 +122,13 @@ export async function createCustomShelf(userId, name) {
         const shelves = await getUserShelves(userId);
         console.log('Current shelves:', shelves);
         
-        // Check if user already has 5 custom shelves (excluding read and viewed shelves)
+        // Check the reader has room for another custom shelf (Read and Viewed do not count)
         const customShelves = shelves.filter(s => !s.isReadShelf && !s.isViewedShelf);
         console.log('Custom shelves count:', customShelves.length);
         
-        if (customShelves.length >= 5) {
+        if (customShelves.length >= MAX_CUSTOM_SHELVES) {
             console.log('Maximum shelves reached');
-            throw new Error('Maximum 5 custom shelves reached');
+            throw new Error(SHELF_LIMIT_MESSAGE);
         }
 
         const newShelf = {

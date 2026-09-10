@@ -86,7 +86,7 @@
         {
             image: '~/images/tutorial/shelf.png',
             title: 'My Shelf',
-            body: 'My Shelf, in the bar at the bottom, has your reading history and the shelves you make yourself. You can create up to five and name them what you like.'
+            body: 'My Shelf, in the bar at the bottom, has your reading history and the shelves you make yourself. You can create up to ten and name them what you like.'
         },
         {
             image: '~/images/tutorial/profile.png',
