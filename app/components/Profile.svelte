@@ -75,6 +75,8 @@
     import TutorialCard from './TutorialCard.svelte';
     // @ts-ignore
     import { logout, getCurrentUser, getUserProfile } from '../services/firebase';
+    // @ts-ignore
+    import { interestList } from '../services/recommendations.js';
 
     let username = "";
     let selectedInterests: string[] = [];
@@ -105,7 +107,7 @@
                 const userProfile = await getUserProfile(currentUser.uid);
                 if (userProfile) {
                     username = userProfile.username || "";
-                    selectedInterests = Array.isArray(userProfile.interests) ? userProfile.interests : [];
+                    selectedInterests = interestList(userProfile);
                     userRole = userProfile.role || "student";
                     
                     // Load academic information based on role

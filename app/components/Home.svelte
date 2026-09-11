@@ -99,7 +99,7 @@
 
         <!--
             Interests prompt. Shown over the whole screen when the account has
-            fewer than three interests, and not dismissable: three are required.
+            no interests at all, and not dismissable: three are required.
             Always mounted and collapsed rather than added by an {#if}, for the
             same "View already has a parent" reason as the search buttons above.
             The empty tap on the overlay keeps taps from reaching the library
@@ -181,7 +181,7 @@
     import TutorialCard from './TutorialCard.svelte';
     import { getBoolean, setBoolean } from '@nativescript/core/application-settings';
     // @ts-ignore
-    import { recommendBooks, recommendationReason } from '../services/recommendations.js';
+    import { recommendBooks, recommendationReason, interestList } from '../services/recommendations.js';
     // @ts-ignore
     import { getCurrentUser, getUserProfile, updateUserProfile } from '../services/firebase';
     // @ts-ignore
@@ -286,12 +286,11 @@
 
     // ---------- interests prompt ----------
     // Accounts are created from the dashboard without interests, and the
-    // library's ranking leans on them, so a reader with fewer than three is
-    // asked for them here before carrying on.
+    // library's ranking leans on them, so a reader with none is asked for
+    // three here before carrying on.
     //
-    // Shown only while the account has fewer than three interests: once they
-    // are saved it never appears again for that account, on any device, here
-    // or on the web.
+    // Shown only to an account with no interests at all: an account that has
+    // any never sees it, on any device, here or on the web.
     const REQUIRED_INTERESTS = 3;
     let showInterestsPrompt = false;
     let pickedInterests: string[] = [];
@@ -299,8 +298,7 @@
     let interestsError = '';
 
     function validInterests(profile: any): string[] {
-        if (!Array.isArray(profile?.interests)) return [];
-        return profile.interests.filter((i: any) => typeof i === 'string' && i.trim());
+        return interestList(profile);
     }
 
     function maybeAskForInterests(uid: string, profile: any) {
@@ -308,13 +306,11 @@
         // that is for the administrator to fix, not the reader.
         if (!uid || !profile) return;
 
-        const current = validInterests(profile);
-        if (current.length >= REQUIRED_INTERESTS) return;
+        // Only an account with no interests at all is asked; one that has any
+        // changes them from Edit Interests instead.
+        if (validInterests(profile).length > 0) return;
 
-        // Keeps whatever the reader already has, so one or two carry over.
-        pickedInterests = current
-            .filter((i) => DEFAULT_SUBJECTS.includes(i))
-            .slice(0, REQUIRED_INTERESTS);
+        pickedInterests = [];
         showInterestsPrompt = true;
     }
 
@@ -372,7 +368,7 @@
         if (!profile || !profile.uid) return;
         // Waits for the interests, so on a new account the tour follows the
         // "Choose your interests" box rather than opening over it.
-        if (validInterests(profile).length < REQUIRED_INTERESTS) return;
+        if (validInterests(profile).length === 0) return;
         if (getBoolean(tutorialSeenKey(profile.uid), false)) return;
         showTutorial = true;
     }
