@@ -289,6 +289,9 @@
     border-radius: 12;
     padding: 20;
     width: 85%;
+    /* Only as tall as what is in it, centred on the screen. */
+    vertical-align: center;
+    horizontal-align: center;
 }
 
 .modal-title {
@@ -307,6 +310,9 @@
     text-align: center;
 }
 
+/* A row of buttons in a dialog or under a form. rows="auto" on these grids
+   matters: a GridLayout with no rows has one star row, which inside a dialog
+   took the whole screen's height and stretched the dialog with it. */
 .modal-actions {
     margin-top: 8;
 }

@@ -60,7 +60,7 @@
                         <label text={passwordError} class="error-message" textWrap={true} />
                     {/if}
 
-                    <gridLayout columns="*, 12, *" class="modal-actions">
+                    <gridLayout rows="auto" columns="*, 12, *" class="modal-actions">
                         <button col={0} text="Cancel" class="btn btn-secondary" on:tap={() => showPasswordModal = false} />
                         <button col={2} text="Confirm" class="btn btn-primary" on:tap={handleChangePassword} />
                     </gridLayout>

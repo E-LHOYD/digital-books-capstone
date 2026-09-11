@@ -4,7 +4,7 @@
     rule) starting at `row`, so a page gives it rows "auto, auto" at the top.
 -->
 <stackLayout {row} col={0} rowSpan={2}>
-    <gridLayout columns="auto, auto, *" class="header">
+    <gridLayout rows="auto" columns="auto, auto, *" class="header">
         <button
             col={0}
             text="←  Back"

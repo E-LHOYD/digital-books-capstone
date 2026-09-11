@@ -4,7 +4,7 @@
 
         <scrollView row={2} col={0}>
             <stackLayout class="container">
-                <gridLayout columns="*, auto">
+                <gridLayout rows="auto" columns="*, auto">
                     <label col={0} text="Profile" class="page-title" />
                     <button col={1} text="?" class="help-btn" on:tap={() => (showTutorial = true)} />
                 </gridLayout>

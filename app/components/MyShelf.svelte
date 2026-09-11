@@ -29,7 +29,7 @@
 
                 <!-- Custom Shelves -->
                 {#if customShelves.length > 0}
-                    <label text="Your shelves" class="section-title" />
+                    <label text="Created shelves" class="section-title" />
                 {/if}
                 {#each customShelves as shelf}
                     <gridLayout class="card" rows="auto, auto" columns="*, auto">
@@ -61,7 +61,7 @@
 
         <!-- Create Shelf Modal -->
         {#if showCreateModal}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideCreateModal}>
+            <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={hideCreateModal}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Create New Shelf" class="modal-title" />
                     
@@ -76,7 +76,7 @@
                         <label text={createError} class="create-error" textWrap="true" />
                     {/if}
 
-                    <gridLayout columns="*, 12, *" class="modal-actions">
+                    <gridLayout rows="auto" columns="*, 12, *" class="modal-actions">
                         <button col={0} text="Create" class="btn btn-primary" on:tap={createShelf} />
                         <button col={2} text="Cancel" class="btn btn-secondary" on:tap={hideCreateModal} />
                     </gridLayout>
@@ -86,19 +86,20 @@
 
         <!-- Delete Confirmation Modal -->
         {#if pendingDelete}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={cancelDeleteShelf}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
-                    <label text="Delete shelf" class="modal-title result-error" />
+            <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={cancelDeleteShelf}>
+                <stackLayout class="modal-content modal-compact" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text="Delete shelf?" class="modal-title result-error" />
 
                     <label
                         text={`"${pendingDelete.name}" will be removed. The books in it are not deleted.`}
-                        class="result-message"
+                        class="modal-message"
                         textWrap="true"
                     />
 
-                    <gridLayout columns="*, 12, *" class="modal-actions">
-                        <button col={0} text="Delete" class="btn btn-danger" isEnabled={!deleting} on:tap={performDeleteShelf} />
-                        <button col={2} text="Cancel" class="btn btn-secondary" isEnabled={!deleting} on:tap={cancelDeleteShelf} />
+                    <!-- Same order as removing books: Cancel, then the red action. -->
+                    <gridLayout rows="auto" columns="*, 10, *" class="modal-actions">
+                        <button col={0} text="Cancel" class="btn btn-secondary compact-btn" isEnabled={!deleting} on:tap={cancelDeleteShelf} />
+                        <button col={2} text="Delete" class="btn btn-danger compact-btn" isEnabled={!deleting} on:tap={performDeleteShelf} />
                     </gridLayout>
                 </stackLayout>
             </gridLayout>
@@ -106,7 +107,7 @@
 
         <!-- Result Modal -->
         {#if resultKind}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={hideResult}>
+            <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={hideResult}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
@@ -478,6 +479,34 @@
 </script>
 
 <style>
+    /* The delete confirmation: a small box with a short question, the same
+       size as the one for removing books from a shelf. */
+    .modal-compact {
+        width: 72%;
+        padding: 12 14;
+    }
+
+    .modal-compact .modal-title {
+        font-size: 16;
+        margin-bottom: 4;
+    }
+
+    .modal-compact .modal-message {
+        font-size: 13;
+        margin-bottom: 0;
+    }
+
+    .modal-compact .modal-actions {
+        margin-top: 8;
+    }
+
+    .compact-btn {
+        height: 36;
+        margin: 0;
+        font-size: 14;
+        padding: 0 10;
+    }
+
     .create-shelf-btn {
         margin: 12 0 4 0;
     }
@@ -487,15 +516,25 @@
         margin: 12 0 4 0;
     }
 
+    /* A small red outlined button with a bin, the app's button shape, so it
+       reads as a button and as the one that takes something away. */
     .shelf-delete-btn {
-        background-color: transparent;
+        background-color: white;
         color: #b3261e;
-        font-size: 14;
+        font-size: 13;
         font-weight: bold;
-        border-width: 0;
-        padding: 4 0 4 12;
-        margin: 0;
+        border-width: 2;
+        border-color: #b3261e;
+        border-radius: 100;
+        height: 34;
+        padding: 0 12;
+        margin: 0 0 0 12;
         text-transform: none;
+    }
+
+    .shelf-delete-btn:highlighted {
+        background-color: #b3261e;
+        color: white;
     }
 
 

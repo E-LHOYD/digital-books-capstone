@@ -75,7 +75,7 @@
         {/if}
 
         <!-- Buttons Row -->
-        <gridLayout columns="*, 12, *" class="buttons-row">
+        <gridLayout rows="auto" columns="*, 12, *" class="buttons-row">
             <button col={0} text="Read Book" class="btn btn-primary" on:tap={readBook} isEnabled={canRead} />
             <button col={2} text="Add to Shelf" class="btn btn-secondary" on:tap={showShelfSelector} />
         </gridLayout>
@@ -127,7 +127,7 @@
                                 text={newShelfName}
                                 on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
                             />
-                            <gridLayout columns="*, 12, *" class="form-actions">
+                            <gridLayout rows="auto" columns="*, 12, *" class="form-actions">
                                 <button col={0} text="Create" class="btn btn-primary" on:tap={createNewShelf} />
                                 <button col={2} text="Cancel" class="btn btn-secondary" on:tap={hideCreateShelfForm} />
                             </gridLayout>

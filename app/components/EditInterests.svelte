@@ -20,7 +20,7 @@
             
             <label text={tempSelectedInterests.length + '/3 selected'} class="selection-count" />
             
-            <gridLayout columns="*, 12, *" class="button-container">
+            <gridLayout rows="auto" columns="*, 12, *" class="button-container">
                 <button col={0} text="Cancel" class="btn btn-secondary" on:tap={goBack} />
                 <button col={2} text="Save" class="btn btn-primary" on:tap={saveInterests} />
             </gridLayout>

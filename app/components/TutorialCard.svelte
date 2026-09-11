@@ -19,7 +19,7 @@
     horizontalAlignment="center"
     on:tap={swallowTap}
 >
-    <gridLayout row={0} columns="*, auto" class="tour-top">
+    <gridLayout rows="auto" row={0} columns="*, auto" class="tour-top">
         <label col={0} text={'Step ' + (step + 1) + ' of ' + STEPS.length} class="tour-step" />
         <label
             col={1}
@@ -44,7 +44,7 @@
         {/each}
     </flexboxLayout>
 
-    <gridLayout row={3} columns="*, 12, *">
+    <gridLayout rows="auto" row={3} columns="*, 12, *">
         <button
             col={0}
             text="Back"

@@ -10,7 +10,7 @@
             <textField hint="email/username" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
 
             <label text="PASSWORD" class="field-label" />
-            <gridLayout columns="*, auto" class="password-row">
+            <gridLayout rows="auto" columns="*, auto" class="password-row">
                 <textField
                     hint="Password"
                     text={password}
@@ -38,7 +38,7 @@
             {/if}
 
             <!-- Keep logged in + forgot password -->
-            <gridLayout columns="auto, *, auto" class="options-row">
+            <gridLayout rows="auto" columns="auto, *, auto" class="options-row">
                 <stackLayout col={0} orientation="horizontal" class="checkbox-container">
                     <label
                         text={keepLoggedIn ? "✓" : ""}

@@ -83,7 +83,7 @@
                                 : `${selectionCount} selected`}
                             class="selection-hint"
                         />
-                        <gridLayout columns="*, 12, *" class="action-buttons">
+                        <gridLayout rows="auto" columns="*, 12, *" class="action-buttons">
                             <button col={0} text="Cancel" class="btn btn-secondary" on:tap={exitSelectionMode} />
                             <button
                                 col={2}
@@ -100,9 +100,9 @@
 
         <!-- Remove Confirmation Modal -->
         {#if showRemoveModal}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={cancelRemove}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
-                    <label text="Remove Books" class="modal-title" />
+            <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={cancelRemove}>
+                <stackLayout class="modal-content modal-compact" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                    <label text="Remove books?" class="modal-title" />
 
                     <label
                         text={`Are you sure you want to remove ${selectionCount} book${selectionCount === 1 ? '' : 's'} from this shelf?`}
@@ -110,9 +110,9 @@
                         textWrap="true"
                     />
 
-                    <gridLayout columns="*, 12, *" class="modal-actions">
-                        <button col={0} text="Cancel" class="btn btn-secondary" on:tap={cancelRemove} />
-                        <button col={2} text="Remove" class="btn btn-danger" on:tap={confirmRemove} />
+                    <gridLayout rows="auto" columns="*, 10, *" class="modal-actions">
+                        <button col={0} text="Cancel" class="btn btn-secondary compact-btn" on:tap={cancelRemove} />
+                        <button col={2} text="Remove" class="btn btn-danger compact-btn" on:tap={confirmRemove} />
                     </gridLayout>
                 </stackLayout>
             </gridLayout>
@@ -120,7 +120,7 @@
 
         <!-- Result -->
         {#if resultTitle}
-            <gridLayout row={0} rowSpan={3} col={0} class="modal-overlay" on:tap={closeResult}>
+            <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={closeResult}>
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text={resultTitle} class="modal-title" />
                     <label text={resultMessage} class="modal-message" textWrap="true" />
@@ -324,6 +324,34 @@
 </script>
 
 <style>
+    /* The remove confirmation: a small box with a short question, not a
+       full-width dialog. */
+    .modal-compact {
+        width: 72%;
+        padding: 12 14;
+    }
+
+    .modal-compact .modal-title {
+        font-size: 16;
+        margin-bottom: 4;
+    }
+
+    .modal-compact .modal-message {
+        font-size: 13;
+        margin-bottom: 0;
+    }
+
+    .modal-compact .modal-actions {
+        margin-top: 8;
+    }
+
+    .compact-btn {
+        height: 36;
+        margin: 0;
+        font-size: 14;
+        padding: 0 10;
+    }
+
 
     .book-percent {
         font-size: 15;

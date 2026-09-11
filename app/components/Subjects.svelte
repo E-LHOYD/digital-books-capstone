@@ -7,7 +7,7 @@
             <stackLayout class="container">
                 <label text="Subjects" class="page-title" />
                 {#each subjectRows as row}
-                    <gridLayout
+                    <gridLayout rows="auto"
                         columns="*, auto"
                         class="card"
                         class:subject-empty={row.count === 0}

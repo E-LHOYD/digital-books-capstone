@@ -7,7 +7,7 @@
             <button row={0} col={0} text="←  Back" class="reader-back" verticalAlignment="top" on:tap={goBack} />
             <label row={0} col={1} text={book.title} class="reader-title" textWrap="true" />
 
-            <gridLayout row={1} col={0} colSpan={2} columns="*, auto, auto" class="reader-tools">
+            <gridLayout rows="auto" row={1} col={0} colSpan={2} columns="*, auto, auto" class="reader-tools">
                 <label col={0} text={`Page ${currentPage} of ${totalPages}`} class="reader-page-counter" />
                 <!-- Bookmarks the page on screen; on a page already bookmarked, removes it. -->
                 <button
@@ -53,7 +53,7 @@
             >
                 <stackLayout>
                     {#each bookmarks as number (number)}
-                        <gridLayout
+                        <gridLayout rows="auto"
                             columns="*, auto"
                             class="bookmark-row"
                             class:bookmark-row-here={number === currentPage}
