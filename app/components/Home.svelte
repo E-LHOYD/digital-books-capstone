@@ -179,6 +179,7 @@
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
     import TutorialCard from './TutorialCard.svelte';
+    import { getBoolean, setBoolean } from '@nativescript/core/application-settings';
     // @ts-ignore
     import { recommendBooks, recommendationReason } from '../services/recommendations.js';
     // @ts-ignore
@@ -288,9 +289,9 @@
     // library's ranking leans on them, so a reader with fewer than three is
     // asked for them here before carrying on.
     //
-    // Asked once per account: saving also writes interestsPrompted: true to the
-    // user document, and an account carrying that flag is never asked again,
-    // here or on the web.
+    // Shown only while the account has fewer than three interests: once they
+    // are saved it never appears again for that account, on any device, here
+    // or on the web.
     const REQUIRED_INTERESTS = 3;
     let showInterestsPrompt = false;
     let pickedInterests: string[] = [];
@@ -306,8 +307,6 @@
         // No profile document means there is nothing to write interests into;
         // that is for the administrator to fix, not the reader.
         if (!uid || !profile) return;
-
-        if (profile.interestsPrompted) return;
 
         const current = validInterests(profile);
         if (current.length >= REQUIRED_INTERESTS) return;
@@ -339,8 +338,8 @@
 
         try {
             const interests = [...pickedInterests];
-            await updateUserProfile(currentUser.uid, { interests, interestsPrompted: true });
-            currentUser = { ...currentUser, interests, interestsPrompted: true };
+            await updateUserProfile(currentUser.uid, { interests });
+            currentUser = { ...currentUser, interests };
             showInterestsPrompt = false;
 
             // A new account has just finished setting up, so this is when it
@@ -360,28 +359,27 @@
     }
 
     // ---------- first-time tour ----------
-    // Shown once, for an account that has been through the interests prompt
-    // and not yet seen the tour. Closing it (finish or skip) writes
-    // tutorialSeen: true, which the web version reads too.
+    // Shown the first time an account is used on this phone: for a new account
+    // straight after its interests are picked, and for an existing account when
+    // it signs in on a new phone (or after the app is reinstalled). Finishing or
+    // skipping it is remembered on the phone, per account, so opening the
+    // Library again or signing in again here does not bring it back.
     let showTutorial = false;
 
+    const tutorialSeenKey = (uid: string) => `tutorialSeen_${uid}`;
+
     function maybeShowTutorial(profile: any) {
-        if (!profile || !profile.interestsPrompted || profile.tutorialSeen) return;
+        if (!profile || !profile.uid) return;
+        // Waits for the interests, so on a new account the tour follows the
+        // "Choose your interests" box rather than opening over it.
         if (validInterests(profile).length < REQUIRED_INTERESTS) return;
+        if (getBoolean(tutorialSeenKey(profile.uid), false)) return;
         showTutorial = true;
     }
 
-    async function closeTutorial() {
+    function closeTutorial() {
         showTutorial = false;
-        if (!currentUser?.uid || currentUser.tutorialSeen) return;
-
-        currentUser = { ...currentUser, tutorialSeen: true };
-        try {
-            await updateUserProfile(currentUser.uid, { tutorialSeen: true });
-        } catch (err) {
-            // At worst the tour shows once more next time.
-            console.error("Could not record that the tour was seen:", err);
-        }
+        if (currentUser?.uid) setBoolean(tutorialSeenKey(currentUser.uid), true);
     }
 
     function swallowTap() {
@@ -396,7 +394,11 @@
                     // Fetch the full user profile from Firestore
                     const userProfile = await getUserProfile(authUser.uid);
                     // Merge auth user with profile data
-                    currentUser = { ...authUser, ...userProfile };
+                    // uid set explicitly: the Firebase user keeps it behind a
+                    // getter, which spreading does not copy, so a profile without
+                    // its own uid field left currentUser.uid undefined and the
+                    // interests could not be saved.
+                    currentUser = { ...authUser, ...userProfile, uid: authUser.uid };
                     maybeAskForInterests(authUser.uid, userProfile);
                     // Someone who picked their interests but left before the
                     // tour finished gets it on their next visit instead.
