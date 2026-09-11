@@ -6,8 +6,20 @@
     this is just the card. It starts from the first step every time `open`
     turns true, and dispatches `close` when the reader finishes or skips.
 -->
-<stackLayout class="tour-box" verticalAlignment="center" horizontalAlignment="center" on:tap={swallowTap}>
-    <gridLayout columns="*, auto" class="tour-top">
+<!--
+    A fixed-height card sized to the screen, so it never runs off the bottom:
+    the step counter and the Back/Next buttons stay put, and the picture and
+    text scroll between them when a phone is too short to show them all.
+-->
+<gridLayout
+    class="tour-box"
+    rows="auto, *, auto, auto"
+    height={cardHeight}
+    verticalAlignment="center"
+    horizontalAlignment="center"
+    on:tap={swallowTap}
+>
+    <gridLayout row={0} columns="*, auto" class="tour-top">
         <label col={0} text={'Step ' + (step + 1) + ' of ' + STEPS.length} class="tour-step" />
         <label
             col={1}
@@ -18,35 +30,52 @@
         />
     </gridLayout>
 
-    <image src={current.image} stretch="aspectFit" class="tour-image" />
-    <label text={current.title} class="tour-title" textWrap="true" />
-    <label text={current.body} class="tour-body" textWrap="true" />
+    <scrollView row={1}>
+        <stackLayout>
+            <image src={current.image} stretch="aspectFit" height={imageHeight} class="tour-image" />
+            <label text={current.title} class="tour-title" textWrap="true" />
+            <label text={current.body} class="tour-body" textWrap="true" />
+        </stackLayout>
+    </scrollView>
 
-    <flexboxLayout class="tour-dots" justifyContent="center">
+    <flexboxLayout row={2} class="tour-dots" justifyContent="center">
         {#each STEPS as _, i}
             <stackLayout class="tour-dot" class:tour-dot-on={i === step} />
         {/each}
     </flexboxLayout>
 
-    <gridLayout columns="*, 12, *">
+    <gridLayout row={3} columns="*, 12, *">
         <button
             col={0}
             text="Back"
-            class="tour-back"
+            class="btn btn-secondary"
             isEnabled={step > 0}
             on:tap={back}
         />
         <button
             col={2}
             text={last ? 'Finish' : 'Next'}
-            class="tour-next"
+            class="btn btn-primary"
             on:tap={next}
         />
     </gridLayout>
-</stackLayout>
+</gridLayout>
 
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import { Screen } from '@nativescript/core';
+    // @ts-ignore
+    import { TUTORIAL_IMAGES } from '../services/tutorialImages.js';
+
+    // The card takes most of the screen height, never more than it can show:
+    // 96dp is left for the status bar and a margin above and below.
+    const screenHeight = Screen.mainScreen.heightDIPs;
+    const screenWidth = Screen.mainScreen.widthDIPs;
+    const cardHeight = Math.max(360, Math.min(640, screenHeight - 96));
+    // The pictures are 640 x 440. The card is 88% of the screen wide less 40dp
+    // of padding, so this keeps their shape; capped so a short screen still
+    // leaves room for the text.
+    const imageHeight = Math.round(Math.min(((screenWidth * 0.88 - 40) * 440) / 640, cardHeight * 0.4));
 
     export let open = false;
 
@@ -54,42 +83,42 @@
 
     const STEPS = [
         {
-            image: '~/images/tutorial/welcome.png',
+            image: TUTORIAL_IMAGES.welcome,
             title: 'Welcome to GD-Library',
             body: "Your school's digital library, right on your phone. This short tour shows you how to find a book, read it, and pick up right where you left off."
         },
         {
-            image: '~/images/tutorial/library.png',
+            image: TUTORIAL_IMAGES.library,
             title: 'Your Library',
             body: 'The Library is your home screen. "Recommended for you" at the top has books picked for your year level, program and interests. Every other book in the library is listed underneath, in "More in the library".'
         },
         {
-            image: '~/images/tutorial/search.png',
+            image: TUTORIAL_IMAGES.search,
             title: 'Search',
             body: 'Looking for something in particular? Type a title, an author or a book number into the search bar at the top of the Library, then tap Search.'
         },
         {
-            image: '~/images/tutorial/subjects.png',
+            image: TUTORIAL_IMAGES.subjects,
             title: 'Subjects and Browse more',
             body: 'Subjects groups the books by subject, such as Math or Science. Browse more shows the whole library in one list.'
         },
         {
-            image: '~/images/tutorial/reading.png',
+            image: TUTORIAL_IMAGES.reading,
             title: 'Reading a book',
             body: 'Tap any book to see its cover and description, then tap "Read Book" to start. Your place is saved as you read. "Add to Shelf" keeps a book somewhere easy to find.'
         },
         {
-            image: '~/images/tutorial/bookmark.png',
+            image: TUTORIAL_IMAGES.bookmark,
             title: 'Bookmarks',
-            body: 'While reading, tap the bookmark icon at the top to mark the page you are on. "Go to bookmark" takes you straight back to it. Tap the icon again to remove it.'
+            body: 'While reading, tap 📑 Bookmark under the title to bookmark the page you are on. Bookmark as many pages as you like, then tap ☰ Bookmarks to see them and tap a page to jump straight to it. Tap ✕ beside a page, or 🔖 Bookmarked while you are on it, to remove a bookmark.'
         },
         {
-            image: '~/images/tutorial/shelf.png',
+            image: TUTORIAL_IMAGES.shelf,
             title: 'My Shelf',
             body: 'My Shelf, in the bar at the bottom, has your reading history and the shelves you make yourself. You can create up to ten and name them what you like.'
         },
         {
-            image: '~/images/tutorial/profile.png',
+            image: TUTORIAL_IMAGES.profile,
             title: 'Profile and Settings',
             body: 'Profile shows your username, program, year level and interests. Tap "Edit Interests" to change them. Settings has "Keep me logged in" and lets you change your password. Tap the ? on your Profile to see this tour again.'
         }
@@ -127,8 +156,7 @@
 <style>
     .tour-box {
         background-color: white;
-        border-width: 2;
-        border-color: #201e1d;
+        border-radius: 12;
         padding: 20;
         width: 88%;
     }
@@ -155,7 +183,6 @@
        card's width. They ring the thing each step describes in yellow. */
     .tour-image {
         width: 100%;
-        height: 190;
         margin-bottom: 12;
         border-width: 2;
         border-color: #201e1d;
@@ -174,11 +201,11 @@
         font-size: 15;
         color: #201e1d;
         line-height: 4;
-        margin-bottom: 16;
+        margin-bottom: 4;
     }
 
     .tour-dots {
-        margin-bottom: 16;
+        margin: 12 0;
     }
 
     .tour-dot {
@@ -193,30 +220,4 @@
         background-color: #033047;
     }
 
-    .tour-back {
-        background-color: white;
-        color: #033047;
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-        font-size: 16;
-        font-weight: bold;
-        height: 48;
-        text-transform: none;
-    }
-
-    .tour-back:disabled {
-        opacity: 0.4;
-    }
-
-    .tour-next {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-        border-radius: 0;
-        font-size: 16;
-        font-weight: bold;
-        height: 48;
-        text-transform: none;
-    }
 </style>

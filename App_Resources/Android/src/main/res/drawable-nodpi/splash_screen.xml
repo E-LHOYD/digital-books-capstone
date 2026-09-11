@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     The window background Android paints from the moment the icon is tapped
-    until the first NativeScript page renders. It was solid white, which is the
-    blank flash before the splash screen appears: the app was showing a white
-    window, then swapping it for the navy Lockscreen.
+    until the first NativeScript page renders (Android 11 and older; Android 12
+    and newer use the system splash set up in values-v31/styles.xml, which
+    shows the same thing).
 
-    Painting it the same navy the Lockscreen uses makes that swap invisible.
-    Deliberately just a flat colour and no logo: the Lockscreen draws its own
-    wordmark and shelf bars, and a logo here would jump as the two hand over.
+    The app's navy with the app icon's mark in the middle: the three book
+    spines from ic_launcher_foreground, drawn at the size Android 12's splash
+    draws them. App.svelte picks the first page (Login or the Library) before
+    anything is drawn, so the splash hands straight over to it.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
@@ -15,4 +16,9 @@
             <solid android:color="@color/ns_splashBackground" />
         </shape>
     </item>
+    <item
+        android:width="240dp"
+        android:height="240dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_launcher_foreground" />
 </layer-list>

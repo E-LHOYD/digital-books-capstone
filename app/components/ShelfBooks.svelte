@@ -1,16 +1,6 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: back button + logo + wordmark -->
-        <stackLayout row="0" orientation="horizontal" class="header">
-            <button text="←" class="back-btn" on:tap={goBack} />
-            <stackLayout orientation="horizontal" class="logo">
-                <stackLayout class="bar bar-1" />
-                <stackLayout class="bar bar-2" />
-                <stackLayout class="bar bar-3" rotate="8" />
-            </stackLayout>
-            <label text="GD-Library" class="brand" />
-        </stackLayout>
-        <stackLayout row="1" class="divider" />
+        <AppHeader row={0} back on:back={goBack} />
 
         <!--
             A grid, not a stack. The list used to be a fixed 450 tall inside a
@@ -21,7 +11,7 @@
         -->
         <gridLayout row={2} col={0} rows="auto, auto, *, auto" columns="*" class="container">
             <!-- Shelf Title -->
-            <label row={0} col={0} text={shelfName} class="shelf-title" />
+            <label row={0} col={0} text={shelfName} class="page-title" textWrap="true" />
 
             <!-- Sort -->
             <scrollView row={1} col={0} orientation="horizontal" class="sort-scroll">
@@ -40,7 +30,7 @@
             </scrollView>
 
             <!-- Books List -->
-            <scrollView row={2} col={0} class="books-scroll">
+            <scrollView row={2} col={0}>
                 <stackLayout>
                     {#if books.length === 0}
                         <stackLayout class="empty-container">
@@ -49,7 +39,7 @@
                     {:else}
                         {#each sortedBooks as book}
                             <gridLayout class="book-item" rows="auto, auto" columns="*, auto, auto" on:tap={() => onRowTap(book)}>
-                                <label row={0} col={0} text={book.title} class="book-title" />
+                                <label row={0} col={0} text={book.title} class="book-title" textWrap="true" />
                                 <label row={1} col={0} text={book.author} class="book-author" />
                                 {#if typeof book.percentage === 'number'}
                                     <label
@@ -85,7 +75,7 @@
             <stackLayout row={3} col={0}>
                 {#if canRemove && books.length > 0}
                     {#if !selectionMode}
-                        <button text="Remove Books" class="remove-btn" on:tap={enterSelectionMode} />
+                        <button text="Remove Books" class="btn btn-danger" on:tap={enterSelectionMode} />
                     {:else}
                         <label
                             text={selectionCount === 0
@@ -93,15 +83,16 @@
                                 : `${selectionCount} selected`}
                             class="selection-hint"
                         />
-                        <stackLayout orientation="horizontal" class="action-buttons">
-                            <button text="Cancel" class="action-btn btn-cancel" on:tap={exitSelectionMode} />
+                        <gridLayout columns="*, 12, *" class="action-buttons">
+                            <button col={0} text="Cancel" class="btn btn-secondary" on:tap={exitSelectionMode} />
                             <button
+                                col={2}
                                 text={removing ? 'Removing...' : 'Remove'}
-                                class="action-btn btn-danger"
+                                class="btn btn-danger"
                                 isEnabled={selectionCount > 0 && !removing}
                                 on:tap={showRemoveDialog}
                             />
-                        </stackLayout>
+                        </gridLayout>
                     {/if}
                 {/if}
             </stackLayout>
@@ -119,10 +110,10 @@
                         textWrap="true"
                     />
 
-                    <stackLayout orientation="horizontal" class="modal-actions">
-                        <button text="Cancel" class="btn btn-cancel" on:tap={cancelRemove} />
-                        <button text="Remove" class="btn btn-danger" on:tap={confirmRemove} />
-                    </stackLayout>
+                    <gridLayout columns="*, 12, *" class="modal-actions">
+                        <button col={0} text="Cancel" class="btn btn-secondary" on:tap={cancelRemove} />
+                        <button col={2} text="Remove" class="btn btn-danger" on:tap={confirmRemove} />
+                    </gridLayout>
                 </stackLayout>
             </gridLayout>
         {/if}
@@ -133,38 +124,22 @@
                 <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text={resultTitle} class="modal-title" />
                     <label text={resultMessage} class="modal-message" textWrap="true" />
-                    <button text="OK" class="btn btn-ok" on:tap={closeResult} />
+                    <button text="OK" class="btn btn-primary" on:tap={closeResult} />
                 </stackLayout>
             </gridLayout>
         {/if}
 
-        <!-- Bottom Navigation -->
-        <stackLayout row={3} col={0} class="bottom-container-fixed">
-            <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goToLibrary}>
-                    <label text="📚" class="nav-icon" />
-                    <label text="Library" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn nav-btn-active">
-                    <label text="📖" class="nav-icon" />
-                    <label text="My Shelf" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" on:tap={goToProfile}>
-                    <label text="👤" class="nav-icon" />
-                    <label text="Profile" class="nav-text" />
-                </stackLayout>
-            </stackLayout>
-        </stackLayout>
+        <BottomNav row={3} active="shelf" />
 
     </gridLayout>
 </page>
 
 <script lang="ts">
+    import AppHeader from './AppHeader.svelte';
+    import BottomNav from './BottomNav.svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import MyShelf from './MyShelf.svelte';
     import BookDetails from './BookDetails.svelte';
-    import Profile from './Profile.svelte';
-    import Home from './Home.svelte';
     // @ts-ignore
     import type { Book } from '../types';
     // @ts-ignore
@@ -345,108 +320,10 @@
         } as any);
     }
 
-    function goToLibrary() {
-        navigate({
-            page: Home
-        } as any);
-    }
 
-    function goToProfile() {
-        navigate({
-            page: Profile
-        } as any);
-    }
 </script>
 
 <style>
-    .page {
-        background-color: #f3f2f2;
-    }
-
-    .screen {
-        padding: 0;
-    }
-
-    .header {
-        padding: 20 20 16 20;
-        horizontal-align: left;
-    }
-
-    .back-btn {
-        font-size: 24;
-        font-weight: bold;
-        color: #033047;
-        background-color: transparent;
-        border-width: 0;
-        padding: 0;
-        margin-right: 15;
-        vertical-align: center;
-    }
-
-    .logo {
-        vertical-align: center;
-        margin-right: 10;
-    }
-
-    .bar {
-        width: 5;
-        background-color: #201e1d;
-        margin-right: 2;
-        vertical-align: bottom;
-    }
-
-    .bar-1 { height: 22; }
-    .bar-2 { height: 17; }
-    .bar-3 { height: 19; background-color: #033047; }
-
-    .brand {
-        font-size: 15;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        vertical-align: center;
-    }
-
-    .divider {
-        height: 2;
-        background-color: #201e1d;
-        margin: 0 20;
-    }
-
-    .container {
-        padding: 28 20 0 20;
-    }
-
-    .shelf-title {
-        font-size: 34;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        text-align: left;
-        margin-bottom: 24;
-    }
-
-    .books-scroll {
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-        margin-bottom: 15;
-    }
-
-    .book-item {
-        padding: 15;
-        border-bottom-width: 1;
-        border-bottom-color: #f0f0f0;
-        margin: 5 0;
-        background-color: white;
-        border-radius: 0;
-        box-shadow: 0 1 3px rgba(0,0,0,0.1);
-    }
-
-    .book-item:active {
-        background-color: #f8f8f8;
-        opacity: 0.8;
-    }
 
     .book-percent {
         font-size: 15;
@@ -467,10 +344,10 @@
         font-size: 13;
         color: #033047;
         background-color: #ffffff;
-        border-width: 1;
-        border-color: #cccccc;
-        border-radius: 0;
-        padding: 6 12;
+        border-width: 2;
+        border-color: #033047;
+        border-radius: 100;
+        padding: 6 14;
         margin-right: 8;
     }
 
@@ -479,19 +356,6 @@
         color: #ffffff;
         border-color: #033047;
         font-weight: bold;
-    }
-
-    .book-title {
-        font-size: 18;
-        font-weight: bold;
-        color: #033047;
-        margin-bottom: 5;
-        text-transform: capitalize;
-    }
-
-    .book-author {
-        font-size: 14;
-        color: #666;
     }
 
     .select-checkbox {
@@ -506,17 +370,6 @@
         height: 30;
     }
 
-    .empty-container {
-        padding: 40;
-        align-items: center;
-    }
-
-    .empty-text {
-        font-size: 16;
-        color: #999;
-        text-align: center;
-    }
-
     .selection-hint {
         font-size: 13;
         color: #666;
@@ -524,146 +377,9 @@
         margin-bottom: 6;
     }
 
-    .btn-ok {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-        margin-top: 5;
-    }
-
-    .remove-btn {
-        width: 100%;
-        padding: 15;
-        background-color: #c62828;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        border-radius: 0;
-        border-width: 0;
-        margin-top: 10;
-        margin-bottom: 10;
-    }
-
     .action-buttons {
-        orientation: horizontal;
         margin-top: 10;
         margin-bottom: 10;
     }
 
-    .action-btn {
-        width: 50%;
-        padding: 15;
-        font-size: 16;
-        font-weight: bold;
-        border-radius: 0;
-        border-width: 0;
-        margin: 0;
-    }
-
-    .action-btn.btn-cancel {
-        background-color: #f0f0f0;
-        color: #033047;
-        border-width: 2;
-        border-color: #033047;
-    }
-
-    .action-btn.btn-danger {
-        background-color: #c62828;
-        color: white;
-    }
-
-    .modal-overlay {
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-        background-color: white;
-        border-radius: 0;
-        padding: 20;
-        width: 80%;
-        max-width: 400;
-    }
-
-    .modal-title {
-        font-size: 20;
-        font-weight: bold;
-        color: #033047;
-        margin-bottom: 15;
-        text-align: center;
-    }
-
-    .modal-message {
-        font-size: 16;
-        color: #333;
-        text-align: center;
-        margin-bottom: 20;
-    }
-
-    .modal-actions {
-        margin-top: 15;
-    }
-
-    .btn {
-        padding: 12 20;
-        border-radius: 0;
-        font-size: 16;
-        font-weight: bold;
-        margin: 0 5;
-    }
-
-    .btn-cancel {
-        background-color: #f0f0f0;
-        color: #033047;
-        border-width: 2;
-        border-color: #033047;
-    }
-
-    .btn-danger {
-        background-color: #c62828;
-        color: white;
-        border-width: 0;
-    }
-
-    .bottom-container-fixed {
-        padding: 0 20 24 20;
-    }
-
-    .bottom-buttons {
-        width: 100%;
-        border-width: 4;
-        border-color: #033047;
-        background-color: #033047;
-        border-radius: 8;
-    }
-
-    .nav-btn {
-        width: 33.33%;
-        height: 65;
-        background-color: white;
-        color: #033047;
-        font-size: 14;
-        font-weight: bold;
-        border-width: 2;
-        border-radius: 4;
-        border-color: #033047;
-        margin: 0;
-        vertical-align: center;
-    }
-
-    .nav-icon {
-        font-size: 20;
-        margin-bottom: 4;
-        text-align: center;
-    }
-
-    .nav-text {
-        font-size: 12;
-        text-align: center;
-    }
-
-    .nav-btn-active {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-    }
 </style>

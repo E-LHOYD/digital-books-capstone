@@ -1,64 +1,52 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
-        <stackLayout row="0" orientation="horizontal" class="header">
-            <stackLayout orientation="horizontal" class="logo">
-                <stackLayout class="bar bar-1" />
-                <stackLayout class="bar bar-2" />
-                <stackLayout class="bar bar-3" rotate="8" />
-            </stackLayout>
-            <label text="GD-Library" class="brand" />
-        </stackLayout>
-        <stackLayout row="1" class="divider" />
+        <AppHeader row={0} />
         
         <!-- Main Content -->
-        <scrollView row={2} col={0} class="scroll-container">
-            <stackLayout class="content">
+        <scrollView row={2} col={0}>
+            <stackLayout class="container">
+                <label text="My Shelf" class="page-title" />
+
                 <!-- Reading History Shelf (combined read + viewed) -->
-                <stackLayout class="shelf-item" on:tap={() => goToShelfBooks('history')}>
-                    <stackLayout class="shelf-header">
-                        <label text="📖" class="shelf-icon" />
-                        <label text="Reading History" class="shelf-name" />
-                        <label text={(readBooks.length + viewedBooks.length) + ' books'} class="shelf-count" />
-                    </stackLayout>
-                    <stackLayout class="shelf-preview">
-                        {#if (readBooks.length + viewedBooks.length) > 0}
-                            <label text="Tap to view books" class="preview-text" />
-                        {:else}
-                            <label text="No reading history yet" class="empty-text" />
-                        {/if}
-                    </stackLayout>
-                </stackLayout>
+                <gridLayout columns="*, auto" rows="auto, auto" class="card" on:tap={() => goToShelfBooks('history')}>
+                    <label row={0} col={0} text="📖 Reading History" class="card-title" />
+                    <label row={0} col={1} text={(readBooks.length + viewedBooks.length) + ' books'} class="muted-text" verticalAlignment="center" />
+                    <label
+                        row={1}
+                        col={0}
+                        colSpan={2}
+                        text={(readBooks.length + viewedBooks.length) > 0 ? 'Tap to view books' : 'No reading history yet'}
+                        class="muted-text"
+                    />
+                </gridLayout>
 
                 <!-- Create Shelf Button -->
                 {#if customShelves.length < MAX_CUSTOM_SHELVES}
-                    <button text="+ Create New Shelf" class="create-shelf-btn" on:tap={showCreateShelfDialog} />
+                    <button text="+ Create New Shelf" class="btn btn-primary create-shelf-btn" on:tap={showCreateShelfDialog} />
                 {:else}
-                    <stackLayout class="max-shelves-notice">
-                        <label text={SHELF_LIMIT_MESSAGE} class="notice-text" />
-                    </stackLayout>
+                    <label text={SHELF_LIMIT_MESSAGE} class="muted-text limit-text" textWrap="true" />
                 {/if}
 
                 <!-- Custom Shelves -->
+                {#if customShelves.length > 0}
+                    <label text="Your shelves" class="section-title" />
+                {/if}
                 {#each customShelves as shelf}
-                    <gridLayout class="shelf-item" rows="auto" columns="*, auto">
-                        <stackLayout row={0} col={0} on:tap={() => goToShelfBooks(shelf.id)}>
-                        <stackLayout class="shelf-header">
-                            <label text={shelf.name} class="shelf-name" />
-                            <label text={(shelf.bookIds?.length || 0) + ' books'} class="shelf-count" />
-                        </stackLayout>
-                        <stackLayout class="shelf-preview">
-                            {#if (shelf.bookIds?.length || 0) > 0}
-                                <label text="Tap to view books" class="preview-text" />
-                            {:else}
-                                <label text="Empty shelf" class="empty-text" />
-                            {/if}
-                        </stackLayout>
-                        </stackLayout>
-
+                    <gridLayout class="card" rows="auto, auto" columns="*, auto">
+                        <label row={0} col={0} text={shelf.name} class="card-title" on:tap={() => goToShelfBooks(shelf.id)} />
+                        <label
+                            row={1}
+                            col={0}
+                            text={(shelf.bookIds?.length || 0) > 0
+                                ? `${shelf.bookIds.length} book${shelf.bookIds.length === 1 ? '' : 's'} · tap to view`
+                                : 'Empty shelf'}
+                            class="muted-text"
+                            on:tap={() => goToShelfBooks(shelf.id)}
+                        />
                         <button
                             row={0}
                             col={1}
+                            rowSpan={2}
                             text="Delete"
                             class="shelf-delete-btn"
                             verticalAlignment="center"
@@ -66,27 +54,10 @@
                         />
                     </gridLayout>
                 {/each}
-
             </stackLayout>
         </scrollView>
 
-        <!-- Bottom Navigation -->
-        <stackLayout row={3} col={0} class="bottom-container-fixed">
-            <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" on:tap={goToLibrary}>
-                    <label text="📚" class="nav-icon" />
-                    <label text="Library" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn nav-btn-active">
-                    <label text="📖" class="nav-icon" />
-                    <label text="My Shelf" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" on:tap={goToProfile}>
-                    <label text="👤" class="nav-icon" />
-                    <label text="Profile" class="nav-text" />
-                </stackLayout>
-            </stackLayout>
-        </stackLayout>
+        <BottomNav row={3} active="shelf" home />
 
         <!-- Create Shelf Modal -->
         {#if showCreateModal}
@@ -96,7 +67,7 @@
                     
                     <textField 
                         hint="Shelf name" 
-                        class="shelf-input" 
+                        class="input" 
                         text={newShelfName}
                         on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
                     />
@@ -105,10 +76,10 @@
                         <label text={createError} class="create-error" textWrap="true" />
                     {/if}
 
-                    <stackLayout orientation="horizontal" class="modal-actions">
-                        <button text="Create" class="btn btn-create" on:tap={createShelf} />
-                        <button text="Cancel" class="btn btn-cancel" on:tap={hideCreateModal} />
-                    </stackLayout>
+                    <gridLayout columns="*, 12, *" class="modal-actions">
+                        <button col={0} text="Create" class="btn btn-primary" on:tap={createShelf} />
+                        <button col={2} text="Cancel" class="btn btn-secondary" on:tap={hideCreateModal} />
+                    </gridLayout>
                 </stackLayout>
             </gridLayout>
         {/if}
@@ -125,10 +96,10 @@
                         textWrap="true"
                     />
 
-                    <stackLayout orientation="horizontal" class="modal-actions">
-                        <button text="Delete" class="btn btn-danger" isEnabled={!deleting} on:tap={performDeleteShelf} />
-                        <button text="Cancel" class="btn btn-cancel" isEnabled={!deleting} on:tap={cancelDeleteShelf} />
-                    </stackLayout>
+                    <gridLayout columns="*, 12, *" class="modal-actions">
+                        <button col={0} text="Delete" class="btn btn-danger" isEnabled={!deleting} on:tap={performDeleteShelf} />
+                        <button col={2} text="Cancel" class="btn btn-secondary" isEnabled={!deleting} on:tap={cancelDeleteShelf} />
+                    </gridLayout>
                 </stackLayout>
             </gridLayout>
         {/if}
@@ -145,7 +116,7 @@
                     <label text={resultMessage} class="result-message" textWrap="true" />
 
                     <stackLayout class="modal-actions">
-                        <button text="OK" class="btn btn-create" on:tap={hideResult} />
+                        <button text="OK" class="btn btn-primary" on:tap={hideResult} />
                     </stackLayout>
                 </stackLayout>
             </gridLayout>
@@ -154,14 +125,14 @@
 </page>
 
 <script lang="ts">
+    import AppHeader from './AppHeader.svelte';
+    import BottomNav from './BottomNav.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { firebase } from '@nativescript/firebase-core';
     import '@nativescript/firebase-firestore';
     import { navigate } from '@nativescript-community/svelte-native';
     // @ts-ignore
     import type { Shelf, Book } from '../types';
-    import Home from './Home.svelte';
-    import Profile from './Profile.svelte';
     import ShelfBooks from './ShelfBooks.svelte';
     import { Auth } from '@nativescript/firebase-auth';
     // @ts-ignore
@@ -503,247 +474,30 @@
 
     
 
-    function goToLibrary() {
-        navigate({
-            page: Home
-        } as any);
-    }
 
-    function goToProfile() {
-        navigate({
-            page: Profile
-        } as any);
-    }
 </script>
 
 <style>
-    .page {
-        background-color: #f3f2f2;
-    }
-
-    .screen {
-        padding: 0;
-    }
-
-    .header {
-        padding: 20 20 16 20;
-        horizontal-align: left;
-    }
-
-    .logo {
-        vertical-align: center;
-        margin-right: 10;
-    }
-
-    .bar {
-        width: 5;
-        background-color: #201e1d;
-        margin-right: 2;
-        vertical-align: bottom;
-    }
-
-    .bar-1 { height: 22; }
-    .bar-2 { height: 17; }
-    .bar-3 { height: 19; background-color: #033047; }
-
-    .brand {
-        font-size: 15;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        vertical-align: center;
-    }
-
-    .divider {
-        height: 2;
-        background-color: #201e1d;
-        margin: 0 20;
-    }
-
-    .shelf-item {
-        padding: 12;
-        margin: 0 0 5 0;
-        background-color: white;
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-    }
-
-    .content {
-        padding: 15 20 20 20;
-    }
-
-    .shelf-item:active {
-        background-color: #f8f8f8;
-        opacity: 0.8;
-    }
-
-    .shelf-header {
-        orientation: horizontal;
-        margin-bottom: 10;
-    }
-
-    .shelf-icon {
-        font-size: 16;
-        margin-right: 8;
-        vertical-align: center;
-    }
-
-    .shelf-name {
-        font-size: 16;
-        font-weight: bold;
-        color: #033047;
-        vertical-align: center;
-        flex-grow: 1;
-    }
-
-    .shelf-count {
-        font-size: 12;
-        color: #666;
-        text-align: right;
-        vertical-align: center;
-    }
-
-    .shelf-preview {
-        padding-left: 5;
-    }
-
-    .preview-text {
-        font-size: 12;
-        color: #666;
-        font-style: italic;
-        padding-left: 10;
-    }
-
-    .preview-book {
-        font-size: 12;
-        color: #666;
-        margin-bottom: 5;
-        padding-left: 10;
-    }
-
-    .empty-text {
-        font-size: 12;
-        color: #999;
-        font-style: italic;
-        padding-left: 10;
-    }
-
     .create-shelf-btn {
-        width: 100%;
-        padding: 15;
-        margin: 10 0 5 0;
-        background-color: #033047;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        border-radius: 0;
-        border-width: 0;
+        margin: 12 0 4 0;
     }
 
-    .max-shelves-notice {
-        padding: 15;
-        margin: 10 0 5 0;
-        background-color: #fff3f0;
-        border-radius: 0;
-        border-width: 2;
-        border-color: #ffccc7;
-    }
-
-    .notice-text {
-        font-size: 14;
-        color: #c62828;
+    .limit-text {
         text-align: center;
+        margin: 12 0 4 0;
     }
 
-    .bottom-container-fixed {
-        padding: 0 20 24 20;
-    }
-
-    .bottom-buttons {
-        width: 100%;
-        border-width: 4;
-        border-color: #033047;
-        background-color: #033047;
-        border-radius: 8;
-    }
-
-    .nav-btn {
-        width: 33.33%;
-        height: 65;
-        background-color: white;
-        color: #033047;
+    .shelf-delete-btn {
+        background-color: transparent;
+        color: #b3261e;
         font-size: 14;
         font-weight: bold;
-        border-width: 2;
-        border-radius: 4;
-        border-color: #033047;
+        border-width: 0;
+        padding: 4 0 4 12;
         margin: 0;
-        vertical-align: center;
+        text-transform: none;
     }
 
-    .nav-icon {
-        font-size: 20;
-        margin-bottom: 4;
-        text-align: center;
-    }
-
-    .nav-text {
-        font-size: 12;
-        text-align: center;
-    }
-
-    .nav-btn-active {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-    }
-
-    /* Covers the whole page as a grid child spanning all rows; NativeScript
-       does not support position: absolute, so the old rules did nothing. */
-    .modal-overlay {
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-        background-color: white;
-        border-radius: 0;
-        padding: 20;
-        width: 80%;
-        max-width: 400;
-    }
-
-    .modal-title {
-        font-size: 20;
-        font-weight: bold;
-        color: #033047;
-        margin-bottom: 15;
-        text-align: center;
-    }
-
-    .shelf-input {
-        font-size: 16;
-        padding: 12;
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-        margin-bottom: 15;
-    }
-
-    .modal-actions {
-        margin-top: 15;
-    }
-
-    .btn-create {
-        background-color: #033047;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        padding: 12 20;
-        border-radius: 0;
-        border-width: 0;
-        margin: 0 5;
-    }
 
     .result-success {
         color: #1b7f3b;
@@ -766,36 +520,4 @@
         margin-top: 8;
     }
 
-    .shelf-delete-btn {
-        background-color: transparent;
-        color: #c62828;
-        font-size: 11;
-        font-weight: bold;
-        border-width: 0;
-        padding: 4 8;
-        margin: 0;
-    }
-
-    .btn-danger {
-        background-color: #c62828;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        padding: 12 20;
-        border-radius: 0;
-        border-width: 0;
-        margin: 0 5;
-    }
-
-    .btn-cancel {
-        background-color: #f0f0f0;
-        color: #033047;
-        font-size: 16;
-        font-weight: bold;
-        padding: 12 20;
-        border-radius: 0;
-        border-width: 2;
-        border-color: #033047;
-        margin: 0 5;
-    }
 </style>

@@ -1,19 +1,10 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, auto, *" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
-        <stackLayout row="0" orientation="horizontal" class="header">
-            <stackLayout orientation="horizontal" class="logo">
-                <stackLayout class="bar bar-1" />
-                <stackLayout class="bar bar-2" />
-                <stackLayout class="bar bar-3" rotate="8" />
-            </stackLayout>
-            <label text="GD-Library" class="brand" />
-        </stackLayout>
-        <stackLayout row="1" class="divider" />
+        <AppHeader row={0} />
 
         <!-- Form -->
         <stackLayout row="2" class="container">
-            <label text="Log in" class="title" />
+            <label text="Log in" class="page-title" />
 
             <label text="EMAIL / USERNAME" class="field-label" />
             <textField hint="email/username" class="input" text={loginInput} on:textChange={(e) => loginInput = e.value} />
@@ -50,8 +41,9 @@
             <gridLayout columns="auto, *, auto" class="options-row">
                 <stackLayout col={0} orientation="horizontal" class="checkbox-container">
                     <label
-                        text={keepLoggedIn ? "■" : " "}
+                        text={keepLoggedIn ? "✓" : ""}
                         class="checkbox-btn"
+                        class:checkbox-on={keepLoggedIn}
                         on:tap={() => keepLoggedIn = !keepLoggedIn}
                     />
                     <label text="Keep me logged in" class="checkbox-label" />
@@ -64,14 +56,14 @@
                 />
             </gridLayout>
 
-            <button text="Log in" class="btn login" on:tap={handleLogin}/>
+            <button text="Log in" class="btn btn-primary login" on:tap={handleLogin}/>
         </stackLayout>
     </gridLayout>
 </page>
 
 <script lang="ts">
+    import AppHeader from './AppHeader.svelte';
     import { navigate } from '@nativescript-community/svelte-native';
-    import Lockscreen from './Lockscreen.svelte';
     import Home from './Home.svelte';
     import { login, getUserByUsername, sendPasswordReset } from '../services/firebase';
 
@@ -203,84 +195,16 @@
 </script>
 
 <style>
-    .page {
-        background-color: #f3f2f2;
+    .checkbox-on {
+        background-color: #033047;
     }
 
-    .screen {
-        padding: 0;
-    }
-
-    .header {
-        padding: 20 20 16 20;
-        horizontal-align: left;
-    }
-
-    .logo {
-        vertical-align: center;
-        margin-right: 10;
-    }
-
-    .bar {
-        width: 5;
-        background-color: #201e1d;
-        margin-right: 2;
-        vertical-align: bottom;
-    }
-
-    .bar-1 { height: 22; }
-    .bar-2 { height: 17; }
-    .bar-3 { height: 19; background-color: #033047; }
-
-    /* Archivo lives in app/fonts as Archivo-Regular.ttf and Archivo-Bold.ttf,
-       both reporting the family name "Archivo", so font-weight picks the right
-       file. The sans-serif fallback matters: a missing font file fails silently
-       on Android and the wordmark would otherwise render in whatever the
-       platform chose. */
-    .brand {
-        font-size: 15;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        vertical-align: center;
-    }
-
-    .divider {
-        height: 2;
-        background-color: #201e1d;
-        margin: 0 20;
-    }
-
-    .container {
-        padding: 28 20 0 20;
-    }
-
-    .title {
-        font-size: 34;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        text-align: left;
-        margin-bottom: 24;
-    }
-
-    .field-label {
-        font-size: 12;
-        letter-spacing: 0.1;
-        color: #201e1d;
-        margin-bottom: 6;
+    .login {
+        margin-top: 24;
     }
 
     .input {
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-        background-color: #ffffff;
-        font-size: 16;
-        padding: 10;
-        height: 48;
-        margin: 0 0 16 0;
-        color: #201e1d;
+        margin-bottom: 16;
     }
 
     .password-row {
@@ -300,6 +224,7 @@
         border-radius: 0;
         font-size: 14;
         color: #201e1d;
+        text-transform: none;
     }
 
     .options-row {
@@ -314,11 +239,12 @@
         width: 24;
         height: 24;
         background-color: #ffffff;
-        color: #033047;
+        color: #ffffff;
         border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
+        border-color: #033047;
+        border-radius: 6;
         font-size: 14;
+        font-weight: bold;
         text-align: center;
         vertical-align: center;
         margin-right: 10;
@@ -355,16 +281,4 @@
         margin: 0 0 12 0;
     }
 
-    .btn.login {
-        width: 100%;
-        height: 48;
-        margin: 24 0 0 0;
-        padding: 10;
-        border-radius: 0;
-        font-size: 16;
-        font-weight: bold;
-        background-color: #033047;
-        color: #ffffff;
-        text-align: center;
-    }
 </style>

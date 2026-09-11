@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The name shown under the icon and in the app switcher. Without this file
+    NativeScript names the app after the project folder, which is how it came
+    to be called "digitalbookscapstone".
+-->
+<resources>
+    <string name="app_name">GD-Library</string>
+    <string name="title_activity_kimera">GD-Library</string>
+</resources>

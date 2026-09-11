@@ -1,15 +1,6 @@
 <page actionBarHidden={true} class="page">
     <gridLayout rows="auto, auto, auto, *, auto" columns="*" class="screen">
-        <!-- Header: logo + wordmark -->
-        <stackLayout row="0" orientation="horizontal" class="header">
-            <stackLayout orientation="horizontal" class="logo">
-                <stackLayout class="bar bar-1" />
-                <stackLayout class="bar bar-2" />
-                <stackLayout class="bar bar-3" rotate="8" />
-            </stackLayout>
-            <label text="GD-Library" class="brand" />
-        </stackLayout>
-        <stackLayout row="1" class="divider" />
+        <AppHeader row={0} />
 
         <!-- Search Bar -->
         <stackLayout row={2} col={0} class="search-container">
@@ -49,14 +40,14 @@
         </stackLayout>
         
         <!-- Main Content -->
-        <stackLayout row={3} col={0} class="container">
-            <stackLayout orientation="horizontal" class="buttons-container">
-                <button text="Subjects" class="subjects-btn" on:tap={goToSubjects} />
-                <button text="Browse more" class="recommendation-btn" on:tap={goToBrowseAll} />
+        <gridLayout row={3} col={0} rows="auto, *" class="container">
+            <stackLayout row={0} orientation="horizontal" class="pill-row">
+                <button text="Subjects" class="pill" on:tap={goToSubjects} />
+                <button text="Browse more" class="pill" on:tap={goToBrowseAll} />
             </stackLayout>
 
-            <!-- Books List - Expanded -->
-            <scrollView class="books-scroll">
+            <!-- Books List: takes whatever height is left on the screen -->
+            <scrollView row={1}>
                 <stackLayout>
                     {#if isLoading}
                         <stackLayout class="loading-container">
@@ -65,7 +56,7 @@
                     {:else if error}
                         <stackLayout class="error-container">
                             <label text={error} class="error-text" />
-                            <button text="Retry" class="retry-btn" on:tap={loadBooks} />
+                            <button text="Retry" class="btn btn-primary" on:tap={loadBooks} />
                         </stackLayout>
                     {:else if displayedBooks.length === 0}
                         <stackLayout class="empty-container">
@@ -79,7 +70,7 @@
                             {#each recommendedBooks as book}
                                 <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
                                     <stackLayout class="book-info">
-                                        <label text={book.title} class="book-title" />
+                                        <label text={book.title} class="book-title" textWrap="true" />
                                         <label text={book.author} class="book-author" />
                                     </stackLayout>
                                 </stackLayout>
@@ -93,7 +84,7 @@
                             {#each moreBooks as book}
                                 <stackLayout class="book-item" on:tap={() => goToBookDetails(book)}>
                                     <stackLayout class="book-info">
-                                        <label text={book.title} class="book-title" />
+                                        <label text={book.title} class="book-title" textWrap="true" />
                                         <label text={book.author} class="book-author" />
                                     </stackLayout>
                                 </stackLayout>
@@ -102,25 +93,9 @@
                     {/if}
                 </stackLayout>
             </scrollView>
-        </stackLayout>
+        </gridLayout>
 
-        <!-- Bottom Buttons - Fixed at bottom -->
-        <stackLayout row={4} col={0} class="bottom-container-fixed">
-            <stackLayout orientation="horizontal" class="bottom-buttons">
-                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'library'} on:tap={() => currentPage = 'library'}>
-                    <label text="📚" class="nav-icon" />
-                    <label text="Library" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'my-shelf'} on:tap={goToMyShelf}>
-                    <label text="📖" class="nav-icon" />
-                    <label text="My Shelf" class="nav-text" />
-                </stackLayout>
-                <stackLayout class="nav-btn" class:nav-btn-active={currentPage === 'profile'} on:tap={goToProfile}>
-                    <label text="👤" class="nav-icon" />
-                    <label text="Profile" class="nav-text" />
-                </stackLayout>
-            </stackLayout>
-        </stackLayout>
+        <BottomNav row={4} active="library" home />
 
         <!--
             Interests prompt. Shown over the whole screen when the account has
@@ -165,7 +140,7 @@
                 />
                 <button
                     text={savingInterests ? 'Saving…' : 'Save interests'}
-                    class="ip-save"
+                    class="btn btn-primary"
                     isEnabled={!savingInterests && pickedInterests.length === REQUIRED_INTERESTS}
                     on:tap={saveInterests}
                 />
@@ -190,6 +165,8 @@
 </page>
 
 <script lang="ts">
+    import AppHeader from './AppHeader.svelte';
+    import BottomNav from './BottomNav.svelte';
     import { onMount } from 'svelte';
     import { firebase } from '@nativescript/firebase-core';
 	import '@nativescript/firebase-firestore';
@@ -197,12 +174,10 @@
     import BookDetails from './BookDetails.svelte';
     import Recommendations from './Recommendations.svelte';
     import Subjects from './Subjects.svelte';
-    import Profile from './Profile.svelte';
     import BrowseAll from './BrowseAll.svelte';
     import SearchResults from './SearchResults.svelte';
     // @ts-ignore
     import { recordActivity } from '../services/presence.js';
-    import MyShelf from './MyShelf.svelte';
     import TutorialCard from './TutorialCard.svelte';
     // @ts-ignore
     import { recommendBooks, recommendationReason } from '../services/recommendations.js';
@@ -236,7 +211,6 @@
         displayedBooks = [...top, ...rest];
     }
     let searchQuery = '';
-    let currentPage = 'library'; // 'home', 'library', 'my-shelf', 'profile'
     let isLoading = false;
     let error: string | null = null;
     let currentUser: any = null;
@@ -478,19 +452,7 @@
         } as any);
     }
 
-    function goToProfile() {
-        currentPage = 'profile';
-        navigate({
-            page: Profile
-        } as any);
-    }
 
-    function goToMyShelf() {
-        currentPage = 'my-shelf';
-        navigate({
-            page: MyShelf
-        } as any);
-    }
 
 	async function loadBooks() {
 		isLoading = true;
@@ -568,8 +530,7 @@
 
     .ip-box {
         background-color: white;
-        border-width: 2;
-        border-color: #201e1d;
+        border-radius: 12;
         padding: 20;
         width: 88%;
     }
@@ -601,8 +562,8 @@
         background-color: white;
         color: #033047;
         border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
+        border-color: #033047;
+        border-radius: 100;
         font-size: 14;
         text-transform: none;
     }
@@ -630,253 +591,4 @@
         margin-bottom: 6;
     }
 
-    .ip-save {
-        background-color: #033047;
-        color: white;
-        font-size: 16;
-        font-weight: bold;
-        padding: 12;
-        border-radius: 0;
-        border-width: 0;
-        margin-top: 6;
-        text-transform: none;
-    }
-
-    .ip-save:disabled {
-        opacity: 0.55;
-    }
-
-    .page {
-        background-color: #f3f2f2;
-    }
-
-    .screen {
-        padding: 0;
-    }
-
-    .header {
-        padding: 20 20 16 20;
-        horizontal-align: left;
-    }
-
-    .logo {
-        vertical-align: center;
-        margin-right: 10;
-    }
-
-    .bar {
-        width: 5;
-        background-color: #201e1d;
-        margin-right: 2;
-        vertical-align: bottom;
-    }
-
-    .bar-1 { height: 22; }
-    .bar-2 { height: 17; }
-    .bar-3 { height: 19; background-color: #033047; }
-
-    .brand {
-        font-size: 15;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        vertical-align: center;
-    }
-
-    .divider {
-        height: 2;
-        background-color: #201e1d;
-        margin: 0 20;
-    }
-
-    .search-container {
-        padding: 20 20 0 20;
-    }
-
-    .search-bar {
-        border-width: 2;
-        border-color: #201e1d;
-        border-radius: 0;
-        background-color: #ffffff;
-        font-size: 16;
-        padding: 10;
-        height: 48;
-        margin: 0 0 16 0;
-        color: #201e1d;
-    }
-
-    .search-clear {
-        background-color: transparent;
-        color: #033047;
-        font-size: 14;
-        font-weight: bold;
-        border-width: 0;
-        padding: 0 12;
-        margin: 0;
-        vertical-align: center;
-    }
-
-    .search-btn {
-        background-color: #033047;
-        color: white;
-        font-size: 14;
-        font-weight: bold;
-        border-width: 0;
-        padding: 0 15;
-        margin: 0 0 0 10;
-        border-radius: 0;
-        vertical-align: center;
-    }
-
-    .container {
-        padding: 0 20;
-    }
-
-    .buttons-container {
-        margin: 0 0 5 0;
-        width: 100%;
-        text-align: center;
-    }
-
-    .subjects-btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-        background-color: white;
-        color: #033047;
-        border-width: 4;
-        border-color: #033047;
-    }
-
-    .recommendation-btn {
-        width: 150;
-        margin: 10;
-        padding: 10;
-        border-radius: 100;
-        font-size: 16;
-        font-weight: bold;
-        background-color: white;
-        color: #033047;
-        border-width: 4;
-        border-color: #033047;
-    }
-
-    .book-info {
-        padding: 10 0;
-    }
-
-    .section-title {
-        font-size: 17;
-        font-weight: bold;
-        font-family: Archivo, sans-serif;
-        color: #201e1d;
-        margin: 12 0 6 0;
-    }
-
-    .books-scroll {
-        height: 538;
-        border-width: 1;
-        border-color: #eee;
-        border-radius: 8;
-        margin: 10 0;
-        width: 100%;
-    }
-
-    .book-item {
-        padding: 20;
-        border-bottom-width: 1;
-        border-bottom-color: #f0f0f0;
-        margin: 5 0;
-        background-color: white;
-        border-radius: 8;
-        box-shadow: 0 1 3px rgba(0,0,0,0.1);
-    }
-
-    .book-item:active {
-        background-color: #f8f8f8;
-        opacity: 0.8;
-    }
-
-    .book-title {
-        font-size: 18;
-        font-weight: bold;
-        color: #033047;
-        margin-bottom: 5;
-        font-family: Archivo, sans-serif;
-        text-transform: capitalize;
-    }
-
-    .book-author {
-        font-size: 14;
-        color: #666;
-    }
-
-    .loading-container,
-    .error-container,
-    .empty-container {
-        padding: 20;
-        text-align: center;
-    }
-
-    .loading-text,
-    .error-text,
-    .empty-text {
-        font-size: 16;
-        color: #666;
-    }
-
-    .retry-btn {
-        margin-top: 10;
-        padding: 10 20;
-        background-color: #033047;
-        color: white;
-        border-radius: 8;
-        font-size: 14;
-    }
-
-    .bottom-container-fixed {
-        padding: 0 20 24 20;
-    }
-
-    .bottom-buttons {
-        width: 100%;
-        border-width: 4;
-        border-color: #033047;
-        background-color: #033047;
-        border-radius: 8;
-    }
-
-    .nav-btn {
-        width: 33.33%;
-        height: 65;
-        background-color: white;
-        color: #033047;
-        font-size: 14;
-        font-weight: bold;
-        border-width: 2;
-        border-radius: 4;
-        border-color: #033047;
-        margin: 0;
-        vertical-align: center;
-    }
-
-    .nav-icon {
-        font-size: 20;
-        margin-bottom: 4;
-        text-align: center;
-    }
-
-    .nav-text {
-        font-size: 12;
-        text-align: center;
-    }
-
-    .nav-btn-active {
-        background-color: #033047;
-        color: white;
-        border-width: 0;
-    }
 </style>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Android 12 and newer always show a system splash screen when the app
+        starts, built from these rather than from windowBackground. Without
+        them it used a plain default background, since the window background
+        here is a layered drawable rather than a single colour.
+
+        Navy with the app icon's mark, the same as the older splash_screen.xml.
+    -->
+    <style name="LaunchScreenTheme" parent="LaunchScreenThemeBase">
+        <item name="android:windowSplashScreenBackground">@color/ns_splashBackground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ns_splashBackground</item>
+    </style>
+
+</resources>

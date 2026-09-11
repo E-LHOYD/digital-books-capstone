@@ -1,4 +1,4 @@
-﻿.fab {
+.fab {
   font-family: 'Font Awesome 5 Brands', 'fa-brands-400';
   font-weight: 400;
 }
@@ -11,4 +11,302 @@
 .far {
   font-family: 'Font Awesome 5 Free', 'fa-regular-400';
   font-weight: 400;
+}
+
+/*
+    GD-Library's look, shared by every screen.
+
+    Taken from the Library home screen: the logo bar and rule at the top, the
+    light grey page, white rounded book cards, round-ended buttons and the
+    Library / My Shelf / Profile bar at the bottom. Screens use these classes
+    rather than keeping their own copies, so a change here reaches all of them.
+    The header and bottom bar themselves are the AppHeader and BottomNav
+    components.
+*/
+
+/* ---------- page ---------- */
+
+.page {
+    background-color: #f3f2f2;
+}
+
+.screen {
+    padding: 0;
+}
+
+.container {
+    padding: 0 20;
+}
+
+.page-title {
+    font-size: 28;
+    font-weight: bold;
+    font-family: Archivo, sans-serif;
+    color: #201e1d;
+    margin: 20 0 14 0;
+}
+
+.section-title {
+    font-size: 17;
+    font-weight: bold;
+    font-family: Archivo, sans-serif;
+    color: #201e1d;
+    margin: 12 0 6 0;
+}
+
+.muted-text {
+    font-size: 14;
+    color: #666666;
+}
+
+.count-text {
+    font-size: 14;
+    color: #666666;
+    margin: 4 0 6 0;
+}
+
+/* ---------- search ---------- */
+
+.search-container {
+    padding: 20 20 0 20;
+}
+
+.search-bar {
+    border-width: 2;
+    border-color: #201e1d;
+    border-radius: 0;
+    background-color: #ffffff;
+    font-size: 16;
+    padding: 10;
+    height: 48;
+    margin: 0 0 16 0;
+    color: #201e1d;
+}
+
+.search-clear {
+    background-color: transparent;
+    color: #033047;
+    font-size: 14;
+    font-weight: bold;
+    border-width: 0;
+    padding: 0 12;
+    margin: 0;
+    vertical-align: center;
+    text-transform: none;
+}
+
+.search-btn {
+    background-color: #033047;
+    color: white;
+    font-size: 14;
+    font-weight: bold;
+    border-width: 0;
+    padding: 0 15;
+    margin: 0 0 0 10;
+    border-radius: 0;
+    vertical-align: center;
+    text-transform: none;
+}
+
+/* ---------- buttons ---------- */
+
+/* The round-ended outline button from the Library screen (Subjects, Browse
+   more), for moving between parts of the app. */
+.pill {
+    padding: 10 16;
+    margin: 10 6;
+    border-radius: 100;
+    font-size: 16;
+    font-weight: bold;
+    background-color: white;
+    color: #033047;
+    border-width: 4;
+    border-color: #033047;
+    text-transform: none;
+}
+
+.pill-row {
+    margin: 0 0 5 0;
+    horizontal-align: center;
+}
+
+/* Actions. Same rounded shape; filled navy for the main action on a screen,
+   outlined for the alternative, red for anything that takes something away. */
+.btn {
+    height: 48;
+    margin: 6 0;
+    padding: 0 18;
+    border-radius: 100;
+    font-size: 16;
+    font-weight: bold;
+    text-transform: none;
+}
+
+.btn-primary {
+    background-color: #033047;
+    color: white;
+    border-width: 0;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #033047;
+    border-width: 3;
+    border-color: #033047;
+}
+
+.btn-danger {
+    background-color: #b3261e;
+    color: white;
+    border-width: 0;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+}
+
+/* ---------- book cards ---------- */
+
+.book-item {
+    padding: 20;
+    border-bottom-width: 1;
+    border-bottom-color: #f0f0f0;
+    margin: 5 0;
+    background-color: white;
+    border-radius: 8;
+    box-shadow: 0 1 3px rgba(0,0,0,0.1);
+}
+
+.book-item:active {
+    background-color: #f8f8f8;
+    opacity: 0.8;
+}
+
+.book-info {
+    padding: 10 0;
+}
+
+/* Long titles wrap onto more lines and the card grows to fit, rather than
+   being cut off at the edge. */
+.book-title {
+    font-size: 18;
+    font-weight: bold;
+    color: #033047;
+    margin-bottom: 5;
+    font-family: Archivo, sans-serif;
+    text-transform: capitalize;
+    white-space: normal;
+}
+
+.book-author {
+    font-size: 14;
+    color: #666666;
+}
+
+/* A white card for anything that is not a book: a shelf, a subject, a
+   profile detail. Same shape as a book card. */
+.card {
+    padding: 16 20;
+    margin: 5 0;
+    background-color: white;
+    border-radius: 8;
+    box-shadow: 0 1 3px rgba(0,0,0,0.1);
+}
+
+.card:active {
+    background-color: #f8f8f8;
+}
+
+.card-title {
+    font-size: 18;
+    font-weight: bold;
+    color: #033047;
+    font-family: Archivo, sans-serif;
+}
+
+.card-label {
+    font-size: 13;
+    color: #666666;
+    margin-bottom: 2;
+}
+
+.card-value {
+    font-size: 16;
+    font-weight: bold;
+    color: #201e1d;
+}
+
+/* ---------- loading, empty, error ---------- */
+
+.loading-container,
+.error-container,
+.empty-container {
+    padding: 20;
+    text-align: center;
+}
+
+.loading-text,
+.error-text,
+.empty-text {
+    font-size: 16;
+    color: #666666;
+}
+
+.error-message {
+    font-size: 14;
+    color: #b3261e;
+    margin: 6 0;
+}
+
+/* ---------- forms ---------- */
+
+.field-label {
+    font-size: 12;
+    letter-spacing: 0.08;
+    color: #201e1d;
+    margin: 10 0 6 0;
+}
+
+.input {
+    border-width: 2;
+    border-color: #201e1d;
+    border-radius: 0;
+    background-color: #ffffff;
+    font-size: 16;
+    padding: 10;
+    height: 48;
+    color: #201e1d;
+}
+
+/* ---------- dialogs ---------- */
+
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 12;
+    padding: 20;
+    width: 85%;
+}
+
+.modal-title {
+    font-size: 20;
+    font-weight: bold;
+    font-family: Archivo, sans-serif;
+    color: #033047;
+    margin-bottom: 12;
+    text-align: center;
+}
+
+.modal-message {
+    font-size: 15;
+    color: #201e1d;
+    margin-bottom: 12;
+    text-align: center;
+}
+
+.modal-actions {
+    margin-top: 8;
 }

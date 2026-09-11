@@ -187,6 +187,32 @@ export async function changePassword(newPassword) {
 }
 
 // =========================
+// 🚪 SESSION ON START
+// =========================
+/**
+ * The user the app opens signed in as, or null. Synchronous, so the first
+ * page can be chosen before anything is drawn and the splash screen hands
+ * straight over to it.
+ *
+ * Firebase keeps the signed-in user on the device by itself, but that user is
+ * only kept when they ticked "Keep me logged in" (which is what saves the
+ * credentials). Anyone else is signed out here, so they are asked to log in
+ * again, as they chose.
+ * @returns {any}
+ */
+export function restoredSessionUser() {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    if (!getSavedCredentials()) {
+        auth.signOut().catch((error) => console.error("Could not end the session:", error));
+        return null;
+    }
+
+    return user;
+}
+
+// =========================
 // 🔐 AUTO LOGIN
 // =========================
 /**

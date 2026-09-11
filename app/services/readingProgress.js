@@ -349,95 +349,92 @@ export async function deleteReadingProgress(bookId) {
     }
 }
 
+// ---------- bookmarks ----------
+//
+// A reader can bookmark as many pages as they like. The pages are kept on the
+// book's progress document as a list, `bookmarks`, which the web reader uses
+// too, so a page bookmarked on one shows up on the other.
+//
+// `bookmark` holds a single page: it is what this app kept before it could
+// hold several. It is still read as one of the bookmarks, and kept pointing at
+// the most recently added page.
+
+function progressRef(userId, bookId) {
+    return firebase().firestore().collection('readingProgress').doc(`${userId}_${bookId}`);
+}
+
+/** Every bookmarked page on a progress record, lowest first. */
+export function bookmarksOf(data) {
+    const pages = new Set(
+        (Array.isArray(data?.bookmarks) ? data.bookmarks : []).filter((n) => Number.isInteger(n) && n > 0)
+    );
+    if (Number.isInteger(data?.bookmark) && data.bookmark > 0) pages.add(data.bookmark);
+    return [...pages].sort((a, b) => a - b);
+}
+
 /**
- * Set bookmark for a book at specific page
+ * The bookmarked pages of a book, lowest first.
+ * @returns {Promise<number[]>}
  */
-export async function setBookmark(bookId, pageNumber) {
+export async function getBookmarks(bookId) {
     try {
         const userId = getCurrentUserId();
-        if (!userId) return false;
-
-        const progressDoc = await firebase()
-            .firestore()
-            .collection('readingProgress')
-            .doc(`${userId}_${bookId}`)
-            .get();
-
-        const existingData = progressDoc.exists ? progressDoc.data() : {};
-        
-        await firebase()
-            .firestore()
-            .collection('readingProgress')
-            .doc(`${userId}_${bookId}`)
-            .set({
-                ...existingData,
-                userId,
-                bookId,
-                bookmark: pageNumber,
-                bookmarkedAt: new Date()
-            }, { merge: true });
-
-        return true;
+        if (!userId) return [];
+        const snapshot = await progressRef(userId, bookId).get();
+        return snapshot.exists ? bookmarksOf(snapshot.data()) : [];
     } catch (error) {
-        console.error('Error setting bookmark:', error);
-        return false;
+        console.error('Error getting bookmarks:', error);
+        return [];
     }
 }
 
 /**
- * Remove bookmark for a book
+ * Bookmark a page. Read fresh before writing, so a page bookmarked on the
+ * web since this book was opened is kept.
+ * @returns {Promise<number[]>} the bookmarks afterwards
  */
-export async function removeBookmark(bookId) {
-    try {
-        const userId = getCurrentUserId();
-        if (!userId) return false;
+export async function addBookmark(bookId, pageNumber) {
+    const userId = getCurrentUserId();
+    if (!userId) throw new Error('Not signed in');
 
-        const progressDoc = await firebase()
-            .firestore()
-            .collection('readingProgress')
-            .doc(`${userId}_${bookId}`)
-            .get();
+    const ref = progressRef(userId, bookId);
+    const snapshot = await ref.get();
+    const pages = bookmarksOf(snapshot.exists ? snapshot.data() : null);
+    if (!pages.includes(pageNumber)) pages.push(pageNumber);
+    pages.sort((a, b) => a - b);
 
-        if (progressDoc.exists) {
-            await firebase()
-                .firestore()
-                .collection('readingProgress')
-                .doc(`${userId}_${bookId}`)
-                .update({
-                    bookmark: null,
-                    bookmarkedAt: null
-                });
-        }
+    await ref.set({
+        userId,
+        bookId,
+        bookmarks: pages,
+        bookmark: pageNumber,
+        bookmarkedAt: new Date()
+    }, { merge: true });
 
-        return true;
-    } catch (error) {
-        console.error('Error removing bookmark:', error);
-        return false;
-    }
+    return pages;
 }
 
 /**
- * Get bookmark for a book
+ * Remove the bookmark on a page.
+ * @returns {Promise<number[]>} the bookmarks afterwards
  */
-export async function getBookmark(bookId) {
-    try {
-        const userId = getCurrentUserId();
-        if (!userId) return null;
+export async function removeBookmark(bookId, pageNumber) {
+    const userId = getCurrentUserId();
+    if (!userId) throw new Error('Not signed in');
 
-        const progressDoc = await firebase()
-            .firestore()
-            .collection('readingProgress')
-            .doc(`${userId}_${bookId}`)
-            .get();
+    const ref = progressRef(userId, bookId);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return [];
 
-        if (progressDoc.exists) {
-            const data = progressDoc.data();
-            return data.bookmark || null;
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('Error getting bookmark:', error);
-        return null;
+    const data = snapshot.data();
+    const pages = bookmarksOf(data).filter((n) => n !== pageNumber);
+
+    const changes = { bookmarks: pages };
+    // Keep the single-page field pointing at a page that is still bookmarked.
+    if (data.bookmark === pageNumber || !pages.includes(data.bookmark)) {
+        changes.bookmark = pages.length ? pages[pages.length - 1] : null;
     }
+
+    await ref.set(changes, { merge: true });
+    return pages;
 }
