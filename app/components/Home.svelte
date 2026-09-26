@@ -121,7 +121,7 @@
                     textWrap="true"
                 />
                 <flexboxLayout class="ip-grid" flexWrap="wrap">
-                    {#each DEFAULT_SUBJECTS as subject}
+                    {#each $allSubjects as subject}
                         <button
                             text={subject}
                             class="ip-option"
@@ -185,7 +185,9 @@
     // @ts-ignore
     import { getCurrentUser, getUserProfile, updateUserProfile } from '../services/firebase';
     // @ts-ignore
-    import { DEFAULT_SUBJECTS } from '../services/subjects';
+    import { allSubjects, loadAllSubjects } from '../services/subjects';
+
+    loadAllSubjects();
 
     let books: any[] = [];
     let displayedBooks: any[] = [];

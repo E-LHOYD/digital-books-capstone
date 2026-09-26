@@ -38,7 +38,9 @@
     import SubjectBooks from './SubjectBooks.svelte';
     import Home from './Home.svelte';
     // @ts-ignore
-    import { DEFAULT_SUBJECTS, hasSubject } from '../services/subjects.js';
+    import { allSubjects, loadAllSubjects, hasSubject } from '../services/subjects.js';
+
+    loadAllSubjects();
 
     // Passed in from the library so this page does not refetch what the
     // library already holds.
@@ -46,7 +48,7 @@
 
     // Every subject is listed, including ones with nothing in them yet, so the
     // set of subjects reads as fixed rather than as whatever happens to exist.
-    $: subjectRows = DEFAULT_SUBJECTS.map((subject: string) => ({
+    $: subjectRows = $allSubjects.map((subject: string) => ({
         subject,
         books: books.filter((book) => hasSubject(book, subject))
     })).map((row) => ({ ...row, count: row.books.length }));

@@ -7,7 +7,7 @@
             <label text="Choose 3 subjects you like. They decide which books are recommended to you." class="muted-text" textWrap="true" />
             
             <flexboxLayout class="interests-grid" flexWrap="wrap">
-                {#each DEFAULT_SUBJECTS as interest}
+                {#each $allSubjects as interest}
                     <button
                         text={interest}
                         class="interest-btn"
@@ -35,7 +35,10 @@
     import BottomNav from './BottomNav.svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     import Profile from './Profile.svelte';
-    import { DEFAULT_SUBJECTS } from '../services/subjects';
+    // @ts-ignore
+    import { allSubjects, loadAllSubjects } from '../services/subjects';
+
+    loadAllSubjects();
     // @ts-ignore
     import { updateUserProfile } from '../services/firebase';
 
