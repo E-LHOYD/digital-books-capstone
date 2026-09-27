@@ -10,7 +10,7 @@
                 <!-- Reading History Shelf (combined read + viewed) -->
                 <gridLayout columns="*, auto" rows="auto, auto" class="card" on:tap={() => goToShelfBooks('history')}>
                     <label row={0} col={0} text="📖 Reading History" class="card-title" />
-                    <label row={0} col={1} text={(readBooks.length + viewedBooks.length) + ' books'} class="muted-text" verticalAlignment="center" />
+                    <label row={0} col={1} text={(readBooks.length + viewedBooks.length) + ' books'} class="muted-text" verticalAlignment="middle" />
                     <label
                         row={1}
                         col={0}
@@ -49,7 +49,7 @@
                             rowSpan={2}
                             text="Delete"
                             class="shelf-delete-btn"
-                            verticalAlignment="center"
+                            verticalAlignment="middle"
                             on:tap={() => confirmDeleteShelf(shelf)}
                         />
                     </gridLayout>
@@ -62,14 +62,14 @@
         <!-- Create Shelf Modal -->
         {#if showCreateModal}
             <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={hideCreateModal}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Create New Shelf" class="modal-title" />
                     
                     <textField 
                         hint="Shelf name" 
                         class="input" 
                         text={newShelfName}
-                        on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
+                        on:textChange={(e) => newShelfName = e.value}
                     />
                     
                     {#if createError}
@@ -87,7 +87,7 @@
         <!-- Delete Confirmation Modal -->
         {#if pendingDelete}
             <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={cancelDeleteShelf}>
-                <stackLayout class="modal-content modal-compact" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content modal-compact" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Delete shelf?" class="modal-title result-error" />
 
                     <label
@@ -108,7 +108,7 @@
         <!-- Result Modal -->
         {#if resultKind}
             <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={hideResult}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
                         class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
@@ -253,6 +253,7 @@
                 const data = doc.data();
                 return {
                     id: doc.id,
+                    bookNumber: data.bookNumber != null ? String(data.bookNumber) : '',
                     title: data.title,
                     author: data.author,
                     detail: data.detail || '',

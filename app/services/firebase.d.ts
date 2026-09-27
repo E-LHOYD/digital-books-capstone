@@ -4,7 +4,11 @@ export interface Book {
     title: string;
     author: string;
     coverPath?: string;
+    coverUrl?: string;
     detail?: string;
+    bookNumber?: string;
+    publishedDate?: string;
+    releaseDate?: string;
 }
 
 export declare function login(email: string, password: string): Promise<any>;

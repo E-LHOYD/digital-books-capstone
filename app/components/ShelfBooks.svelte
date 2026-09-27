@@ -48,7 +48,7 @@
                                         rowSpan={2}
                                         text={`${Math.round(book.percentage)}%`}
                                         class="book-percent"
-                                        verticalAlignment="center"
+                                        verticalAlignment="middle"
                                     />
                                 {/if}
                                 {#if canRemove && selectionMode}
@@ -62,7 +62,7 @@
                                             ? "color: #1b7f3b;"
                                             : "color: #033047;"}
                                         on:tap={toggleBookSelection.bind(null, book)}
-                                        verticalAlignment="center"
+                                        verticalAlignment="middle"
                                     />
                                 {/if}
                             </gridLayout>
@@ -101,7 +101,7 @@
         <!-- Remove Confirmation Modal -->
         {#if showRemoveModal}
             <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={cancelRemove}>
-                <stackLayout class="modal-content modal-compact" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content modal-compact" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Remove books?" class="modal-title" />
 
                     <label
@@ -121,7 +121,7 @@
         <!-- Result -->
         {#if resultTitle}
             <gridLayout row={0} rowSpan={4} col={0} class="modal-overlay" on:tap={closeResult}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text={resultTitle} class="modal-title" />
                     <label text={resultMessage} class="modal-message" textWrap="true" />
                     <button text="OK" class="btn btn-primary" on:tap={closeResult} />

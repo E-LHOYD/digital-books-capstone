@@ -30,6 +30,11 @@
         <!-- Author -->
         <label text={book.author} class="detail-author" />
 
+        <!-- Book Number -->
+        {#if book.bookNumber}
+            <label text={`Book Number: ${book.bookNumber}`} class="detail-book-number" />
+        {/if}
+
         <!-- Subjects -->
         {#if book.subjects && book.subjects.length > 0}
             <stackLayout class="detail-subjects">
@@ -88,7 +93,7 @@
         <!-- Shelf Selection Modal -->
         {#if showShelfModal}
             <gridLayout row={0} rowSpan={5} col={0} class="modal-overlay" on:tap={hideShelfModal}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label text="Select a Shelf" class="modal-title" />
                     
                     <scrollView class="shelf-list">
@@ -125,7 +130,7 @@
                                 hint="Shelf name" 
                                 class="input" 
                                 text={newShelfName}
-                                on:textChange={(e) => (newShelfName = e?.value ?? e?.object?.text ?? '')}
+                                on:textChange={(e) => newShelfName = e.value}
                             />
                             <gridLayout rows="auto" columns="*, 12, *" class="form-actions">
                                 <button col={0} text="Create" class="btn btn-primary" on:tap={createNewShelf} />
@@ -140,7 +145,7 @@
         <!-- Result Modal -->
         {#if resultKind}
             <gridLayout row={0} rowSpan={5} col={0} class="modal-overlay" on:tap={hideResult}>
-                <stackLayout class="modal-content" verticalAlignment="center" horizontalAlignment="center" on:tap={stopPropagation}>
+                <stackLayout class="modal-content" verticalAlignment="middle" horizontalAlignment="center" on:tap={stopPropagation}>
                     <label
                         text={resultKind === 'success' ? 'Success' : 'Something went wrong'}
                         class="modal-title {resultKind === 'success' ? 'result-success' : 'result-error'}"
@@ -455,6 +460,13 @@
 
     .detail-author {
         font-size: 18;
+        color: #666;
+        margin-bottom: 20;
+        text-align: center;
+    }
+
+    .detail-book-number {
+        font-size: 16;
         color: #666;
         margin-bottom: 20;
         text-align: center;

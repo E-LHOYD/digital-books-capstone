@@ -2,6 +2,7 @@ export interface Book {
     title: string;
     author: string;
     coverPath?: string;
+    coverUrl?: string;
     detail?: string;
     subject?: string;
     subjects?: string[];
@@ -9,6 +10,9 @@ export interface Book {
     fileName?: string;
     fileSize?: number;
     id?: string;
+    bookNumber?: string;
+    publishedDate?: string;
+    releaseDate?: string;
 }
 
 export interface UserProfile {
