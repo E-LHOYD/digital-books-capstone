@@ -63,6 +63,30 @@ export function getSavedCredentials() {
     return null;
 }
 
+/**
+ * Whether the reader chose "Keep me logged in". Kept as its own flag so the
+ * choice survives even when no password is saved (for example after turning
+ * it off and back on in Settings).
+ * @returns {boolean}
+ */
+export function isKeepLoggedIn() {
+    return getBoolean(STORAGE_KEYS.KEEP_LOGGED_IN, false);
+}
+
+/**
+ * Turn "Keep me logged in" on or off from Settings. Turning it on keeps the
+ * current Firebase session across restarts; turning it off also forgets any
+ * saved password.
+ * @param {boolean} value
+ */
+export function setKeepLoggedIn(value) {
+    if (value) {
+        setBoolean(STORAGE_KEYS.KEEP_LOGGED_IN, true);
+    } else {
+        clearCredentials();
+    }
+}
+
 // Clear saved credentials
 export function clearCredentials() {
     remove(STORAGE_KEYS.EMAIL);
@@ -204,7 +228,7 @@ export function restoredSessionUser() {
     const user = auth.currentUser;
     if (!user) return null;
 
-    if (!getSavedCredentials()) {
+    if (!isKeepLoggedIn()) {
         auth.signOut().catch((error) => console.error("Could not end the session:", error));
         return null;
     }
@@ -230,7 +254,12 @@ export async function autoLogin() {
         return null;
     } catch (error) {
         console.error("Auto-login failed:", error);
-        clearCredentials(); // Clear invalid credentials
+        // Only forget the saved login when it is actually wrong. Being offline
+        // or a server hiccup at startup must not switch "Keep me logged in" off.
+        const code = String(error?.code || error?.message || '');
+        if (/wrong-password|user-not-found|invalid-credential|invalid-login|user-disabled/i.test(code)) {
+            clearCredentials();
+        }
         return null;
     }
 }

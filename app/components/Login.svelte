@@ -39,15 +39,31 @@
 
             <!-- Keep logged in + forgot password -->
             <gridLayout rows="auto" columns="auto, *, auto" class="options-row">
-                <stackLayout col={0} orientation="horizontal" class="checkbox-container">
-                    <label
-                        text={keepLoggedIn ? "✓" : ""}
+                <!-- One tap target for the box and its text. The children do not
+                     take touches themselves, so every tap reaches the row, and the
+                     box colour is set directly rather than through a CSS class. -->
+                <gridLayout
+                    col={0}
+                    columns="auto, auto"
+                    class="checkbox-container"
+                    backgroundColor="transparent"
+                    on:tap={toggleKeepLoggedIn}
+                >
+                    <gridLayout
+                        col={0}
                         class="checkbox-btn"
-                        class:checkbox-on={keepLoggedIn}
-                        on:tap={() => keepLoggedIn = !keepLoggedIn}
-                    />
-                    <label text="Keep me logged in" class="checkbox-label" />
-                </stackLayout>
+                        backgroundColor={keepLoggedIn ? '#033047' : '#ffffff'}
+                        isUserInteractionEnabled={false}
+                    >
+                        <label
+                            text="✓"
+                            class="checkbox-tick"
+                            visibility={keepLoggedIn ? 'visible' : 'hidden'}
+                            isUserInteractionEnabled={false}
+                        />
+                    </gridLayout>
+                    <label col={1} text="Keep me logged in" class="checkbox-label" isUserInteractionEnabled={false} />
+                </gridLayout>
                 <label
                     col={2}
                     text={isSendingReset ? "Sending..." : "Forgot password?"}
@@ -187,18 +203,21 @@
         }
     }
 
+    function toggleKeepLoggedIn() {
+        keepLoggedIn = !keepLoggedIn;
+    }
+
     function goToHome() {
+        // clearHistory so Back from the Library does not return to this
+        // Login page, which looked like being logged out.
         navigate({
-            page: Home
-        });
+            page: Home,
+            clearHistory: true
+        } as any);
     }
 </script>
 
 <style>
-    .checkbox-on {
-        background-color: #033047;
-    }
-
     .login {
         margin-top: 24;
     }
@@ -233,21 +252,27 @@
 
     .checkbox-container {
         vertical-align: center;
+        padding: 8 8 8 0;
     }
 
     .checkbox-btn {
         width: 24;
         height: 24;
-        background-color: #ffffff;
-        color: #ffffff;
         border-width: 2;
         border-color: #033047;
         border-radius: 6;
+        margin-right: 10;
+        vertical-align: center;
+    }
+
+    .checkbox-tick {
+        color: #ffffff;
+        font-family: sans-serif;
         font-size: 14;
         font-weight: bold;
         text-align: center;
         vertical-align: center;
-        margin-right: 10;
+        horizontal-align: center;
     }
 
     .checkbox-label {

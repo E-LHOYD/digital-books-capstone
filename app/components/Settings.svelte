@@ -8,10 +8,22 @@
 
                 <!-- Keep Logged In -->
                 <stackLayout class="card">
-                    <stackLayout orientation="horizontal" class="checkbox-container" on:tap={() => keepLoggedIn = !keepLoggedIn}>
-                        <label text={keepLoggedIn ? "✓" : ""} class="checkbox-btn" class:checkbox-on={keepLoggedIn} />
-                        <label text="Keep me logged in" class="setting-label" />
-                    </stackLayout>
+                    <gridLayout columns="auto, *" class="checkbox-container" backgroundColor="transparent" on:tap={toggleKeepLoggedIn}>
+                        <gridLayout
+                            col={0}
+                            class="checkbox-btn"
+                            backgroundColor={keepLoggedIn ? '#033047' : '#ffffff'}
+                            isUserInteractionEnabled={false}
+                        >
+                            <label
+                                text="✓"
+                                class="checkbox-tick"
+                                visibility={keepLoggedIn ? 'visible' : 'hidden'}
+                                isUserInteractionEnabled={false}
+                            />
+                        </gridLayout>
+                        <label col={1} text="Keep me logged in" class="setting-label" isUserInteractionEnabled={false} />
+                    </gridLayout>
                 </stackLayout>
 
                 <!-- Change Password Button -->
@@ -77,7 +89,7 @@
     import { onMount } from 'svelte';
     import { navigate } from '@nativescript-community/svelte-native';
     // @ts-ignore
-    import { getSavedCredentials, saveCredentials, getCurrentUser, changePassword, login } from '../services/firebase';
+    import { isKeepLoggedIn, setKeepLoggedIn, saveCredentials, getCurrentUser, changePassword, login } from '../services/firebase';
 
     let keepLoggedIn = true; // Default to keep logged in
     let showPasswordModal = false;
@@ -86,26 +98,19 @@
     let confirmPassword = "";
     let passwordError = "";
 
-    onMount(async () => {
-        // Load current keep logged in preference
-        const credentials = getSavedCredentials();
-        if (credentials) {
-            keepLoggedIn = true;
-        } else {
-            keepLoggedIn = false;
-        }
+    onMount(() => {
+        // Load the current "Keep me logged in" choice
+        keepLoggedIn = isKeepLoggedIn();
     });
 
-    // Update keep logged in preference when checkbox is toggled
-    $: if (keepLoggedIn !== undefined) {
-        const credentials = getSavedCredentials();
-        if (credentials) {
-            saveCredentials(credentials.email, credentials.password, keepLoggedIn);
-        }
+    // Saved straight away. The old version only re-saved when a password was
+    // already stored, so once it was switched off it could never be switched
+    // back on: the tick showed, but nothing was saved and the next launch
+    // signed the reader out.
+    function toggleKeepLoggedIn() {
+        keepLoggedIn = !keepLoggedIn;
+        setKeepLoggedIn(keepLoggedIn);
     }
-
-
-
 
     function goBack() {
         navigate({ page: Profile } as any);
@@ -137,15 +142,13 @@
             }
             
             // Re-authenticate with current password
-            await login(currentUser.email, currentPassword, true);
+            await login(currentUser.email, currentPassword, keepLoggedIn);
             
             // Change password
             await changePassword(newPassword);
             
             // Update saved credentials if keeping logged in
-            if (keepLoggedIn) {
-                saveCredentials(currentUser.email, newPassword, true);
-            }
+            saveCredentials(currentUser.email, newPassword, keepLoggedIn);
             
             showPasswordModal = false;
             currentPassword = "";
@@ -172,20 +175,21 @@
     .checkbox-btn {
         width: 28;
         height: 28;
-        background-color: white;
-        color: white;
         border-width: 2;
         border-color: #033047;
         border-radius: 6;
-        font-size: 16;
-        font-weight: bold;
         margin-right: 12;
-        text-align: center;
         vertical-align: center;
     }
 
-    .checkbox-on {
-        background-color: #033047;
+    .checkbox-tick {
+        color: #ffffff;
+        font-family: sans-serif;
+        font-size: 16;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: center;
+        horizontal-align: center;
     }
 
     .setting-label {
