@@ -95,7 +95,7 @@
         {
             image: TUTORIAL_IMAGES.search,
             title: 'Search',
-            body: 'Looking for something in particular? Type a title, an author or a book number into the search bar at the top of the Library, then tap Search.'
+            body: 'Looking for something in particular? Type a title, an author or an ISBN into the search bar at the top of the Library, then tap Search.'
         },
         {
             image: TUTORIAL_IMAGES.subjects,

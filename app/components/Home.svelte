@@ -8,7 +8,7 @@
                 <textField
                     row={0}
                     col={0}
-                    hint="Search title, author or book number"
+                    hint="Search title, author or ISBN"
                     class="search-bar"
                     text={searchQuery}
                     on:textChange={handleSearchTextChange}

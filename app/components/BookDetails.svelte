@@ -30,9 +30,9 @@
         <!-- Author -->
         <label text={book.author} class="detail-author" />
 
-        <!-- Book Number -->
+        <!-- ISBN -->
         {#if book.bookNumber}
-            <label text={`Book Number: ${book.bookNumber}`} class="detail-book-number" />
+            <label text={`ISBN: ${book.bookNumber}`} class="detail-book-number" />
         {/if}
 
         <!-- Subjects -->
